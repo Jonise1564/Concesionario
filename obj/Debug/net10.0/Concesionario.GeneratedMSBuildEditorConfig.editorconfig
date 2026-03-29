@@ -19,45 +19,45 @@ build_property.TargetFrameworkIdentifier = .NETCoreApp
 build_property.TargetFrameworkVersion = v10.0
 build_property.RootNamespace = Concesionario
 build_property.RootNamespace = Concesionario
-build_property.ProjectDir = C:\Users\JSON\Desktop\Concesionario\
+build_property.ProjectDir = C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 9.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\JSON\Desktop\Concesionario
+build_property.MSBuildProjectDirectory = C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Users/JSON/Desktop/Concesionario/Views/Home/Index.cshtml]
+[C:/Users/thefl/OneDrive/Documentos/GitHub/Concesionario/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/JSON/Desktop/Concesionario/Views/Home/Privacy.cshtml]
+[C:/Users/thefl/OneDrive/Documentos/GitHub/Concesionario/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/JSON/Desktop/Concesionario/Views/Shared/Error.cshtml]
+[C:/Users/thefl/OneDrive/Documentos/GitHub/Concesionario/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/JSON/Desktop/Concesionario/Views/Shared/_ValidationScriptsPartial.cshtml]
+[C:/Users/thefl/OneDrive/Documentos/GitHub/Concesionario/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/JSON/Desktop/Concesionario/Views/Vehiculos/Index.cshtml]
+[C:/Users/thefl/OneDrive/Documentos/GitHub/Concesionario/Views/Vehiculos/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVoaWN1bG9zXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/JSON/Desktop/Concesionario/Views/_ViewImports.cshtml]
+[C:/Users/thefl/OneDrive/Documentos/GitHub/Concesionario/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/JSON/Desktop/Concesionario/Views/_ViewStart.cshtml]
+[C:/Users/thefl/OneDrive/Documentos/GitHub/Concesionario/Views/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/JSON/Desktop/Concesionario/Views/Shared/_Layout.cshtml]
+[C:/Users/thefl/OneDrive/Documentos/GitHub/Concesionario/Views/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = b-37ogrq4w4u
