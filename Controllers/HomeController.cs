@@ -16,6 +16,11 @@ public class HomeController : Controller
         return View();
     }
 
+    public IActionResult Financiamiento() => View();
+    public IActionResult SobreNosotros() => View();
+    public IActionResult Contacto() => View();
+    public IActionResult Acceso() => View();
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

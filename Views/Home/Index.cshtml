@@ -1,6 +1,4 @@
-﻿
-@* Views/Home/Index.cshtml *@
-@{
+﻿@{
     ViewData["Title"] = "Inicio";
 }
 
@@ -8,31 +6,38 @@
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true"/>
 }
 
-<section class="py-5 bg-white">
+<!-- HERO -->
+<div class="hero">
+
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content text-center">
+        <p class="subtitulo">TU CONCESIONARIO DE CONFIANZA</p>
+        <h1>Tu Próximo Auto Te Espera</h1>
+        <p class="descripcion">
+            Conocé la mejor selección de vehículos y accedé a financiación exclusiva.
+        </p>
+
+        <a asp-controller="Vehiculos" asp-action="Index" class="btn-hero">
+            Explorar vehículos
+        </a>
+    </div>
+
+</div>
+
+<!-- SECCIÓN SIMPLE -->
+<section class="bienvenida">
     <div class="container text-center">
-        <h2 class="fw-light">Bienvenidos  <span class="fw-bold"></span></h2>
-        <hr style="width: 50px; border: 2px solid #eb0a1e; margin: 20px auto;">
+
+        <h2 class="titulo-bienvenida">
+            Bienvenidos a <span>Jonel Automotores</span>
+        </h2>
+
+        <div class="linea"></div>
+
+        <p class="texto-bienvenida">
+            Encontrá los mejores vehículos con financiación accesible y atención personalizada.
+        </p>
+
     </div>
 </section>
-
-<div class="hero-section">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <p class="mb-1">EL NUEVO VEHÍCULO | DISPONIBLE HOY</p>
-        <h1>TU PRÓXIMO AUTO</h1>
-        <p>Conocé la nueva experiencia de conducción premium y accedé a planes de financiación exclusivos.</p>
-        <a href="/Vehiculos" class="btn-toyota">CONOCÉ MÁS</a>
-    </div>
-</div>
-
-<div class="model-bar">
-    <div class="container d-flex justify-content-around">
-        <a href="#" class="model-item text-uppercase small">Modelos</a>
-        <a href="#" class="model-item text-uppercase small">Comprá</a>
-        <a href="#" class="model-item text-uppercase small">Alquilá</a>
-        <a href="#" class="model-item text-uppercase small">Mi Vehículo</a>
-        <a href="#" class="model-item text-uppercase small">Descubrí</a>
-        <a href="#" class="model-item text-uppercase small">Contactanos</a>
-    </div>
-</div>
-

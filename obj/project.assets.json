@@ -2586,19 +2586,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\JSON\\.nuget\\packages\\": {}
+    "C:\\Users\\thefl\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\JSON\\Desktop\\Concesionario\\Concesionario.csproj",
+      "projectUniqueName": "C:\\Users\\thefl\\OneDrive\\Documentos\\GitHub\\Concesionario\\Concesionario.csproj",
       "projectName": "Concesionario",
-      "projectPath": "C:\\Users\\JSON\\Desktop\\Concesionario\\Concesionario.csproj",
-      "packagesPath": "C:\\Users\\JSON\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\JSON\\Desktop\\Concesionario\\obj\\",
+      "projectPath": "C:\\Users\\thefl\\OneDrive\\Documentos\\GitHub\\Concesionario\\Concesionario.csproj",
+      "packagesPath": "C:\\Users\\thefl\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\thefl\\OneDrive\\Documentos\\GitHub\\Concesionario\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\JSON\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\thefl\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
@@ -2622,7 +2622,7 @@
         "auditLevel": "low",
         "auditMode": "all"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net10.0": {
@@ -2666,7 +2666,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

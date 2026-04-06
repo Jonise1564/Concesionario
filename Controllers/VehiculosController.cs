@@ -24,4 +24,9 @@ public class VehiculosController : Controller
 
         return View(inventario);
     }
+
+    public IActionResult Buscar()
+    {
+        return View();
+    }
 }
