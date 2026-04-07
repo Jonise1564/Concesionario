@@ -1,11 +1,167 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>Financiamiento</h1>
-</body>
-</html>
+@{
+    ViewData["Title"] = "Financiamiento";
+}
+
+@section Styles {
+    <style>
+        body { background-color: #121212; color: #ffffff; font-family: 'Inter', sans-serif; }
+        
+        .fw-800 { font-weight: 800; }
+        .text-danger { color: #eb0a1e !important; }
+        .text-muted { color: #aaaaaa !important; }
+
+        /* HERO SECTION */
+        .hero-finanzas {
+            position: relative;
+            height: 50vh;
+            min-height: 400px;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('/img/finanzas-bg.jpg') center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .hero-content { position: relative; z-index: 2; padding-top: 60px; }
+
+        .linea-acento {
+            width: 60px; height: 4px;
+            background-color: #eb0a1e;
+            margin: 15px auto;
+        }
+
+        /* CARDS DE OPCIONES */
+        .finanza-card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            padding: 40px;
+            height: 100%;
+            transition: 0.3s;
+            border-bottom: 4px solid #333;
+        }
+
+        .finanza-card:hover {
+            border-bottom: 4px solid #eb0a1e;
+            background-color: #252525;
+            transform: translateY(-5px);
+        }
+
+        .icon-box {
+            font-size: 3rem;
+            color: #eb0a1e;
+            margin-bottom: 20px;
+        }
+
+        /* REQUISITOS SECTION */
+        .requisitos-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .requisitos-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .requisitos-list li i {
+            color: #eb0a1e;
+            margin-right: 15px;
+        }
+
+        /* BANNER CTA */
+        .cta-finanzas {
+            background: linear-gradient(45deg, #1e1e1e, #000);
+            border: 1px solid #eb0a1e;
+            padding: 50px;
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+}
+
+<section class="hero-finanzas">
+    <div class="hero-content">
+        <p class="text-danger fw-bold text-uppercase mb-0" style="letter-spacing: 3px;">Tu próximo auto es posible</p>
+        <h1 class="text-uppercase fw-800 display-4">Financiamiento</h1>
+        <div class="linea-acento"></div>
+        <p class="lead text-light">Planes a medida con las tasas más competitivas del mercado.</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-4">
+            <div class="finanza-card shadow-lg">
+                <div class="icon-box"><i class="bi bi-percent"></i></div>
+                <h4 class="fw-800 text-uppercase">Tasa Fija</h4>
+                <p class="text-muted">Cuotas fijas en pesos para que siempre sepas cuánto vas a pagar, sin sorpresas.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="finanza-card shadow-lg">
+                <div class="icon-box"><i class="bi bi-truck"></i></div>
+                <h4 class="fw-800 text-uppercase">Créditos Prendarios</h4>
+                <p class="text-muted">Financiamos hasta el 50% del valor de la unidad con aprobación inmediata.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="finanza-card shadow-lg">
+                <div class="icon-box"><i class="bi bi-arrow-repeat"></i></div>
+                <h4 class="fw-800 text-uppercase">Llave por Llave</h4>
+                <p class="text-muted">Tomamos tu usado como parte de pago al mejor precio de plaza.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row align-items-center g-5 py-5">
+        <div class="col-lg-6">
+            <h6 class="text-danger fw-bold text-uppercase">Simplicidad</h6>
+            <h2 class="display-6 fw-800 text-uppercase mb-4">Requisitos Mínimos</h2>
+            <p class="text-muted mb-4">En Jonel Automotores queremos que te lleves tu auto hoy mismo. Por eso, simplificamos la documentación necesaria:</p>
+            <ul class="requisitos-list">
+                <li><i class="bi bi-check-circle-fill"></i> DNI Argentino vigente.</li>
+                <li><i class="bi bi-check-circle-fill"></i> Recibo de sueldo o comprobante de ingresos.</li>
+                <li><i class="bi bi-check-circle-fill"></i> Un servicio a tu nombre (Luz, Gas o Agua).</li>
+                <li><i class="bi bi-check-circle-fill"></i> No estar en situación negativa en Veraz.</li>
+            </ul>
+        </div>
+        <div class="col-lg-6">
+            <div class="p-4" style="background-color: #1e1e1e; border: 1px solid #333;">
+                <h4 class="fw-800 text-uppercase text-center mb-4">¿Cómo funciona?</h4>
+                <div class="d-flex mb-4">
+                    <div class="me-4 text-danger h1 fw-800">01</div>
+                    <div>
+                        <h5 class="fw-bold">Elegís tu vehículo</h5>
+                        <p class="text-muted small">Navegá nuestro stock y seleccioná el auto que mejor se adapte a vos.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-4">
+                    <div class="me-4 text-danger h1 fw-800">02</div>
+                    <div>
+                        <h5 class="fw-bold">Pre-aprobación</h5>
+                        <p class="text-muted small">Evaluamos tu perfil crediticio en menos de 24 horas hábiles.</p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="me-4 text-danger h1 fw-800">03</div>
+                    <div>
+                        <h5 class="fw-bold">Retirás tu unidad</h5>
+                        <p class="text-muted small">Firmás la documentación y te vas manejando tu próximo Jonel.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cta-finanzas">
+        <h3 class="fw-800 text-uppercase">¿Querés una simulación personalizada?</h3>
+        <p class="text-muted">Nuestros asesores están listos para armar un plan que se ajuste a tu bolsillo.</p>
+        <div class="mt-4">
+            <a asp-controller="Home" asp-action="Contacto" class="btn btn-danger btn-lg px-5 py-3 fw-800 text-uppercase" style="border-radius:0;">
+                Consultar ahora <i class="bi bi-whatsapp ms-2"></i>
+            </a>
+        </div>
+    </div>
+</div>
