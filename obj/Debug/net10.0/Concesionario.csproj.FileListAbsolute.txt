@@ -21,7 +21,6 @@ C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\scopedcss\bundle\Concesionario.styles.css
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\scopedcss\projectbundle\Concesionario.bundle.scp.css
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-b9sayid5wm-b9sayid5wm.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\ofy8utyl77-{0}-61n19gt1b8-61n19gt1b8.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\pok7n4mbzr-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\nws25mg7fo-{0}-c2jlpeoesf-c2jlpeoesf.gz
@@ -172,7 +171,6 @@ C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\runtimes\win-x64\native\kr
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\runtimes\win-x64\native\krbcc64.dll
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\runtimes\win\lib\net8.0\System.Windows.Extensions.dll
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\Concesionario.csproj.AssemblyReference.cache
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-01zdxpfpnb-01zdxpfpnb.gz
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\appsettings.Development.json
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\appsettings.json
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\package-lock.json
@@ -412,3 +410,5 @@ C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\kzmiadl72z-{0}-
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\tcod515kaw-{0}-9vr69e8ynj-9vr69e8ynj.gz
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-83fmnlkzpa-83fmnlkzpa.gz
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-d6rqcnv671-d6rqcnv671.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-jln2znbvx3-jln2znbvx3.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-n0mtmneroy-n0mtmneroy.gz
