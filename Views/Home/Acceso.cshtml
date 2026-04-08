@@ -1,4 +1,4 @@
-@{
+@* @{
     ViewData["Title"] = "Acceso";
 }
 
@@ -107,7 +107,7 @@
 
         <form asp-controller="Account" asp-action="Login" method="post" autocomplete="off">
             @Html.AntiForgeryToken() @* Medida de seguridad contra ataques CSRF *@
-
+@* 
             <div class="mb-4">
                 <label class="form-label">Usuario o Email</label>
                 <div class="input-group">
@@ -159,6 +159,240 @@
             password.setAttribute('type', type);
             this.querySelector('i').classList.toggle('bi-eye');
             this.querySelector('i').classList.toggle('bi-eye-slash');
+        });
+    </script>
+} *@ 
+
+@{
+    ViewData["Title"] = "Acceso";
+}
+
+@section Styles {
+    <style>
+        body { background-color: #000000; color: #ffffff; font-family: 'Inter', sans-serif; }
+        .fw-800 { font-weight: 800; }
+        .text-danger { color: #eb0a1e !important; }
+        
+        /* Contenedor Central */
+        .login-wrapper {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+        }
+
+        .login-card {
+            background-color: #121212;
+            border: 1px solid #222;
+            padding: 50px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .linea-acento {
+            width: 50px; height: 3px;
+            background-color: #eb0a1e;
+            margin: 15px auto 30px;
+        }
+
+        /* Estilos de Input Modernos */
+        .form-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #888;
+        }
+
+        .input-group-text {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            color: #eb0a1e;
+            border-radius: 0;
+        }
+
+        .form-control {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff !important;
+            border-radius: 0;
+            padding: 12px;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus {
+            background-color: #222;
+            border-color: #eb0a1e;
+            box-shadow: none;
+        }
+
+        /* Botón de Acceso */
+        .btn-login {
+            background-color: #eb0a1e;
+            color: #fff;
+            border: 1px solid #eb0a1e;
+            border-radius: 0;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 14px;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn-login:hover {
+            background-color: transparent;
+            color: #eb0a1e;
+        }
+
+        .forgot-link {
+            color: #666;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .forgot-link:hover { color: #eb0a1e; }
+        #togglePassword { cursor: pointer; }
+
+        /* Estilo para mensajes de error */
+        #loginError {
+            display: none;
+            background-color: rgba(235, 10, 30, 0.1);
+            color: #eb0a1e;
+            padding: 10px;
+            font-size: 0.85rem;
+            border-left: 3px solid #eb0a1e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+}
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="text-center mb-4">
+            <h2 class="fw-800 text-uppercase m-0">Acceso <span class="text-danger">Jonel</span></h2>
+            <div class="linea-acento"></div>
+        </div>
+
+        <div id="loginError"></div>
+
+        <form id="formLogin" autocomplete="off">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-4">
+                <label class="form-label">Usuario o Email</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Ingresá tu usuario" required autofocus>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                    <span class="input-group-text" id="togglePassword">
+                        <i class="bi bi-eye"></i>
+                    </span>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="remember">
+                    <label class="form-check-label text-muted small" for="remember">
+                        Recordarme
+                    </label>
+                </div>
+                <a href="#" class="forgot-link">¿Olvidaste tu clave?</a>
+            </div>
+
+            <button type="submit" class="btn-login" id="btnLogin">
+                <span id="btnText">Entrar</span>
+                <i class="bi bi-box-arrow-in-right ms-2"></i>
+            </button>
+            
+            <div class="text-center mt-4">
+                <p class="text-muted small">¿No tenés acceso? <a href="#" class="text-danger fw-bold text-decoration-none">Contactar Administrador</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 1. Lógica para ocultar/mostrar contraseña
+        const togglePassword = document.querySelector('#togglePassword');
+        const passwordField = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('bi-eye');
+            this.querySelector('i').classList.toggle('bi-eye-slash');
+        });
+
+        // 2. Lógica de Envío JWT con Mensaje de Éxito
+        const form = document.getElementById('formLogin');
+        const errorDiv = document.getElementById('loginError');
+        const btnLogin = document.getElementById('btnLogin');
+        const btnText = document.getElementById('btnText');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            errorDiv.style.display = 'none';
+            btnLogin.disabled = true;
+            btnText.innerText = 'Validando...';
+
+            const payload = {
+                username: document.getElementById('username').value,
+                password: passwordField.value
+            };
+
+            try {
+                const response = await fetch('/api/Account/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // --- EFECTO DE ÉXITO ---
+                    localStorage.setItem('jonel_token', data.token);
+                    localStorage.setItem('jonel_user', data.username);
+
+                    // Cambiamos el botón a modo "Éxito"
+                    btnLogin.style.backgroundColor = '#28a745'; // Color verde
+                    btnLogin.style.borderColor = '#28a745';
+                    btnText.innerHTML = '¡Acceso Concedido! <i class="bi bi-check-circle-fill ms-2"></i>';
+
+                    // Esperamos 1 segundo para que el usuario vea el éxito antes de ir al Home
+                    setTimeout(() => {
+                        window.location.href = '/'; 
+                    }, 1200);
+
+                } else {
+                    const errorData = await response.json();
+                    errorDiv.innerText = errorData.message || 'Error de autenticación';
+                    errorDiv.style.display = 'block';
+                    btnLogin.disabled = false;
+                    btnText.innerText = 'Entrar';
+                }
+            } catch (err) {
+                errorDiv.innerText = 'Error de conexión con el servidor';
+                errorDiv.style.display = 'block';
+                btnLogin.disabled = false;
+                btnText.innerText = 'Entrar';
+            }
         });
     </script>
 }

@@ -1,0 +1,8 @@
+[Authorize] // <--- Solo usuarios logueados con JWT entran aquí
+public class AdminController : Controller
+{
+    public IActionResult Index()
+    {
+        return View();
+    }
+}

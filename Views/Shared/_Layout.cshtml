@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 
-<head>
+@* <head>
     <!--link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet"> -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -53,7 +53,7 @@
                                 </a>
                             </li> *@
 
-                            <li class="nav-item">
+                            @* <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Home" asp-action="Acceso">
                                     Acceso
                                 </a>
@@ -66,7 +66,7 @@
         </header>
 
         @* NOTA: Quitamos la clase 'container' de aquí para permitir diseños Full-Width *@
-        <main role="main">
+        @* <main role="main">
             @RenderBody()
         </main>
 
@@ -94,4 +94,102 @@
         @await RenderSectionAsync("Scripts", required: false)
     </body>
 
+</html> *@ 
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <header class="headerNav">
+        <nav class="navbar navbar-expand-sm navbar-dark navbar-custom position-absolute w-100 py-3">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/img/cars/jonel2.png" alt="Jonel Autos" class="logo">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Vehiculos" asp-action="Index">Vehículos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Financiamiento">Financiamiento</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="SobreNosotros">Sobre Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Contacto">Contacto</a>
+                        </li>
+
+                        <li class="nav-item" id="menuAcceso">
+                            <a class="nav-link text-dark fw-bold" asp-controller="Home" asp-action="Acceso">Acceso</a>
+                        </li>
+                        
+                        <li class="nav-item" id="menuAdmin" style="display:none;">
+                            <a class="nav-link text-danger fw-bold" asp-controller="Admin" asp-action="Index">Panel Admin</a>
+                        </li>
+
+                        <li class="nav-item" id="menuLogout" style="display:none;">
+                            <a class="nav-link text-dark" href="javascript:void(0)" onclick="cerrarSesion()">
+                                <i class="bi bi-box-arrow-right"></i> Salir
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <h5 class="footer-title">Jonel Automotores</h5>
+            <p class="footer-text">Calidad, confianza y los mejores vehículos del mercado.</p>
+            <hr class="footer-line">
+            <p class="footer-copy">© 2026 Jonel Automotores - Todos los derechos reservados</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const token = localStorage.getItem('jonel_token');
+            const menuAcceso = document.getElementById('menuAcceso');
+            const menuAdmin = document.getElementById('menuAdmin');
+            const menuLogout = document.getElementById('menuLogout');
+
+            if (token) {
+                // Si hay token, ocultamos "Acceso" y mostramos "Panel Admin" y "Salir"
+                if(menuAcceso) menuAcceso.style.display = 'none';
+                if(menuAdmin) menuAdmin.style.display = 'block';
+                if(menuLogout) menuLogout.style.display = 'block';
+            }
+        });
+
+        function cerrarSesion() {
+            localStorage.removeItem('jonel_token');
+            localStorage.removeItem('jonel_user');
+            window.location.href = '/Home/Index';
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
 </html>
