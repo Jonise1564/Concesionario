@@ -412,3 +412,11 @@ C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compre
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-d6rqcnv671-d6rqcnv671.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-jln2znbvx3-jln2znbvx3.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-n0mtmneroy-n0mtmneroy.gz
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
