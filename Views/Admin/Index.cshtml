@@ -1,842 +1,4 @@
-@* @{
-    ViewData["Title"] = "Panel de Control";
-}
-
-<style>
-    /* Estructura Principal */
-    .admin-container {
-        display: flex;
-        min-height: 100vh;
-        background-color: #000;
-        /* Subimos a 100px para que el Navbar del layout no tape el título */
-        padding-top: 100px; 
-        position: relative;
-    }
-
-    /* Barra Lateral */
-    .sidebar {
-        width: 250px;
-        background-color: #0b0b0b;
-        border-right: 1px solid #222;
-        padding: 20px;
-        position: fixed;
-        /* Debe coincidir con el padding-top del contenedor */
-        top: 100px; 
-        left: 0;
-        bottom: 0;
-        z-index: 999;
-    }
-
-    /* Área de Contenido */
-    .main-content {
-        margin-left: 250px; 
-        width: calc(100% - 250px);
-        padding: 30px;
-    }
-
-    .nav-admin-link {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        color: #888;
-        text-decoration: none;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        transition: 0.3s;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-    }
-
-    .nav-admin-link:hover, .nav-admin-link.active {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .nav-admin-link i {
-        margin-right: 10px;
-        font-size: 1.1rem;
-    }
-
-    /* Ajustes de Tabla */
-    .table-dark {
-        background-color: #0b0b0b !important;
-    }
-
-    /* Forzar que el Navbar del Layout esté por encima de la sidebar */
-    .fixed-top {
-        z-index: 1030 !important;
-    }
-</style>
-
-<div class="admin-container">
-    <aside class="sidebar">
-        <p class="text-muted small fw-bold mb-4 px-2">MENÚ ADMINISTRADOR</p>
-        <nav>
-            <a href="#" class="nav-admin-link active">
-                <i class="bi bi-car-front"></i> Vehículos
-            </a>
-            <a href="#" class="nav-admin-link">
-                <i class="bi bi-people"></i> Usuarios
-            </a>
-            <a href="#" class="nav-admin-link">
-                <i class="bi bi-envelope"></i> Mensajes
-            </a>
-            <a href="#" class="nav-admin-link">
-                <i class="bi bi-gear"></i> Configuración
-            </a>
-            <hr class="border-secondary">
-            <a href="/" class="nav-admin-link text-info">
-                <i class="bi bi-arrow-left-circle"></i> Volver a la Web
-            </a>
-        </nav>
-    </aside>
-
-    <main class="main-content">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-800 text-uppercase text-white">Gestión de <span class="text-danger">Stock</span></h2>
-                <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="abrirModal()">
-                    <i class="bi bi-plus-lg"></i> NUEVO INGRESO
-                </button>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-dark table-hover border-secondary">
-                    <thead class="text-muted small">
-                        <tr>
-                            <th>MARCA</th>
-                            <th>MODELO</th>
-                            <th>AÑO</th>
-                            <th>PRECIO</th>
-                            <th>ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaCuerpo">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-</div>
-
-<div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title fw-bold text-white">DATOS DEL VEHÍCULO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formVehiculo">
-                    <input type="hidden" id="vId" value="0">
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">MARCA</label>
-                        <input type="text" id="vMarca" class="form-control bg-black border-secondary text-white" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">MODELO</label>
-                        <input type="text" id="vModelo" class="form-control bg-black border-secondary text-white" required>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label small text-muted">AÑO</label>
-                            <input type="number" id="vAnio" class="form-control bg-black border-secondary text-white" required>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label small text-muted">PRECIO</label>
-                            <input type="number" id="vPrecio" class="form-control bg-black border-secondary text-white" required>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
-                <button type="button" class="btn btn-danger btn-sm px-4" onclick="guardar()">GUARDAR</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        const token = localStorage.getItem('jonel_token');
-        const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
-
-        document.addEventListener("DOMContentLoaded", () => {
-            if (!token) window.location.href = '/Home/Acceso';
-            listar();
-        });
-
-        async function listar() {
-            try {
-                const resp = await fetch('/Admin/GetVehiculos', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await resp.json();
-                document.getElementById('tablaCuerpo').innerHTML = data.map(v => `
-                    <tr class="align-middle">
-                        <td class="fw-bold text-white">${v.marca}</td>
-                        <td class="text-white">${v.modelo}</td>
-                        <td class="text-white">${v.anio}</td>
-                        <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-light me-2" onclick="editar(${v.id}, '${v.marca}', '${v.modelo}', ${v.anio}, ${v.precio})">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (err) { console.error("Error al listar:", err); }
-        }
-
-        function abrirModal() {
-            document.getElementById('formVehiculo').reset();
-            document.getElementById('vId').value = "0";
-            myModal.show();
-        }
-
-        async function guardar() {
-            // Recopilamos datos asegurando tipos correctos
-            const model = {
-                id: parseInt(document.getElementById('vId').value),
-                marca: document.getElementById('vMarca').value,
-                modelo: document.getElementById('vModelo').value,
-                anio: parseInt(document.getElementById('vAnio').value),
-                precio: parseFloat(document.getElementById('vPrecio').value),
-                // Agregamos campos que la BD suele pedir para no dar error 400
-                imagenUrl: "default.jpg", 
-                disponible: true
-            };
-
-            if(!model.marca || !model.modelo) {
-                alert("Marca y Modelo son obligatorios");
-                return;
-            }
-
-            const response = await fetch('/Admin/Guardar', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify(model)
-            });
-
-            if (response.ok) {
-                myModal.hide();
-                listar();
-            } else {
-                const error = await response.text();
-                alert("Error al guardar: " + error);
-            }
-        }
-
-        async function eliminar(id) {
-            if (confirm("¿Eliminar este vehículo?")) {
-                const resp = await fetch(`/Admin/Eliminar?id=${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if(resp.ok) listar();
-            }
-        }
-
-        function editar(id, marca, modelo, anio, precio) {
-            document.getElementById('vId').value = id;
-            document.getElementById('vMarca').value = marca;
-            document.getElementById('vModelo').value = modelo;
-            document.getElementById('vAnio').value = anio;
-            document.getElementById('vPrecio').value = precio;
-            myModal.show();
-        }
-    </script>
-} *@
-
-
-
-
-
-
 @* 
-
-
-@{
-    ViewData["Title"] = "Panel de Control";
-}
-
-<style>
-    /* Estructura Principal */
-    .admin-container {
-        display: flex;
-        min-height: 100vh;
-        background-color: #000;
-        padding-top: 100px; 
-        position: relative;
-    }
-
-    /* Barra Lateral */
-    .sidebar {
-        width: 250px;
-        background-color: #0b0b0b;
-        border-right: 1px solid #222;
-        padding: 20px;
-        position: fixed;
-        top: 100px; 
-        left: 0;
-        bottom: 0;
-        z-index: 999;
-    }
-
-    .main-content {
-        margin-left: 250px; 
-        width: calc(100% - 250px);
-        padding: 30px;
-    }
-
-    .nav-admin-link {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        color: #888;
-        text-decoration: none;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        transition: 0.3s;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-    }
-
-    .nav-admin-link:hover, .nav-admin-link.active {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .nav-admin-link i { margin-right: 10px; font-size: 1.1rem; }
-    .table-dark { background-color: #0b0b0b !important; }
-    .fixed-top { z-index: 1030 !important; }
-</style>
-
-<div class="admin-container">
-    <aside class="sidebar">
-        <p class="text-muted small fw-bold mb-4 px-2">MENÚ ADMINISTRADOR</p>
-        <nav>
-            <a href="#" class="nav-admin-link active"><i class="bi bi-car-front"></i> Vehículos</a>
-            <a href="#" class="nav-admin-link"><i class="bi bi-people"></i> Usuarios</a>
-            <a href="#" class="nav-admin-link"><i class="bi bi-envelope"></i> Mensajes</a>
-            <a href="#" class="nav-admin-link"><i class="bi bi-gear"></i> Configuración</a>
-            <hr class="border-secondary">
-            <a href="/" class="nav-admin-link text-info"><i class="bi bi-arrow-left-circle"></i> Volver a la Web</a>
-        </nav>
-    </aside>
-
-    <main class="main-content">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-800 text-uppercase text-white">Gestión de <span class="text-danger">Stock</span></h2>
-                <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="abrirModal()">
-                    <i class="bi bi-plus-lg"></i> NUEVO INGRESO
-                </button>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-dark table-hover border-secondary align-middle">
-                    <thead class="text-muted small">
-                        <tr>
-                            <th>MARCA</th>
-                            <th>MODELO / VERSIÓN</th>
-                            <th>AÑO</th>
-                            <th>PRECIO</th>
-                            <th>STOCK</th>
-                            <th>ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaCuerpo"></tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-</div>
-
-<div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content bg-dark border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title fw-bold text-white">DATOS TÉCNICOS DEL VEHÍCULO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-white">
-                <form id="formVehiculo">
-                    <input type="hidden" id="vId" value="0">
-                    <div class="row">
-                        <div class="col-md-6 border-end border-secondary">
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">MARCA</label>
-                                <input type="text" id="vMarca" class="form-control bg-black border-secondary text-white" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">MODELO</label>
-                                <input type="text" id="vModelo" class="form-control bg-black border-secondary text-white" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">VERSIÓN</label>
-                                <input type="text" id="vVersion" class="form-control bg-black border-secondary text-white">
-                            </div>
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label class="form-label small text-muted">AÑO</label>
-                                    <input type="number" id="vAnio" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label class="form-label small text-muted">KILÓMETROS</label>
-                                    <input type="number" id="vKilometros" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">IMAGEN (URL)</label>
-                                <input type="text" id="vImagenUrl" class="form-control bg-black border-secondary text-white" placeholder="https://...">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">PRECIO</label>
-                                <input type="number" id="vPrecio" class="form-control bg-black border-secondary text-white" required>
-                            </div>
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label class="form-label small text-muted">STOCK</label>
-                                    <input type="number" id="vStock" class="form-control bg-black border-secondary text-white" required value="1">
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label class="form-label small text-muted">CATEGORÍA ID</label>
-                                    <input type="number" id="vCategoriaId" class="form-control bg-black border-secondary text-white" required value="1">
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">COMBUSTIBLE</label>
-                                <select id="vCombustible" class="form-select bg-black border-secondary text-white">
-                                    <option value="Nafta">Nafta</option>
-                                    <option value="Diesel">Diesel</option>
-                                    <option value="Híbrido">Híbrido</option>
-                                    <option value="Eléctrico">Eléctrico</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">TRANSMISIÓN</label>
-                                <select id="vTransmision" class="form-select bg-black border-secondary text-white">
-                                    <option value="Manual">Manual</option>
-                                    <option value="Automática">Automática</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
-                <button type="button" class="btn btn-danger btn-sm px-4" onclick="guardar()">GUARDAR CAMBIOS</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        const token = localStorage.getItem('jonel_token');
-        const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
-
-        document.addEventListener("DOMContentLoaded", () => {
-            if (!token) window.location.href = '/Home/Acceso';
-            listar();
-        });
-
-        async function listar() {
-            try {
-                const resp = await fetch('/Admin/GetVehiculos', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await resp.json();
-                document.getElementById('tablaCuerpo').innerHTML = data.map(v => `
-                    <tr class="align-middle">
-                        <td class="fw-bold text-white">${v.marca}</td>
-                        <td class="text-white">${v.modelo} <br><small class="text-muted">${v.version || ''}</small></td>
-                        <td class="text-white">${v.anio}</td>
-                        <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
-                        <td class="text-white">${v.stock}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'>
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (err) { console.error("Error al listar:", err); }
-        }
-
-        function abrirModal() {
-            document.getElementById('formVehiculo').reset();
-            document.getElementById('vId').value = "0";
-            myModal.show();
-        }
-
-        async function guardar() {
-            const model = {
-                id: parseInt(document.getElementById('vId').value),
-                marca: document.getElementById('vMarca').value,
-                modelo: document.getElementById('vModelo').value,
-                version: document.getElementById('vVersion').value,
-                anio: parseInt(document.getElementById('vAnio').value),
-                kilometros: parseInt(document.getElementById('vKilometros').value),
-                precio: parseFloat(document.getElementById('vPrecio').value),
-                stock: parseInt(document.getElementById('vStock').value),
-                combustible: document.getElementById('vCombustible').value,
-                transmision: document.getElementById('vTransmision').value,
-                categoriaId: parseInt(document.getElementById('vCategoriaId').value),
-                imagenUrl: document.getElementById('vImagenUrl').value || "default.jpg"
-            };
-
-            const response = await fetch('/Admin/Guardar', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify(model)
-            });
-
-            if (response.ok) {
-                myModal.hide();
-                listar();
-            } else {
-                alert("Error al guardar los datos.");
-            }
-        }
-
-        function editar(v) {
-            document.getElementById('vId').value = v.id;
-            document.getElementById('vMarca').value = v.marca;
-            document.getElementById('vModelo').value = v.modelo;
-            document.getElementById('vVersion').value = v.version;
-            document.getElementById('vAnio').value = v.anio;
-            document.getElementById('vKilometros').value = v.kilometros;
-            document.getElementById('vPrecio').value = v.precio;
-            document.getElementById('vStock').value = v.stock;
-            document.getElementById('vCombustible').value = v.combustible;
-            document.getElementById('vTransmision').value = v.transmision;
-            document.getElementById('vCategoriaId').value = v.categoriaId;
-            document.getElementById('vImagenUrl').value = v.imagenUrl;
-            myModal.show();
-        }
-
-        async function eliminar(id) {
-            if (confirm("¿Eliminar este vehículo?")) {
-                const resp = await fetch(`/Admin/Eliminar?id=${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if(resp.ok) listar();
-            }
-        }
-    </script>
-} *@
-
-
-@* 
-@{
-    ViewData["Title"] = "Panel de Control";
-}
-
-<style>
-    /* Estructura Principal */
-    .admin-container {
-        display: flex;
-        min-height: 100vh;
-        background-color: #000;
-        padding-top: 100px; 
-        position: relative;
-    }
-
-    /* Barra Lateral */
-    .sidebar {
-        width: 250px;
-        background-color: #0b0b0b;
-        border-right: 1px solid #222;
-        padding: 20px;
-        position: fixed;
-        top: 100px; 
-        left: 0;
-        bottom: 0;
-        z-index: 999;
-    }
-
-    .main-content {
-        margin-left: 250px; 
-        width: calc(100% - 250px);
-        padding: 30px;
-    }
-
-    .nav-admin-link {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        color: #888;
-        text-decoration: none;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        transition: 0.3s;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-    }
-
-    .nav-admin-link:hover, .nav-admin-link.active {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .nav-admin-link i { margin-right: 10px; font-size: 1.1rem; }
-    .table-dark { background-color: #0b0b0b !important; }
-    .fixed-top { z-index: 1030 !important; }
-</style>
-
-<div class="admin-container">
-    <aside class="sidebar">
-        <p class="text-muted small fw-bold mb-4 px-2">MENÚ ADMINISTRADOR</p>
-        <nav>
-            <a href="#" class="nav-admin-link active"><i class="bi bi-car-front"></i> Vehículos</a>
-            <a href="#" class="nav-admin-link"><i class="bi bi-people"></i> Usuarios</a>
-            <a href="#" class="nav-admin-link"><i class="bi bi-envelope"></i> Mensajes</a>
-            <a href="#" class="nav-admin-link"><i class="bi bi-gear"></i> Configuración</a>
-            <hr class="border-secondary">
-            <a href="/" class="nav-admin-link text-info"><i class="bi bi-arrow-left-circle"></i> Volver a la Web</a>
-        </nav>
-    </aside>
-
-    <main class="main-content">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-800 text-uppercase text-white">Gestión de <span class="text-danger">Stock</span></h2>
-                <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="abrirModal()">
-                    <i class="bi bi-plus-lg"></i> NUEVO INGRESO
-                </button>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-dark table-hover border-secondary align-middle">
-                    <thead class="text-muted small">
-                        <tr>
-                            <th>MARCA</th>
-                            <th>MODELO / VERSIÓN</th>
-                            <th>AÑO</th>
-                            <th>PRECIO</th>
-                            <th>STOCK</th>
-                            <th>ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaCuerpo"></tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-</div>
-
-<div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content bg-dark border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title fw-bold text-white">DATOS TÉCNICOS DEL VEHÍCULO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-white">
-                <form id="formVehiculo">
-                    <input type="hidden" id="vId" value="0">
-                    <div class="row">
-                        <div class="col-md-6 border-end border-secondary">
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">MARCA</label>
-                                <input type="text" id="vMarca" class="form-control bg-black border-secondary text-white" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">MODELO</label>
-                                <input type="text" id="vModelo" class="form-control bg-black border-secondary text-white" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">VERSIÓN</label>
-                                <input type="text" id="vVersion" class="form-control bg-black border-secondary text-white">
-                            </div>
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label class="form-label small text-muted">AÑO</label>
-                                    <input type="number" id="vAnio" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label class="form-label small text-muted">KILÓMETROS</label>
-                                    <input type="number" id="vKilometros" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">IMAGEN (URL)</label>
-                                <input type="text" id="vImagenUrl" class="form-control bg-black border-secondary text-white" placeholder="https://...">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">PRECIO</label>
-                                <input type="number" id="vPrecio" class="form-control bg-black border-secondary text-white" required>
-                            </div>
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label class="form-label small text-muted">STOCK</label>
-                                    <input type="number" id="vStock" class="form-control bg-black border-secondary text-white" required value="1">
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label class="form-label small text-muted">CATEGORÍA ID</label>
-                                    <input type="number" id="vCategoriaId" class="form-control bg-black border-secondary text-white" required value="1">
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">COMBUSTIBLE</label>
-                                <select id="vCombustible" class="form-select bg-black border-secondary text-white">
-                                    <option value="Nafta">Nafta</option>
-                                    <option value="Diesel">Diesel</option>
-                                    <option value="Híbrido">Híbrido</option>
-                                    <option value="Eléctrico">Eléctrico</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">TRANSMISIÓN</label>
-                                <select id="vTransmision" class="form-select bg-black border-secondary text-white">
-                                    <option value="Manual">Manual</option>
-                                    <option value="Automática">Automática</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
-                <button type="button" class="btn btn-danger btn-sm px-4" onclick="guardar()">GUARDAR CAMBIOS</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        const token = localStorage.getItem('jonel_token');
-        const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
-
-        document.addEventListener("DOMContentLoaded", () => {
-            if (!token) window.location.href = '/Home/Acceso';
-            listar();
-        });
-
-        async function listar() {
-            try {
-                const resp = await fetch('/Admin/GetVehiculos', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await resp.json();
-                document.getElementById('tablaCuerpo').innerHTML = data.map(v => `
-                    <tr class="align-middle">
-                        <td class="fw-bold text-white">${v.marca}</td>
-                        <td class="text-white">${v.modelo} <br><small class="text-muted">${v.version || ''}</small></td>
-                        <td class="text-white">${v.anio}</td>
-                        <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
-                        <td class="text-white">${v.stock}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'>
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (err) { console.error("Error al listar:", err); }
-        }
-
-        function abrirModal() {
-            document.getElementById('formVehiculo').reset();
-            document.getElementById('vId').value = "0";
-            myModal.show();
-        }
-
-        async function guardar() {
-            const model = {
-                id: parseInt(document.getElementById('vId').value),
-                marca: document.getElementById('vMarca').value,
-                modelo: document.getElementById('vModelo').value,
-                version: document.getElementById('vVersion').value,
-                anio: parseInt(document.getElementById('vAnio').value),
-                kilometros: parseInt(document.getElementById('vKilometros').value),
-                precio: parseFloat(document.getElementById('vPrecio').value),
-                stock: parseInt(document.getElementById('vStock').value),
-                combustible: document.getElementById('vCombustible').value,
-                transmision: document.getElementById('vTransmision').value,
-                categoriaId: parseInt(document.getElementById('vCategoriaId').value),
-                imagenUrl: document.getElementById('vImagenUrl').value || "default.jpg"
-            };
-
-            const response = await fetch('/Admin/Guardar', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify(model)
-            });
-
-            if (response.ok) {
-                myModal.hide();
-                listar();
-            } else {
-                alert("Error al guardar los datos.");
-            }
-        }
-
-        function editar(v) {
-            document.getElementById('vId').value = v.id;
-            document.getElementById('vMarca').value = v.marca;
-            document.getElementById('vModelo').value = v.modelo;
-            document.getElementById('vVersion').value = v.version;
-            document.getElementById('vAnio').value = v.anio;
-            document.getElementById('vKilometros').value = v.kilometros;
-            document.getElementById('vPrecio').value = v.precio;
-            document.getElementById('vStock').value = v.stock;
-            document.getElementById('vCombustible').value = v.combustible;
-            document.getElementById('vTransmision').value = v.transmision;
-            document.getElementById('vCategoriaId').value = v.categoriaId;
-            document.getElementById('vImagenUrl').value = v.imagenUrl;
-            myModal.show();
-        }
-
-        async function eliminar(id) {
-            if (confirm("¿Eliminar este vehículo?")) {
-                const resp = await fetch(`/Admin/Eliminar?id=${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if(resp.ok) listar();
-            }
-        }
-    </script>
-} *@
-
-
-
-
-
-
 @{
     ViewData["Title"] = "Panel de Control";
 }
@@ -1144,6 +306,326 @@
                 });
                 if(resp.ok) listar();
             }
+        }
+    </script>
+} *@
+
+@{
+    ViewData["Title"] = "Panel de Control";
+}
+
+<style>
+    .admin-container { display: flex; min-height: 100vh; background-color: #000; padding-top: 100px; position: relative; }
+    .sidebar { width: 250px; background-color: #0b0b0b; border-right: 1px solid #222; padding: 20px; position: fixed; top: 100px; left: 0; bottom: 0; z-index: 999; }
+    .main-content { margin-left: 250px; width: calc(100% - 250px); padding: 30px; }
+    .nav-admin-link { display: flex; align-items: center; padding: 12px 15px; color: #888; text-decoration: none; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
+    .nav-admin-link:hover, .nav-admin-link.active { background-color: #dc3545; color: white; }
+    .nav-admin-link i { margin-right: 10px; font-size: 1.1rem; }
+    .table-dark { background-color: #0b0b0b !important; }
+    .preview-container { border: 2px dashed #333; height: 250px; display: flex; align-items: center; justify-content: center; background-color: #050505; border-radius: 8px; overflow: hidden; }
+    #imgPreview { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .swal2-popup { background-color: #111 !important; color: #fff !important; border: 1px solid #333 !important; }
+    .form-control:invalid, .form-select:invalid { border-color: #500 !important; }
+</style>
+
+<div class="admin-container">
+    <aside class="sidebar">
+        <p class="text-muted small fw-bold mb-4 px-2">MENÚ ADMINISTRADOR</p>
+        <nav>
+            <a href="#" class="nav-admin-link active"><i class="bi bi-car-front"></i> Vehículos</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-people"></i> Usuarios</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-envelope"></i> Mensajes</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-gear"></i> Configuración</a>
+            <hr class="border-secondary">
+            <a href="/" class="nav-admin-link text-info"><i class="bi bi-arrow-left-circle"></i> Volver a la Web</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-800 text-uppercase text-white">Gestión de <span class="text-danger">Stock</span></h2>
+                <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="abrirModal()">
+                    <i class="bi bi-plus-lg"></i> NUEVO INGRESO
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover border-secondary align-middle">
+                    <thead class="text-muted small">
+                        <tr>
+                            <th>MARCA</th>
+                            <th>MODELO / VERSIÓN</th>
+                            <th>AÑO</th>
+                            <th>PRECIO</th>
+                            <th>STOCK</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold text-white" id="modalTitulo">DATOS DEL VEHÍCULO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-white">
+                <form id="formVehiculo" class="needs-validation" novalidate>
+                    <input type="hidden" id="vId" value="0">
+                    <div class="row">
+                        <div class="col-md-8 border-end border-secondary">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger">MARCA</label>
+                                    <select id="vMarca" class="form-select bg-black border-secondary text-white" required onchange="cargarModelos()">
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger">MODELO</label>
+                                    <select id="vModelo" class="form-select bg-black border-secondary text-white" required onchange="cargarVersiones()" disabled>
+                                        <option value="">Seleccione marca...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger">VERSIÓN</label>
+                                    <select id="vVersion" class="form-select bg-black border-secondary text-white" required disabled>
+                                        <option value="">Seleccione modelo...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger">AÑO</label>
+                                    <input type="number" id="vAnio" class="form-control bg-black border-secondary text-white" required min="1950">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger">KILÓMETROS</label>
+                                    <input type="number" id="vKilometros" class="form-control bg-black border-secondary text-white" required min="0">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger">PRECIO</label>
+                                    <input type="number" id="vPrecio" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger">STOCK</label>
+                                    <input type="number" id="vStock" class="form-control bg-black border-secondary text-white" required value="1">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger">COMBUSTIBLE</label>
+                                    <select id="vCombustible" class="form-select bg-black border-secondary text-white" required>
+                                        <option value="Nafta">Nafta</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="Híbrido">Híbrido</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger">TRANSMISIÓN</label>
+                                    <select id="vTransmision" class="form-select bg-black border-secondary text-white" required>
+                                        <option value="Manual">Manual</option>
+                                        <option value="Automática">Automática</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-danger">FOTO</label>
+                            <input type="file" id="vFile" class="form-control bg-black border-secondary text-white mb-3" accept="image/*" onchange="previewImagen(this)">
+                            <div class="preview-container">
+                                <img id="imgPreview" src="" onerror="this.src='https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen'">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
+                <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" onclick="validarYGuardar()">GUARDAR CAMBIOS</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // DATA HARDCODEADA (Puedes ampliarla según necesites)
+        const vehiculosData = {
+            "Toyota": {
+                "Corolla Cross": ["XLI 2.0", "XEI 2.0", "SEG 2.0", "SEG Hybrid"],
+                "Hilux": ["SR 2.8", "SRV 2.8", "SRX 2.8", "GR-Sport"],
+                "Etios": ["X 1.5", "XLS 1.5"]
+            },
+            "Fiat": {
+                "Cronos": ["Drive 1.3", "Stile 1.3", "Precision 1.3 AT"],
+                "Toro": ["Freedom 2.0", "Volcano 2.0", "Ultra 2.0"],
+                "Pulse": ["Drive 1.3", "Impetus 1.0T"]
+            },
+            "Volkswagen": {
+                "Amarok": ["Trendline", "Comfortline", "Highline", "Extreme V6"],
+                "Taos": ["Comfortline", "Highline"],
+                "Gol": ["Trend", "Last Edition"]
+            }
+        };
+
+        const token = localStorage.getItem('jonel_token');
+        const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, background: '#111', color: '#fff' });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!token) window.location.href = '/Home/Acceso';
+            cargarMarcas();
+            listar();
+        });
+
+        // Lógica de Selects Dependientes
+        function cargarMarcas() {
+            const select = document.getElementById('vMarca');
+            Object.keys(vehiculosData).forEach(m => {
+                select.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+        }
+
+        function cargarModelos() {
+            const marca = document.getElementById('vMarca').value;
+            const selectMod = document.getElementById('vModelo');
+            const selectVer = document.getElementById('vVersion');
+            
+            selectMod.innerHTML = '<option value="">Seleccione modelo...</option>';
+            selectVer.innerHTML = '<option value="">Seleccione modelo...</option>';
+            selectVer.disabled = true;
+
+            if (marca) {
+                selectMod.disabled = false;
+                Object.keys(vehiculosData[marca]).forEach(m => {
+                    selectMod.innerHTML += `<option value="${m}">${m}</option>`;
+                });
+            } else {
+                selectMod.disabled = true;
+            }
+        }
+
+        function cargarVersiones() {
+            const marca = document.getElementById('vMarca').value;
+            const modelo = document.getElementById('vModelo').value;
+            const selectVer = document.getElementById('vVersion');
+            
+            selectVer.innerHTML = '<option value="">Seleccione...</option>';
+            
+            if (modelo) {
+                selectVer.disabled = false;
+                vehiculosData[marca][modelo].forEach(v => {
+                    selectVer.innerHTML += `<option value="${v}">${v}</option>`;
+                });
+            } else {
+                selectVer.disabled = true;
+            }
+        }
+
+        function previewImagen(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => document.getElementById('imgPreview').src = e.target.result;
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function listar() {
+            try {
+                const resp = await fetch('/Admin/GetVehiculos', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                document.getElementById('tablaCuerpo').innerHTML = data.map(v => `
+                    <tr class="align-middle">
+                        <td class="fw-bold text-white">${v.marca}</td>
+                        <td class="text-white">${v.modelo} <br><small class="text-muted">${v.version || ''}</small></td>
+                        <td class="text-white">${v.anio}</td>
+                        <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
+                        <td class="text-white">${v.stock}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>`).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        function abrirModal() {
+            document.getElementById('formVehiculo').reset();
+            document.getElementById('vId').value = "0";
+            document.getElementById('vModelo').disabled = true;
+            document.getElementById('vVersion').disabled = true;
+            document.getElementById('imgPreview').src = "";
+            myModal.show();
+        }
+
+        async function editar(v) {
+            abrirModal();
+            document.getElementById('modalTitulo').innerText = "MODIFICAR VEHÍCULO";
+            document.getElementById('vId').value = v.id;
+            document.getElementById('vMarca').value = v.marca;
+            cargarModelos();
+            document.getElementById('vModelo').value = v.modelo;
+            cargarVersiones();
+            document.getElementById('vVersion').value = v.version;
+            document.getElementById('vAnio').value = v.anio;
+            document.getElementById('vKilometros').value = v.kilometros;
+            document.getElementById('vPrecio').value = v.precio;
+            document.getElementById('vStock').value = v.stock;
+            document.getElementById('vCombustible').value = v.combustible;
+            document.getElementById('vTransmision').value = v.transmision;
+            document.getElementById('imgPreview').src = v.imagenUrl || "";
+            myModal.show();
+        }
+
+        function validarYGuardar() {
+            const form = document.getElementById('formVehiculo');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+            guardar();
+        }
+
+        async function guardar() {
+            const formData = new FormData();
+            formData.append("Id", document.getElementById('vId').value);
+            formData.append("Marca", document.getElementById('vMarca').value);
+            formData.append("Modelo", document.getElementById('vModelo').value);
+            formData.append("Version", document.getElementById('vVersion').value);
+            formData.append("Anio", document.getElementById('vAnio').value);
+            formData.append("Kilometros", document.getElementById('vKilometros').value);
+            formData.append("Precio", document.getElementById('vPrecio').value);
+            formData.append("Stock", document.getElementById('vStock').value);
+            formData.append("Combustible", document.getElementById('vCombustible').value);
+            formData.append("Transmision", document.getElementById('vTransmision').value);
+
+            const file = document.getElementById('vFile').files[0];
+            if (file) formData.append("File", file);
+
+            const resp = await fetch('/Admin/Guardar', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            if (resp.ok) {
+                myModal.hide();
+                listar();
+                Toast.fire({ icon: 'success', title: 'Guardado correctamente' });
+            }
+        }
+
+        async function eliminar(id) {
+            Swal.fire({ title: '¿Eliminar unidad?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545', background: '#111', color: '#fff' }).then(async res => {
+                if (res.isConfirmed) {
+                    const resp = await fetch(`/Admin/Eliminar?id=${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                    if(resp.ok) { listar(); Toast.fire({ icon: 'success', title: 'Eliminado' }); }
+                }
+            });
         }
     </script>
 }
