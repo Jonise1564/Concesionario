@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     <style>
         /* Estilos Base Modo Oscuro */
-        body { background-color: #121212; color: #e0e0e0; }
+        body { background-color: #121212; color: #e0e0e0; margin-top: 6rem; }
+
         .fw-900 { font-weight: 900; }
         .text-danger { color: #eb0a1e !important; }
 
@@ -101,7 +102,7 @@
     </style>
 }
 
-<div class="container mt-5 pt-4">
+<div class="container mt-5 pt-4 mainDiv">
     @* --- Cabecera --- *@
     <div class="mb-5">
         <h2 class="text-uppercase fw-900 m-0 titulo-seccion"></h2>
@@ -109,8 +110,8 @@
 
     @* --- Panel de Filtros --- *@
     <div class="card filtro-dark shadow-sm mb-5 p-4">
-        <div class="row g-3">
-            <div class="col-12 col-lg-4">
+        <div class="row g-5">
+            <div class="col-12 col-md-6">
                 <label class="form-label small fw-bold text-uppercase">Búsqueda rápida</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-search text-danger"></i></span>
@@ -118,7 +119,7 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-6 col-lg-4">
+            <div class="col-12 col-md-6">
                 <label class="form-label small fw-bold text-uppercase">Kilometraje</label>
                 <div class="d-flex gap-2">
                     <input type="number" id="kmDesde" class="form-control" placeholder="Mín">
@@ -126,13 +127,26 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-6 col-lg-4">
+            <div class="col-12 col-md-6">
                 <div class="d-flex justify-content-between">
                     <label class="form-label small fw-bold text-uppercase">Precio Máximo</label>
                     <span id="labelPrecio" class="small fw-bold text-danger">Cualquier precio</span>
                 </div>
                 <input type="range" class="form-range" id="precioMax" min="0" max="1000000" step="1000">
             </div>
+
+            <div class="col-12 col-md-6">
+                <label class="form-label small fw-bold text-uppercase">Ordenar por</label>
+                <select id="ordenar" class="form-control">
+                    <option value="default">Por defecto</option>
+                    <option value="precio-asc">Precio: menor a mayor</option>
+                    <option value="precio-desc">Precio: mayor a menor</option>
+                    <option value="anio-desc">Año: más nuevo</option>
+                    <option value="anio-asc">Año: más viejo</option>
+                    <option value="km-asc">Menos km</option>
+                    <option value="km-desc">Más km</option>
+                </select>
+            </div> 
         </div>
     </div>
 
@@ -144,7 +158,9 @@
                  data-marca="@item.Marca?.ToLower()"
                  data-modelo="@item.Modelo.ToLower()" 
                  data-precio="@item.Precio"
-                 data-km="@item.Kilometros">
+                 data-km="@item.Kilometros"
+                 data-anio="@item.Anio">
+                 
                 
                 <div class="card h-100 tarjeta-dark overflow-hidden">
                     <div class="position-relative img-container">
@@ -205,6 +221,8 @@
             const precioMax = document.getElementById('precioMax');
             const labelPrecio = document.getElementById('labelPrecio');
             const tarjetas = document.querySelectorAll('.tarjeta-vehiculo');
+            const ordenar = document.getElementById('ordenar');
+            const grid = document.getElementById('gridVehiculos');
 
             // Ajuste dinámico del rango de precio
             let maxPrecioEncontrado = 0;
@@ -237,11 +255,39 @@
                 });
             }
 
+            function ordenarTarjetas() {
+                const tipo = ordenar.value;
+                const tarjetasArray = Array.from(tarjetas);
+
+                tarjetasArray.sort((a, b) => {
+                    const precioA = parseFloat(a.dataset.precio);
+                    const precioB = parseFloat(b.dataset.precio);
+                    const kmA = parseInt(a.dataset.km);
+                    const kmB = parseInt(b.dataset.km);
+                    const anioA = parseInt(a.dataset.anio);
+                    const anioB = parseInt(b.dataset.anio);
+
+                    switch (tipo) {
+                        case "precio-asc": return precioA - precioB;
+                        case "precio-desc": return precioB - precioA;
+                        case "anio-desc": return anioB - anioA;
+                        case "anio-asc": return anioA - anioB;
+                        case "km-asc": return kmA - kmB;
+                        case "km-desc": return kmB - kmA;
+                        default: return 0;
+                    }
+                });
+
+                tarjetasArray.forEach(t => grid.appendChild(t));
+            }
+
             buscador.addEventListener('input', filtrar);
             kmDesde.addEventListener('input', filtrar);
             kmHasta.addEventListener('input', filtrar);
             precioMax.addEventListener('input', filtrar);
-            filtrar(); 
+            ordenar.addEventListener('change', ordenarTarjetas);
+            filtrar();
+            ordenarTarjetas();
         });
     </script>
 }

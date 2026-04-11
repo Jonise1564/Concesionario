@@ -408,8 +408,6 @@ C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\kjkhwmfvzv-{0}-
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\slvozzgorw-{0}-m9qm4tazc0-m9qm4tazc0.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\kzmiadl72z-{0}-jjsuc0puko-jjsuc0puko.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\tcod515kaw-{0}-9vr69e8ynj-9vr69e8ynj.gz
-C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-83fmnlkzpa-83fmnlkzpa.gz
-C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-d6rqcnv671-d6rqcnv671.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-jln2znbvx3-jln2znbvx3.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-n0mtmneroy-n0mtmneroy.gz
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
@@ -420,3 +418,13 @@ C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Pr
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-4zob8qzyy2-4zob8qzyy2.gz
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-tfpz1ey6g5-tfpz1ey6g5.gz
