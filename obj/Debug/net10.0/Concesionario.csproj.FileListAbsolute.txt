@@ -428,3 +428,6 @@ C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Micros
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-4zob8qzyy2-4zob8qzyy2.gz
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-tfpz1ey6g5-tfpz1ey6g5.gz
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\dotnet-tools.json
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\MailKit.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\MimeKit.dll

@@ -773,23 +773,29 @@
         <div class="col-lg-7">
             <div class="contact-card shadow-lg">
                 <h3 class="fw-900 text-uppercase mb-4">Envianos tu consulta</h3>
-                <form>
+                @if (TempData["Mensaje"] != null)
+                    {
+                        <div class="alert alert-success">
+                            @TempData["Mensaje"]
+                        </div>
+                    }
+                <form method="post" asp-action="EnviarContacto">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nombre y Apellido</label>
-                            <input type="text" class="form-control" placeholder="Nombre completo">
+                            <input type="text" name="Nombre" class="form-control" placeholder="Nombre completo">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">WhatsApp</label>
-                            <input type="tel" class="form-control" placeholder="+54 266 400-0000">
+                            <input type="tel" name="Telefono" class="form-control" placeholder="+54 266 400-0000">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Correo Electrónico</label>
-                            <input type="email" class="form-control" placeholder="correo@ejemplo.com">
+                            <input type="email" name="Email" class="form-control" placeholder="correo@ejemplo.com">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Interés</label>
-                            <select class="form-select">
+                            <select class="form-select" name="Interes">
                                 <option selected disabled>Seleccionar interés</option>
                                 <option>Compra de Vehículo</option>
                                 <option>Venta / Permuta</option>
@@ -798,11 +804,11 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Modelo de Interés</label>
-                            <input type="text" class="form-control" placeholder="Ej: Toyota Hilux">
+                            <input type="text" name="Modelo" class="form-control" placeholder="Ej: Toyota Hilux">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Mensaje</label>
-                            <textarea class="form-control" rows="4" placeholder="¿En qué podemos ayudarte?"></textarea>
+                            <textarea class="form-control" name="Mensaje" rows="4" placeholder="¿En qué podemos ayudarte?"></textarea>
                         </div>
                         <div class="col-12">
                             <button type="submit" class="btn-enviar">
