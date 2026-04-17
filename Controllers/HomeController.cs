@@ -29,6 +29,11 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<IActionResult> EnviarContacto(ContactoModel model)
     {
+        if (!ModelState.IsValid)
+        {
+            return View("Contacto", model);
+        }
+
         var email = new MimeMessage();
         email.From.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
         email.To.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));

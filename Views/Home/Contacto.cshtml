@@ -758,6 +758,8 @@
     </style>
 }
 
+@model Concesionario.Models.ContactoModel
+
 <div class="hero-contacto">
     <div class="hero-overlay"></div>
     <div class="hero-content">
@@ -779,42 +781,56 @@
                             @TempData["Mensaje"]
                         </div>
                     }
-                <form method="post" asp-action="EnviarContacto">
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <form method="post" asp-action="EnviarContacto" asp-controller="Home">
                     <div class="row g-3">
+
                         <div class="col-md-6">
                             <label class="form-label">Nombre y Apellido</label>
-                            <input type="text" name="Nombre" class="form-control" placeholder="Nombre completo">
+                            <input asp-for="Nombre" class="form-control" placeholder="Nombre completo">
+                            <span asp-validation-for="Nombre" class="text-danger"></span>
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label">WhatsApp</label>
-                            <input type="tel" name="Telefono" class="form-control" placeholder="+54 266 400-0000">
+                            <input asp-for="Telefono" class="form-control" placeholder="+54 266 400-0000">
+                            <span asp-validation-for="Telefono" class="text-danger"></span>
                         </div>
+
                         <div class="col-12">
                             <label class="form-label">Correo Electrónico</label>
-                            <input type="email" name="Email" class="form-control" placeholder="correo@ejemplo.com">
+                            <input asp-for="Email" class="form-control" placeholder="correo@ejemplo.com">
+                            <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Interés</label>
-                            <select class="form-select" name="Interes">
-                                <option selected disabled>Seleccionar interés</option>
+                            <select asp-for="Interes" class="form-select">
+                                <option value="">Seleccionar interés</option>
                                 <option>Compra de Vehículo</option>
                                 <option>Venta / Permuta</option>
                                 <option>Financiación</option>
                             </select>
+                            <span asp-validation-for="Interes" class="text-danger"></span>
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Modelo de Interés</label>
-                            <input type="text" name="Modelo" class="form-control" placeholder="Ej: Toyota Hilux">
+                            <input asp-for="Modelo" class="form-control" placeholder="Ej: Toyota Hilux">
                         </div>
+
                         <div class="col-12">
                             <label class="form-label">Mensaje</label>
-                            <textarea class="form-control" name="Mensaje" rows="4" placeholder="¿En qué podemos ayudarte?"></textarea>
+                            <textarea asp-for="Mensaje" class="form-control" rows="4" placeholder="¿En qué podemos ayudarte?"></textarea>
+                            <span asp-validation-for="Mensaje" class="text-danger"></span>
                         </div>
+
                         <div class="col-12">
                             <button type="submit" class="btn-enviar">
                                 ENVIAR AHORA <i class="bi bi-chevron-right ms-2"></i>
                             </button>
                         </div>
+
                     </div>
                 </form>
             </div>
@@ -850,3 +866,7 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
