@@ -1,3 +1,54 @@
+// // using Microsoft.AspNetCore.Authorization;
+// // using Microsoft.AspNetCore.Mvc;
+// // using Concesionario.Data;
+// // using Concesionario.Models;
+// // using Microsoft.EntityFrameworkCore;
+
+// // namespace Concesionario.Controllers
+// // {
+// //     [Route("Admin")]
+// //     public class AdminController : Controller
+// //     {
+// //         private readonly ApplicationDbContext _context;
+
+// //         public AdminController(ApplicationDbContext context)
+// //         {
+// //             _context = context;
+// //         }
+
+// //         // 1. Permitimos entrar a la vista sin el "pop-up" de contraseña
+// //         [AllowAnonymous] 
+// //         [HttpGet]
+// //         [HttpGet("Index")]
+// //         public IActionResult Index()
+// //         {
+// //             return View();
+// //         }
+
+// //         // 2. Las APIs siguen PROTEGIDAS. Solo el JS con token podrá leerlas.
+// //         [Authorize]
+// //         [HttpGet("GetVehiculos")]
+// //         public async Task<IActionResult> GetVehiculos()
+// //         {
+// //             var vehiculos = await _context.Vehiculos.ToListAsync();
+// //             return Ok(vehiculos);
+// //         }
+
+// //         [Authorize]
+// //         [HttpPost("Guardar")]
+// //         public async Task<IActionResult> Guardar([FromBody] Vehiculo model)
+// //         {
+// //             if (model.Id == 0) _context.Vehiculos.Add(model);
+// //             else _context.Vehiculos.Update(model);
+// //             await _context.SaveChangesAsync();
+// //             return Ok(new { message = "Éxito" });
+// //         }
+// //     }
+// // }
+
+
+
+
 // using Microsoft.AspNetCore.Authorization;
 // using Microsoft.AspNetCore.Mvc;
 // using Concesionario.Data;
@@ -6,29 +57,29 @@
 
 // namespace Concesionario.Controllers
 // {
-//     [Authorize] // Solo permite acceso si el usuario está autenticado vía JWT
-//     [Route("Admin")] // Define que la URL base para este controlador es /Admin
+//     [Route("Admin")]
 //     public class AdminController : Controller
 //     {
 //         private readonly ApplicationDbContext _context;
+//         private readonly IWebHostEnvironment _env;
 
-//         public AdminController(ApplicationDbContext context)
+//         public AdminController(ApplicationDbContext context, IWebHostEnvironment env)
 //         {
 //             _context = context;
+//             _env = env;
 //         }
 
-//         // 1. Carga la página principal del Panel
-//         // Acceso: GET /Admin o /Admin/Index
+//         // Vista principal del panel
+//         [AllowAnonymous] 
 //         [HttpGet]
 //         [HttpGet("Index")]
 //         public IActionResult Index()
 //         {
-//             // Busca automáticamente la carpeta Views/Admin/Index.cshtml
 //             return View();
 //         }
 
-//         // 2. API para obtener la lista de autos
-//         // Acceso: GET /Admin/GetVehiculos
+//         // API para listar vehículos (Protegida)
+//         [Authorize]
 //         [HttpGet("GetVehiculos")]
 //         public async Task<IActionResult> GetVehiculos()
 //         {
@@ -36,36 +87,85 @@
 //             return Ok(vehiculos);
 //         }
 
-//         // 3. API para Guardar o Editar
-//         // Acceso: POST /Admin/Guardar
+//         // API para Guardar/Modificar con soporte de archivos (Protegida)
+//         [Authorize]
 //         [HttpPost("Guardar")]
-//         public async Task<IActionResult> Guardar([FromBody] Vehiculo model)
+//         public async Task<IActionResult> Guardar([FromForm] Vehiculo model, IFormFile? FotoArchivo)
 //         {
-//             if (model == null) return BadRequest("Datos inválidos");
+//             try
+//             {
+//                 // Manejo de la subida de imagen física
+//                 if (FotoArchivo != null && FotoArchivo.Length > 0)
+//                 {
+//                     // Crear un nombre único para el archivo
+//                     string nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(FotoArchivo.FileName);
+                    
+//                     // Definir la ruta en wwwroot/img/cars
+//                     string rutaCarpeta = Path.Combine(_env.WebRootPath, "img", "cars");
+                    
+//                     if (!Directory.Exists(rutaCarpeta)) 
+//                         Directory.CreateDirectory(rutaCarpeta);
 
-//             if (model.Id == 0)
-//                 _context.Vehiculos.Add(model);
-//             else
-//                 _context.Vehiculos.Update(model);
+//                     string rutaCompleta = Path.Combine(rutaCarpeta, nombreArchivo);
 
-//             await _context.SaveChangesAsync();
-//             return Ok(new { message = "Operación exitosa" });
+//                     // Guardar el archivo en el disco
+//                     using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+//                     {
+//                         await FotoArchivo.CopyToAsync(stream);
+//                     }
+
+//                     // Actualizar el modelo con el nuevo nombre de archivo
+//                     model.ImagenUrl = nombreArchivo;
+//                 }
+
+//                 if (model.Id == 0) 
+//                 {
+//                     _context.Vehiculos.Add(model);
+//                 }
+//                 else 
+//                 {
+//                     // Si no hay foto nueva, model.ImagenUrl conservará 
+//                     // el valor enviado desde el campo oculto del formulario.
+//                     _context.Vehiculos.Update(model);
+//                 }
+
+//                 await _context.SaveChangesAsync();
+//                 return Ok(new { message = "Éxito" });
+//             }
+//             catch (Exception ex)
+//             {
+//                 return BadRequest(new { message = "Error en el servidor: " + ex.Message });
+//             }
 //         }
 
-//         // 4. API para Eliminar
-//         // Acceso: DELETE /Admin/Eliminar/{id}
+//         // API para Eliminar (Protegida)
+//         [Authorize]
 //         [HttpDelete("Eliminar")]
 //         public async Task<IActionResult> Eliminar(int id)
 //         {
-//             var vehiculo = await _context.Vehiculos.FindAsync(id);
-//             if (vehiculo == null) return NotFound();
+//             try
+//             {
+//                 var v = await _context.Vehiculos.FindAsync(id);
+//                 if (v == null) return NotFound();
 
-//             _context.Vehiculos.Remove(vehiculo);
-//             await _context.SaveChangesAsync();
-//             return Ok(new { message = "Vehículo eliminado" });
+//                 _context.Vehiculos.Remove(v);
+//                 await _context.SaveChangesAsync();
+//                 return Ok(new { message = "Eliminado" });
+//             }
+//             catch (Exception ex)
+//             {
+//                 return BadRequest(new { message = ex.Message });
+//             }
 //         }
+
+    
+
+
+
 //     }
 // }
+
+
 
 
 using Microsoft.AspNetCore.Authorization;
@@ -80,13 +180,15 @@ namespace Concesionario.Controllers
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public AdminController(ApplicationDbContext context)
+        public AdminController(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
-        // 1. Permitimos entrar a la vista sin el "pop-up" de contraseña
+        // Vista principal del panel
         [AllowAnonymous] 
         [HttpGet]
         [HttpGet("Index")]
@@ -95,23 +197,101 @@ namespace Concesionario.Controllers
             return View();
         }
 
-        // 2. Las APIs siguen PROTEGIDAS. Solo el JS con token podrá leerlas.
+        // API para listar todos los vehículos (Protegida)
         [Authorize]
         [HttpGet("GetVehiculos")]
         public async Task<IActionResult> GetVehiculos()
         {
+            // Retornamos todos, activos e inactivos, para que el admin pueda gestionarlos
             var vehiculos = await _context.Vehiculos.ToListAsync();
             return Ok(vehiculos);
         }
 
+        // API para Activar/Desactivar (Borrado Lógico)
+        [Authorize]
+        [HttpPost("CambiarEstado")]
+        public async Task<IActionResult> CambiarEstado(int id)
+        {
+            try
+            {
+                var v = await _context.Vehiculos.FindAsync(id);
+                if (v == null) return NotFound();
+
+                v.Activo = !v.Activo; // Invierte el estado booleano
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, nuevoEstado = v.Activo });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // API para Guardar/Modificar con soporte de archivos (Protegida)
         [Authorize]
         [HttpPost("Guardar")]
-        public async Task<IActionResult> Guardar([FromBody] Vehiculo model)
+        public async Task<IActionResult> Guardar([FromForm] Vehiculo model, IFormFile? FotoArchivo)
         {
-            if (model.Id == 0) _context.Vehiculos.Add(model);
-            else _context.Vehiculos.Update(model);
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Éxito" });
+            try
+            {
+                // Manejo de la subida de imagen física
+                if (FotoArchivo != null && FotoArchivo.Length > 0)
+                {
+                    string nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(FotoArchivo.FileName);
+                    string rutaCarpeta = Path.Combine(_env.WebRootPath, "img", "cars");
+                    
+                    if (!Directory.Exists(rutaCarpeta)) 
+                        Directory.CreateDirectory(rutaCarpeta);
+
+                    string rutaCompleta = Path.Combine(rutaCarpeta, nombreArchivo);
+
+                    using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                    {
+                        await FotoArchivo.CopyToAsync(stream);
+                    }
+
+                    model.ImagenUrl = nombreArchivo;
+                }
+
+                if (model.Id == 0) 
+                {
+                    _context.Vehiculos.Add(model);
+                }
+                else 
+                {
+                    // Update rastrea los cambios en el modelo, incluyendo el campo 'Activo' 
+                    // que viene desde el checkbox del modal
+                    _context.Vehiculos.Update(model);
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Éxito" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error en el servidor: " + ex.Message });
+            }
+        }
+
+        // API para Eliminar definitivamente (Protegida)
+        [Authorize]
+        [HttpDelete("Eliminar")]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            try
+            {
+                var v = await _context.Vehiculos.FindAsync(id);
+                if (v == null) return NotFound();
+
+                _context.Vehiculos.Remove(v);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Eliminado" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

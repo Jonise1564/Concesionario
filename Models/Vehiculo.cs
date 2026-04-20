@@ -38,4 +38,6 @@ public class Vehiculo
     [NotMapped]
     public string NombreCompleto => $"{Marca} {Modelo} {Version}";
     public string? ImagenUrl { get; set; }
+
+    public bool Activo { get; set; } = true;
 }

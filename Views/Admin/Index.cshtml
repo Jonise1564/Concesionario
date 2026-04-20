@@ -208,9 +208,19 @@
             listar();
         });
 
+
         function actualizarPreview() {
-            const url = document.getElementById('vImagenUrl').value;
-            document.getElementById('imgPreview').src = url;
+            const nombreArchivo = document.getElementById('vImagenUrl').value;
+            const imgElement = document.getElementById('imgPreview');
+            
+            if (nombreArchivo) {
+                // Si es una URL completa (http), la usa directo. Si no, busca en tu carpeta.
+                imgElement.src = nombreArchivo.startsWith('http') 
+                                ? nombreArchivo 
+                                : `/img/cars/${nombreArchivo}`;
+            } else {
+                imgElement.src = 'https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen';
+            }
         }
 
         async function listar() {
@@ -308,24 +318,96 @@
             }
         }
     </script>
-} *@
+}   *@
+
+
+
+
+@* 
+
+
+
 
 @{
     ViewData["Title"] = "Panel de Control";
 }
 
 <style>
-    .admin-container { display: flex; min-height: 100vh; background-color: #000; padding-top: 100px; position: relative; }
-    .sidebar { width: 250px; background-color: #0b0b0b; border-right: 1px solid #222; padding: 20px; position: fixed; top: 100px; left: 0; bottom: 0; z-index: 999; }
-    .main-content { margin-left: 250px; width: calc(100% - 250px); padding: 30px; }
-    .nav-admin-link { display: flex; align-items: center; padding: 12px 15px; color: #888; text-decoration: none; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
-    .nav-admin-link:hover, .nav-admin-link.active { background-color: #dc3545; color: white; }
+    /* Estructura Principal */
+    .admin-container {
+        display: flex;
+        min-height: 100vh;
+        background-color: #000;
+        padding-top: 100px; 
+        position: relative;
+    }
+
+    /* Barra Lateral */
+    .sidebar {
+        width: 250px;
+        background-color: #0b0b0b;
+        border-right: 1px solid #222;
+        padding: 20px;
+        position: fixed;
+        top: 100px; 
+        left: 0;
+        bottom: 0;
+        z-index: 999;
+    }
+
+    .main-content {
+        margin-left: 250px; 
+        width: calc(100% - 250px);
+        padding: 30px;
+    }
+
+    .nav-admin-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        color: #888;
+        text-decoration: none;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        transition: 0.3s;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .nav-admin-link:hover, .nav-admin-link.active {
+        background-color: #dc3545;
+        color: white;
+    }
+
     .nav-admin-link i { margin-right: 10px; font-size: 1.1rem; }
     .table-dark { background-color: #0b0b0b !important; }
-    .preview-container { border: 2px dashed #333; height: 250px; display: flex; align-items: center; justify-content: center; background-color: #050505; border-radius: 8px; overflow: hidden; }
-    #imgPreview { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .swal2-popup { background-color: #111 !important; color: #fff !important; border: 1px solid #333 !important; }
-    .form-control:invalid, .form-select:invalid { border-color: #500 !important; }
+    .fixed-top { z-index: 1030 !important; }
+
+    /* Estilos del Preview de Imagen */
+    .preview-container {
+        border: 2px dashed #333;
+        height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #050505;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    #imgPreview {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    /* Estilo para la imagen en la tabla */
+    .img-thumb-table {
+        width: 60px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #333;
+    }
 </style>
 
 <div class="admin-container">
@@ -349,10 +431,12 @@
                     <i class="bi bi-plus-lg"></i> NUEVO INGRESO
                 </button>
             </div>
+
             <div class="table-responsive">
                 <table class="table table-dark table-hover border-secondary align-middle">
                     <thead class="text-muted small">
                         <tr>
+                            <th>FOTO</th>
                             <th>MARCA</th>
                             <th>MODELO / VERSIÓN</th>
                             <th>AÑO</th>
@@ -376,56 +460,57 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-white">
-                <form id="formVehiculo" class="needs-validation" novalidate>
-                    <input type="hidden" id="vId" value="0">
+                <form id="formVehiculo" enctype="multipart/form-data">
+                    <input type="hidden" id="vId" name="Id" value="0">
+                    <input type="hidden" id="vImagenUrl" name="ImagenUrl">
+
                     <div class="row">
                         <div class="col-md-8 border-end border-secondary">
                             <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label small fw-bold text-danger">MARCA</label>
-                                    <select id="vMarca" class="form-select bg-black border-secondary text-white" required onchange="cargarModelos()">
-                                        <option value="">Seleccione...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label small fw-bold text-danger">MODELO</label>
-                                    <select id="vModelo" class="form-select bg-black border-secondary text-white" required onchange="cargarVersiones()" disabled>
-                                        <option value="">Seleccione marca...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label small fw-bold text-danger">VERSIÓN</label>
-                                    <select id="vVersion" class="form-select bg-black border-secondary text-white" required disabled>
-                                        <option value="">Seleccione modelo...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label small fw-bold text-danger">AÑO</label>
-                                    <input type="number" id="vAnio" class="form-control bg-black border-secondary text-white" required min="1950">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label small fw-bold text-danger">KILÓMETROS</label>
-                                    <input type="number" id="vKilometros" class="form-control bg-black border-secondary text-white" required min="0">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label small fw-bold text-danger">PRECIO</label>
-                                    <input type="number" id="vPrecio" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label small fw-bold text-danger">STOCK</label>
-                                    <input type="number" id="vStock" class="form-control bg-black border-secondary text-white" required value="1">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Marca</label>
+                                    <input type="text" id="vMarca" name="Marca" class="form-control bg-black border-secondary text-white" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-danger">COMBUSTIBLE</label>
-                                    <select id="vCombustible" class="form-select bg-black border-secondary text-white" required>
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Modelo</label>
+                                    <input type="text" id="vModelo" name="Modelo" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Versión</label>
+                                    <input type="text" id="vVersion" name="Version" class="form-control bg-black border-secondary text-white">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Año</label>
+                                    <input type="number" id="vAnio" name="Anio" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Kilómetros</label>
+                                    <input type="number" id="vKilometros" name="Kilometros" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Precio</label>
+                                    <input type="number" id="vPrecio" name="Precio" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Stock</label>
+                                    <input type="number" id="vStock" name="Stock" class="form-control bg-black border-secondary text-white" required value="1">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Categoría ID</label>
+                                    <input type="number" id="vCategoriaId" name="CategoriaId" class="form-control bg-black border-secondary text-white" required value="1">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Combustible</label>
+                                    <select id="vCombustible" name="Combustible" class="form-select bg-black border-secondary text-white">
                                         <option value="Nafta">Nafta</option>
                                         <option value="Diesel">Diesel</option>
                                         <option value="Híbrido">Híbrido</option>
+                                        <option value="Eléctrico">Eléctrico</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-danger">TRANSMISIÓN</label>
-                                    <select id="vTransmision" class="form-select bg-black border-secondary text-white" required>
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Transmisión</label>
+                                    <select id="vTransmision" name="Transmision" class="form-select bg-black border-secondary text-white">
                                         <option value="Manual">Manual</option>
                                         <option value="Automática">Automática</option>
                                     </select>
@@ -433,143 +518,106 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold text-danger">FOTO</label>
-                            <input type="file" id="vFile" class="form-control bg-black border-secondary text-white mb-3" accept="image/*" onchange="previewImagen(this)">
-                            <div class="preview-container">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-danger text-uppercase">Subir Fotografía</label>
+                                <input type="file" id="vFotoFile" name="FotoArchivo" class="form-control bg-black border-secondary text-white" accept="image/*" onchange="seleccionarArchivo(this)">
+                            </div>
+                            <div class="preview-container mt-2">
                                 <img id="imgPreview" src="" onerror="this.src='https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen'">
                             </div>
+                            <p class="text-center small text-muted mt-2">Vista previa de la unidad</p>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer border-secondary">
                 <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
-                <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" onclick="validarYGuardar()">GUARDAR CAMBIOS</button>
+                <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" onclick="guardar()">GUARDAR CAMBIOS</button>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // DATA HARDCODEADA (Puedes ampliarla según necesites)
-        const vehiculosData = {
-            "Toyota": {
-                "Corolla Cross": ["XLI 2.0", "XEI 2.0", "SEG 2.0", "SEG Hybrid"],
-                "Hilux": ["SR 2.8", "SRV 2.8", "SRX 2.8", "GR-Sport"],
-                "Etios": ["X 1.5", "XLS 1.5"]
-            },
-            "Fiat": {
-                "Cronos": ["Drive 1.3", "Stile 1.3", "Precision 1.3 AT"],
-                "Toro": ["Freedom 2.0", "Volcano 2.0", "Ultra 2.0"],
-                "Pulse": ["Drive 1.3", "Impetus 1.0T"]
-            },
-            "Volkswagen": {
-                "Amarok": ["Trendline", "Comfortline", "Highline", "Extreme V6"],
-                "Taos": ["Comfortline", "Highline"],
-                "Gol": ["Trend", "Last Edition"]
-            }
-        };
-
         const token = localStorage.getItem('jonel_token');
         const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
-        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, background: '#111', color: '#fff' });
 
         document.addEventListener("DOMContentLoaded", () => {
             if (!token) window.location.href = '/Home/Acceso';
-            cargarMarcas();
             listar();
         });
 
-        // Lógica de Selects Dependientes
-        function cargarMarcas() {
-            const select = document.getElementById('vMarca');
-            Object.keys(vehiculosData).forEach(m => {
-                select.innerHTML += `<option value="${m}">${m}</option>`;
-            });
-        }
-
-        function cargarModelos() {
-            const marca = document.getElementById('vMarca').value;
-            const selectMod = document.getElementById('vModelo');
-            const selectVer = document.getElementById('vVersion');
-            
-            selectMod.innerHTML = '<option value="">Seleccione modelo...</option>';
-            selectVer.innerHTML = '<option value="">Seleccione modelo...</option>';
-            selectVer.disabled = true;
-
-            if (marca) {
-                selectMod.disabled = false;
-                Object.keys(vehiculosData[marca]).forEach(m => {
-                    selectMod.innerHTML += `<option value="${m}">${m}</option>`;
-                });
-            } else {
-                selectMod.disabled = true;
-            }
-        }
-
-        function cargarVersiones() {
-            const marca = document.getElementById('vMarca').value;
-            const modelo = document.getElementById('vModelo').value;
-            const selectVer = document.getElementById('vVersion');
-            
-            selectVer.innerHTML = '<option value="">Seleccione...</option>';
-            
-            if (modelo) {
-                selectVer.disabled = false;
-                vehiculosData[marca][modelo].forEach(v => {
-                    selectVer.innerHTML += `<option value="${v}">${v}</option>`;
-                });
-            } else {
-                selectVer.disabled = true;
-            }
-        }
-
-        function previewImagen(input) {
+        // Previsualiza la foto antes de subirla
+        function seleccionarArchivo(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = e => document.getElementById('imgPreview').src = e.target.result;
+                reader.onload = function(e) {
+                    document.getElementById('imgPreview').src = e.target.result;
+                }
                 reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function actualizarPreview() {
+            const nombreArchivo = document.getElementById('vImagenUrl').value;
+            const imgElement = document.getElementById('imgPreview');
+            
+            if (nombreArchivo) {
+                imgElement.src = nombreArchivo.startsWith('http') 
+                                ? nombreArchivo 
+                                : `/img/cars/${nombreArchivo}`;
+            } else {
+                imgElement.src = 'https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen';
             }
         }
 
         async function listar() {
             try {
-                const resp = await fetch('/Admin/GetVehiculos', { headers: { 'Authorization': `Bearer ${token}` } });
+                const resp = await fetch('/Admin/GetVehiculos', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const data = await resp.json();
                 document.getElementById('tablaCuerpo').innerHTML = data.map(v => `
                     <tr class="align-middle">
+                        <td>
+                            <img src="${v.imagenUrl && v.imagenUrl.startsWith('http') ? v.imagenUrl : '/img/cars/' + v.imagenUrl}" 
+                                 class="img-thumb-table" 
+                                 onerror="this.src='https://placehold.co/60x40/000?text=S/F'">
+                        </td>
                         <td class="fw-bold text-white">${v.marca}</td>
                         <td class="text-white">${v.modelo} <br><small class="text-muted">${v.version || ''}</small></td>
                         <td class="text-white">${v.anio}</td>
                         <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
                         <td class="text-white">${v.stock}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'>
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
                         </td>
-                    </tr>`).join('');
-            } catch (err) { console.error(err); }
+                    </tr>
+                `).join('');
+            } catch (err) { console.error("Error al listar:", err); }
         }
 
         function abrirModal() {
+            document.getElementById('modalTitulo').innerText = "NUEVO INGRESO DE VEHÍCULO";
             document.getElementById('formVehiculo').reset();
             document.getElementById('vId').value = "0";
-            document.getElementById('vModelo').disabled = true;
-            document.getElementById('vVersion').disabled = true;
-            document.getElementById('imgPreview').src = "";
+            document.getElementById('vImagenUrl').value = "";
+            document.getElementById('vFotoFile').value = ""; // Limpiar input de archivo
+            actualizarPreview();
             myModal.show();
         }
 
-        async function editar(v) {
-            abrirModal();
+        function editar(v) {
             document.getElementById('modalTitulo').innerText = "MODIFICAR VEHÍCULO";
             document.getElementById('vId').value = v.id;
             document.getElementById('vMarca').value = v.marca;
-            cargarModelos();
             document.getElementById('vModelo').value = v.modelo;
-            cargarVersiones();
             document.getElementById('vVersion').value = v.version;
             document.getElementById('vAnio').value = v.anio;
             document.getElementById('vKilometros').value = v.kilometros;
@@ -577,55 +625,838 @@
             document.getElementById('vStock').value = v.stock;
             document.getElementById('vCombustible').value = v.combustible;
             document.getElementById('vTransmision').value = v.transmision;
-            document.getElementById('imgPreview').src = v.imagenUrl || "";
+            document.getElementById('vCategoriaId').value = v.categoriaId;
+            document.getElementById('vImagenUrl').value = v.imagenUrl;
+            document.getElementById('vFotoFile').value = ""; // No se carga el archivo físico aquí
+            actualizarPreview();
             myModal.show();
         }
 
-        function validarYGuardar() {
+        async function guardar() {
             const form = document.getElementById('formVehiculo');
-            if (!form.checkValidity()) {
-                form.classList.add('was-validated');
-                return;
+            const formData = new FormData(form); // ESTO ENVÍA EL ARCHIVO Y LOS TEXTOS JUNTOS
+
+            const response = await fetch('/Admin/Guardar', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}` 
+                    // NOTA: Con FormData NO se pone 'Content-Type' manualmente
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                myModal.hide();
+                listar();
+            } else {
+                alert("Error al guardar los datos.");
             }
-            guardar();
+        }
+
+        async function eliminar(id) {
+            if (confirm("¿Eliminar este vehículo?")) {
+                const resp = await fetch(`/Admin/Eliminar?id=${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(resp.ok) listar();
+            }
+        }
+    </script>
+} *@
+
+
+@* 
+
+
+@{
+    ViewData["Title"] = "Panel de Control";
+}
+
+<style>
+    /* Estructura Principal */
+    .admin-container {
+        display: flex;
+        min-height: 100vh;
+        background-color: #000;
+        padding-top: 100px; 
+        position: relative;
+    }
+
+    /* Barra Lateral */
+    .sidebar {
+        width: 250px;
+        background-color: #0b0b0b;
+        border-right: 1px solid #222;
+        padding: 20px;
+        position: fixed;
+        top: 100px; 
+        left: 0;
+        bottom: 0;
+        z-index: 999;
+    }
+
+    .main-content {
+        margin-left: 250px; 
+        width: calc(100% - 250px);
+        padding: 30px;
+    }
+
+    .nav-admin-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        color: #888;
+        text-decoration: none;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        transition: 0.3s;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .nav-admin-link:hover, .nav-admin-link.active {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .nav-admin-link i { margin-right: 10px; font-size: 1.1rem; }
+    .table-dark { background-color: #0b0b0b !important; }
+    .fixed-top { z-index: 1030 !important; }
+
+    /* Estilos del Preview de Imagen */
+    .preview-container {
+        border: 2px dashed #333;
+        height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #050505;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    #imgPreview {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .img-thumb-table {
+        width: 60px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #333;
+    }
+
+    /* Estilo para el switch inactivo */
+    .form-check-input:not(:checked) {
+        background-color: #333;
+        border-color: #444;
+    }
+</style>
+
+<div class="admin-container">
+    <aside class="sidebar">
+        <p class="text-muted small fw-bold mb-4 px-2">MENÚ ADMINISTRADOR</p>
+        <nav>
+            <a href="#" class="nav-admin-link active"><i class="bi bi-car-front"></i> Vehículos</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-people"></i> Usuarios</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-envelope"></i> Mensajes</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-gear"></i> Configuración</a>
+            <hr class="border-secondary">
+            <a href="/" class="nav-admin-link text-info"><i class="bi bi-arrow-left-circle"></i> Volver a la Web</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-800 text-uppercase text-white">Gestión de <span class="text-danger">Stock</span></h2>
+                <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="abrirModal()">
+                    <i class="bi bi-plus-lg"></i> NUEVO INGRESO
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover border-secondary align-middle">
+                    <thead class="text-muted small">
+                        <tr>
+                            <th>FOTO</th>
+                            <th>ESTADO</th>
+                            <th>MARCA</th>
+                            <th>MODELO / VERSIÓN</th>
+                            <th>AÑO</th>
+                            <th>PRECIO</th>
+                            <th>STOCK</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold text-white" id="modalTitulo">DATOS DEL VEHÍCULO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-white">
+                <form id="formVehiculo" enctype="multipart/form-data">
+                    <input type="hidden" id="vId" name="Id" value="0">
+                    <input type="hidden" id="vImagenUrl" name="ImagenUrl">
+
+                    <div class="row">
+                        <div class="col-md-8 border-end border-secondary">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Marca</label>
+                                    <input type="text" id="vMarca" name="Marca" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Modelo</label>
+                                    <input type="text" id="vModelo" name="Modelo" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Versión</label>
+                                    <input type="text" id="vVersion" name="Version" class="form-control bg-black border-secondary text-white">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Año</label>
+                                    <input type="number" id="vAnio" name="Anio" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Kilómetros</label>
+                                    <input type="number" id="vKilometros" name="Kilometros" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Precio</label>
+                                    <input type="number" id="vPrecio" name="Precio" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Stock</label>
+                                    <input type="number" id="vStock" name="Stock" class="form-control bg-black border-secondary text-white" required value="1">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Categoría ID</label>
+                                    <input type="number" id="vCategoriaId" name="CategoriaId" class="form-control bg-black border-secondary text-white" required value="1">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Combustible</label>
+                                    <select id="vCombustible" name="Combustible" class="form-select bg-black border-secondary text-white">
+                                        <option value="Nafta">Nafta</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="Híbrido">Híbrido</option>
+                                        <option value="Eléctrico">Eléctrico</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Transmisión</label>
+                                    <select id="vTransmision" name="Transmision" class="form-select bg-black border-secondary text-white">
+                                        <option value="Manual">Manual</option>
+                                        <option value="Automática">Automática</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <div class="form-check form-switch p-3 bg-black rounded border border-secondary">
+                                        <input class="form-check-input" type="checkbox" id="vActivo" name="Activo" checked>
+                                        <label class="form-check-label small fw-bold text-white text-uppercase ms-2">Visible en la Web Pública</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-danger text-uppercase">Subir Fotografía</label>
+                                <input type="file" id="vFotoFile" name="FotoArchivo" class="form-control bg-black border-secondary text-white" accept="image/*" onchange="seleccionarArchivo(this)">
+                            </div>
+                            <div class="preview-container mt-2">
+                                <img id="imgPreview" src="" onerror="this.src='https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen'">
+                            </div>
+                            <p class="text-center small text-muted mt-2">Vista previa de la unidad</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
+                <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" onclick="guardar()">GUARDAR CAMBIOS</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const token = localStorage.getItem('jonel_token');
+        const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!token) window.location.href = '/Home/Acceso';
+            listar();
+        });
+
+        // 1. Previsualización de imagen al seleccionar archivo físico
+        function seleccionarArchivo(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imgPreview').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // 2. Actualizar el preview según la URL guardada (para edición)
+        function actualizarPreview() {
+            const nombreArchivo = document.getElementById('vImagenUrl').value;
+            const imgElement = document.getElementById('imgPreview');
+            
+            if (nombreArchivo) {
+                imgElement.src = nombreArchivo.startsWith('http') 
+                                ? nombreArchivo 
+                                : `/img/cars/${nombreArchivo}`;
+            } else {
+                imgElement.src = 'https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen';
+            }
+        }
+
+        // 3. Switch rápido desde la tabla
+        async function toggleEstado(id) {
+            try {
+                const resp = await fetch(`/Admin/CambiarEstado?id=${id}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!resp.ok) listar(); 
+            } catch (err) { 
+                console.error(err);
+                listar();
+            }
+        }
+
+        async function listar() {
+            try {
+                const resp = await fetch('/Admin/GetVehiculos', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await resp.json();
+                document.getElementById('tablaCuerpo').innerHTML = data.map(v => `
+                    <tr class="align-middle">
+                        <td>
+                            <img src="${v.imagenUrl && v.imagenUrl.startsWith('http') ? v.imagenUrl : '/img/cars/' + v.imagenUrl}" 
+                                 class="img-thumb-table" 
+                                 onerror="this.src='https://placehold.co/60x40/000?text=S/F'">
+                        </td>
+                        <td>
+                             <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" ${v.activo ? 'checked' : ''} onclick="toggleEstado(${v.id})">
+                             </div>
+                        </td>
+                        <td class="fw-bold text-white">${v.marca}</td>
+                        <td class="text-white">${v.modelo} <br><small class="text-muted">${v.version || ''}</small></td>
+                        <td class="text-white">${v.anio}</td>
+                        <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
+                        <td class="text-white">${v.stock}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'>
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) { console.error("Error al listar:", err); }
+        }
+
+        function abrirModal() {
+            document.getElementById('modalTitulo').innerText = "NUEVO INGRESO DE VEHÍCULO";
+            document.getElementById('formVehiculo').reset();
+            document.getElementById('vId').value = "0";
+            document.getElementById('vImagenUrl').value = "";
+            document.getElementById('vFotoFile').value = "";
+            document.getElementById('vActivo').checked = true;
+            actualizarPreview();
+            myModal.show();
+        }
+
+        function editar(v) {
+            document.getElementById('modalTitulo').innerText = "MODIFICAR VEHÍCULO";
+            document.getElementById('vId').value = v.id;
+            document.getElementById('vMarca').value = v.marca;
+            document.getElementById('vModelo').value = v.modelo;
+            document.getElementById('vVersion').value = v.version;
+            document.getElementById('vAnio').value = v.anio;
+            document.getElementById('vKilometros').value = v.kilometros;
+            document.getElementById('vPrecio').value = v.precio;
+            document.getElementById('vStock').value = v.stock;
+            document.getElementById('vCombustible').value = v.combustible;
+            document.getElementById('vTransmision').value = v.transmision;
+            document.getElementById('vCategoriaId').value = v.categoriaId;
+            document.getElementById('vImagenUrl').value = v.imagenUrl;
+            document.getElementById('vActivo').checked = v.activo;
+            document.getElementById('vFotoFile').value = ""; 
+            actualizarPreview();
+            myModal.show();
         }
 
         async function guardar() {
-            const formData = new FormData();
-            formData.append("Id", document.getElementById('vId').value);
-            formData.append("Marca", document.getElementById('vMarca').value);
-            formData.append("Modelo", document.getElementById('vModelo').value);
-            formData.append("Version", document.getElementById('vVersion').value);
-            formData.append("Anio", document.getElementById('vAnio').value);
-            formData.append("Kilometros", document.getElementById('vKilometros').value);
-            formData.append("Precio", document.getElementById('vPrecio').value);
-            formData.append("Stock", document.getElementById('vStock').value);
-            formData.append("Combustible", document.getElementById('vCombustible').value);
-            formData.append("Transmision", document.getElementById('vTransmision').value);
+            const form = document.getElementById('formVehiculo');
+            const formData = new FormData(form);
 
-            const file = document.getElementById('vFile').files[0];
-            if (file) formData.append("File", file);
+            // Forzar el valor de Activo ya que los checkboxes no se incluyen en FormData si están apagados
+            formData.set('Activo', document.getElementById('vActivo').checked);
 
-            const resp = await fetch('/Admin/Guardar', {
+            const response = await fetch('/Admin/Guardar', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
-            if (resp.ok) {
+            if (response.ok) {
                 myModal.hide();
                 listar();
-                Toast.fire({ icon: 'success', title: 'Guardado correctamente' });
+            } else {
+                const error = await response.json();
+                alert("Error: " + (error.message || "No se pudo guardar."));
             }
         }
 
         async function eliminar(id) {
-            Swal.fire({ title: '¿Eliminar unidad?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545', background: '#111', color: '#fff' }).then(async res => {
-                if (res.isConfirmed) {
-                    const resp = await fetch(`/Admin/Eliminar?id=${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                    if(resp.ok) { listar(); Toast.fire({ icon: 'success', title: 'Eliminado' }); }
+            if (confirm("¿Eliminar definitivamente este vehículo de la base de datos?")) {
+                const resp = await fetch(`/Admin/Eliminar?id=${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(resp.ok) listar();
+            }
+        }
+    </script>
+} *@
+
+
+
+
+
+
+
+@{
+    ViewData["Title"] = "Panel de Control";
+}
+
+<style>
+    /* Estructura Principal */
+    .admin-container {
+        display: flex;
+        min-height: 100vh;
+        background-color: #000;
+        padding-top: 100px; 
+        position: relative;
+    }
+
+    /* Barra Lateral */
+    .sidebar {
+        width: 250px;
+        background-color: #0b0b0b;
+        border-right: 1px solid #222;
+        padding: 20px;
+        position: fixed;
+        top: 100px; 
+        left: 0;
+        bottom: 0;
+        z-index: 999;
+    }
+
+    .main-content {
+        margin-left: 250px; 
+        width: calc(100% - 250px);
+        padding: 30px;
+    }
+
+    .nav-admin-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        color: #888;
+        text-decoration: none;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        transition: 0.3s;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .nav-admin-link:hover, .nav-admin-link.active {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .nav-admin-link i { margin-right: 10px; font-size: 1.1rem; }
+    .table-dark { background-color: #0b0b0b !important; }
+    .fixed-top { z-index: 1030 !important; }
+
+    /* Estilos del Preview de Imagen */
+    .preview-container {
+        border: 2px dashed #333;
+        height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #050505;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    #imgPreview {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .img-thumb-table {
+        width: 60px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #333;
+    }
+
+    /* Estilo para el switch inactivo */
+    .form-check-input:not(:checked) {
+        background-color: #333;
+        border-color: #444;
+    }
+</style>
+
+<div class="admin-container">
+    <aside class="sidebar">
+        <p class="text-muted small fw-bold mb-4 px-2">MENÚ ADMINISTRADOR</p>
+        <nav>
+            <a href="#" class="nav-admin-link active"><i class="bi bi-car-front"></i> Vehículos</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-people"></i> Usuarios</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-envelope"></i> Mensajes</a>
+            <a href="#" class="nav-admin-link"><i class="bi bi-gear"></i> Configuración</a>
+            <hr class="border-secondary">
+            <a href="/" class="nav-admin-link text-info"><i class="bi bi-arrow-left-circle"></i> Volver a la Web</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-800 text-uppercase text-white">Gestión de <span class="text-danger">Stock</span></h2>
+                <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="abrirModal()">
+                    <i class="bi bi-plus-lg"></i> NUEVO INGRESO
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover border-secondary align-middle">
+                    <thead class="text-muted small">
+                        <tr>
+                            <th>FOTO</th>
+                            <th>ESTADO</th>
+                            <th>MARCA</th>
+                            <th>MODELO / VERSIÓN</th>
+                            <th>AÑO</th>
+                            <th>PRECIO</th>
+                            <th>STOCK</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo">
+                        <tr>
+                            <td colspan="8" class="text-center p-5">
+                                <div class="spinner-border text-danger" role="status"></div>
+                                <p class="mt-2 text-muted">Cargando unidades...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold text-white" id="modalTitulo">DATOS DEL VEHÍCULO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-white">
+                <form id="formVehiculo" enctype="multipart/form-data">
+                    <input type="hidden" id="vId" name="Id" value="0">
+                    <input type="hidden" id="vImagenUrl" name="ImagenUrl">
+
+                    <div class="row">
+                        <div class="col-md-8 border-end border-secondary">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Marca</label>
+                                    <input type="text" id="vMarca" name="Marca" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Modelo</label>
+                                    <input type="text" id="vModelo" name="Modelo" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Versión</label>
+                                    <input type="text" id="vVersion" name="Version" class="form-control bg-black border-secondary text-white">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Año</label>
+                                    <input type="number" id="vAnio" name="Anio" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Kilómetros</label>
+                                    <input type="number" id="vKilometros" name="Kilometros" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Precio</label>
+                                    <input type="number" id="vPrecio" name="Precio" class="form-control bg-black border-secondary text-white" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Stock</label>
+                                    <input type="number" id="vStock" name="Stock" class="form-control bg-black border-secondary text-white" required value="1">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Categoría ID</label>
+                                    <input type="number" id="vCategoriaId" name="CategoriaId" class="form-control bg-black border-secondary text-white" required value="1">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Combustible</label>
+                                    <select id="vCombustible" name="Combustible" class="form-select bg-black border-secondary text-white">
+                                        <option value="Nafta">Nafta</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="Híbrido">Híbrido</option>
+                                        <option value="Eléctrico">Eléctrico</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Transmisión</label>
+                                    <select id="vTransmision" name="Transmision" class="form-select bg-black border-secondary text-white">
+                                        <option value="Manual">Manual</option>
+                                        <option value="Automática">Automática</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <div class="form-check form-switch p-3 bg-black rounded border border-secondary">
+                                        <input class="form-check-input" type="checkbox" id="vActivo" name="Activo" checked>
+                                        <label class="form-check-label small fw-bold text-white text-uppercase ms-2">Visible en la Web Pública</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-danger text-uppercase">Subir Fotografía</label>
+                                <input type="file" id="vFotoFile" name="FotoArchivo" class="form-control bg-black border-secondary text-white" accept="image/*" onchange="seleccionarArchivo(this)">
+                            </div>
+                            <div class="preview-container mt-2">
+                                <img id="imgPreview" src="" onerror="this.src='https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen'">
+                            </div>
+                            <p class="text-center small text-muted mt-2">Vista previa de la unidad</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
+                <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" onclick="guardar()">GUARDAR CAMBIOS</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const token = localStorage.getItem('jonel_token');
+        const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!token) {
+                window.location.href = '/Home/Acceso';
+                return;
+            }
+            listar();
+        });
+
+        async function listar() {
+            try {
+                const resp = await fetch('/Admin/GetVehiculos', {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (resp.status === 401) {
+                    console.error("No autorizado");
+                    window.location.href = '/Home/Acceso';
+                    return;
                 }
-            });
+
+                if (!resp.ok) throw new Error("Error en el servidor: " + resp.status);
+
+                const data = await resp.json();
+                const cuerpo = document.getElementById('tablaCuerpo');
+                
+                if (data.length === 0) {
+                    cuerpo.innerHTML = '<tr><td colspan="8" class="text-center text-muted p-4">No hay vehículos en el inventario</td></tr>';
+                    return;
+                }
+
+                cuerpo.innerHTML = data.map(v => {
+                    // Lógica para la ruta de la imagen
+                    let imgPath = 'https://placehold.co/60x40/000?text=S/F';
+                    if (v.imagenUrl) {
+                        imgPath = v.imagenUrl.startsWith('http') ? v.imagenUrl : `/img/cars/${v.imagenUrl}`;
+                    }
+
+                    return `
+                        <tr class="align-middle">
+                            <td>
+                                <img src="${imgPath}" class="img-thumb-table" onerror="this.src='https://placehold.co/60x40/000?text=S/F'">
+                            </td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" ${v.activo ? 'checked' : ''} onclick="toggleEstado(${v.id})">
+                                </div>
+                            </td>
+                            <td class="fw-bold text-white">${v.marca}</td>
+                            <td class="text-white">${v.modelo} <br><small class="text-muted">${v.version || ''}</small></td>
+                            <td class="text-white">${v.anio}</td>
+                            <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
+                            <td class="text-white">${v.stock}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'>
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) { 
+                console.error("Error al listar:", err);
+                document.getElementById('tablaCuerpo').innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error de conexión: ${err.message}</td></tr>`;
+            }
+        }
+
+        function seleccionarArchivo(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imgPreview').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function actualizarPreview() {
+            const nombreArchivo = document.getElementById('vImagenUrl').value;
+            const imgElement = document.getElementById('imgPreview');
+            
+            if (nombreArchivo) {
+                imgElement.src = nombreArchivo.startsWith('http') ? nombreArchivo : `/img/cars/${nombreArchivo}`;
+            } else {
+                imgElement.src = 'https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen';
+            }
+        }
+
+        async function toggleEstado(id) {
+            try {
+                const resp = await fetch(`/Admin/CambiarEstado?id=${id}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!resp.ok) listar(); 
+            } catch (err) { 
+                console.error(err);
+                listar();
+            }
+        }
+
+        function abrirModal() {
+            document.getElementById('modalTitulo').innerText = "NUEVO INGRESO DE VEHÍCULO";
+            document.getElementById('formVehiculo').reset();
+            document.getElementById('vId').value = "0";
+            document.getElementById('vImagenUrl').value = "";
+            document.getElementById('vFotoFile').value = "";
+            document.getElementById('vActivo').checked = true;
+            actualizarPreview();
+            myModal.show();
+        }
+
+        function editar(v) {
+            document.getElementById('modalTitulo').innerText = "MODIFICAR VEHÍCULO";
+            document.getElementById('vId').value = v.id;
+            document.getElementById('vMarca').value = v.marca;
+            document.getElementById('vModelo').value = v.modelo;
+            document.getElementById('vVersion').value = v.version || '';
+            document.getElementById('vAnio').value = v.anio;
+            document.getElementById('vKilometros').value = v.kilometros;
+            document.getElementById('vPrecio').value = v.precio;
+            document.getElementById('vStock').value = v.stock;
+            document.getElementById('vCombustible').value = v.combustible;
+            document.getElementById('vTransmision').value = v.transmision;
+            document.getElementById('vCategoriaId').value = v.categoriaId;
+            document.getElementById('vImagenUrl').value = v.imagenUrl || '';
+            document.getElementById('vActivo').checked = v.activo;
+            document.getElementById('vFotoFile').value = ""; 
+            actualizarPreview();
+            myModal.show();
+        }
+
+        async function guardar() {
+            const form = document.getElementById('formVehiculo');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const formData = new FormData(form);
+            formData.set('Activo', document.getElementById('vActivo').checked);
+
+            try {
+                const response = await fetch('/Admin/Guardar', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    myModal.hide();
+                    listar();
+                } else {
+                    const error = await response.json();
+                    alert("Error: " + (error.message || "No se pudo guardar."));
+                }
+            } catch (err) {
+                alert("Error de conexión al guardar.");
+            }
+        }
+
+        async function eliminar(id) {
+            if (confirm("¿Eliminar definitivamente este vehículo?")) {
+                try {
+                    const resp = await fetch(`/Admin/Eliminar?id=${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if(resp.ok) listar();
+                } catch (err) {
+                    alert("Error al eliminar.");
+                }
+            }
         }
     </script>
 }
