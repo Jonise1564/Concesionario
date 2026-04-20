@@ -207,6 +207,29 @@ namespace Concesionario.Controllers
             return Ok(vehiculos);
         }
 
+        [HttpGet]
+            public async Task<IActionResult> GetVehiculos(int pagina = 1, int tamano = 15, string filtro = "")
+            {
+                var query = _context.Vehiculos.AsQueryable();
+
+                // Filtro on-demand
+                if (!string.IsNullOrEmpty(filtro))
+                {
+                    query = query.Where(v => v.Marca.Contains(filtro) || v.Modelo.Contains(filtro));
+                }
+
+                var total = await query.CountAsync();
+                
+                // Paginación on-demand
+                var items = await query
+                    .OrderByDescending(v => v.Id)
+                    .Skip((pagina - 1) * tamano)
+                    .Take(tamano)
+                    .ToListAsync();
+
+                return Ok(new { items, total });
+            }
+
         // API para Activar/Desactivar (Borrado Lógico)
         [Authorize]
         [HttpPost("CambiarEstado")]
