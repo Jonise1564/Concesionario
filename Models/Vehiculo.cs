@@ -33,6 +33,8 @@ public class Vehiculo
     public string? Transmision { get; set; }
 
     public int CategoriaId { get; set; }
+
+    public string Tipo { get; set; }
     
     // Propiedad calculada útil para el buscador
     [NotMapped]
