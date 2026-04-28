@@ -10,129 +10,96 @@ namespace Concesionario.Controllers
     public class ChatController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private static string ultimoTipo = "Auto";
 
         public ChatController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        private IActionResult BuscarPorTipo(string tipo, string titulo)
+        private IActionResult BuscarPorTipo(string tipo, string titulo, int cantidad = 3)
         {
             var vehiculos = _context.Vehiculos
                 .Where(v => v.Tipo == tipo)
                 .OrderBy(v => v.Precio)
-                .Take(3)
+                .Take(cantidad)
                 .ToList();
 
-            if (vehiculos.Any())
+            var respuesta = titulo + "\n";
+
+            foreach (var v in vehiculos)
             {
-                var respuesta = titulo + "\n";
-
-                foreach (var v in vehiculos)
-                {
-                    respuesta += $"- {v.Marca} {v.Modelo} {v.Anio} - ${v.Precio}\n";
-                }
-
-                respuesta += "\n¿Te interesa alguno? Puedo ayudarte con más info.";
-
-                return Ok(new { reply = respuesta });
+                respuesta += $"- {v.Marca} {v.Modelo} {v.Anio} - ${v.Precio:N0}\n";
             }
 
-            return Ok(new { reply = $"No tenemos {tipo.ToLower()} disponibles en este momento." });
+            respuesta += "\n¿Te interesa alguno o querés ver más opciones?";
+
+            return Ok(new { reply = respuesta });
         }
 
         [HttpPost]
         public IActionResult Post([FromBody] ChatRequest request)
         {
-            var mensaje = request.Message.ToLower();
+            var detector = new IntentDetector();
+            var intent = detector.Detectar(request.Message);
 
-            // 🔹 SALUDO
-            if (mensaje.Contains("hola") || mensaje.Contains("buenas"))
+            switch (intent)
             {
-                return Ok(new { reply = "¡Hola! 👋 Bienvenido a la concesionaria Jonel. ¿Qué tipo de vehículo estás buscando?" });
+                case ChatIntent.Saludo:
+                    return Ok(new { reply = "¡Hola! 👋 ¿Buscás auto, camioneta o SUV?" });
+
+                case ChatIntent.BuscarAuto:
+                    ultimoTipo = "Auto";
+                    return BuscarPorTipo("Auto", "Estos son algunos autos disponibles:");
+
+                case ChatIntent.BuscarCamioneta:
+                    ultimoTipo = "Camioneta";
+                    return BuscarPorTipo("Camioneta", "Estas son algunas camionetas:");
+
+                case ChatIntent.BuscarSUV:
+                    ultimoTipo = "SUV";
+                    return BuscarPorTipo("SUV", "Estas son algunas SUV:");
+
+                case ChatIntent.BuscarModelo:
+                    return BuscarPorModelo(request.Message);
+
+                case ChatIntent.Precio:
+                    return Ok(new { reply = "¿Qué vehículo te interesa? Así puedo decirte el precio." });
+
+                case ChatIntent.Barato:
+                    return BuscarPorPrecio(true);
+
+                case ChatIntent.Caro:
+                    return BuscarPorPrecio(false);
+
+                case ChatIntent.Financiamiento:
+                    return Ok(new { reply = "Ofrecemos financiación. Escribinos al WhatsApp 📲 +54 266 400-0000" });
+
+                case ChatIntent.Permuta:
+                    return Ok(new { reply = "Aceptamos permutas. ¿Qué vehículo tenés?" });
+
+                case ChatIntent.Ubicacion:
+                    return Ok(new { reply = "Estamos en Av. España 1234, San Luis." });
+
+                case ChatIntent.Horario:
+                    return Ok(new { reply = "Lun a Vie 9 a 20 hs, Sáb 9 a 13 hs." });
+
+                case ChatIntent.InteresCompra:
+                    return Ok(new { reply = "¡Genial! Escribinos por WhatsApp 📲 +54 266 400-0000" });
+
+                case ChatIntent.Rechazo:
+                    return Ok(new { reply = "No hay problema 👍 ¿Querés que te muestre otras opciones o preferís otro tipo de vehículo?" });
+
+                case ChatIntent.VerMas:
+                    return BuscarPorTipo(
+                        ultimoTipo,
+                        $"Te muestro más {ultimoTipo.ToLower()}:",
+                        10
+                    );
+
+                default:
+                    return Ok(new { reply = "No entendí 😅 ¿Buscás auto, camioneta o SUV?" });
             }
-
-            // 🔹 BUSQUEDA POR MODELOS ESPECÍFICOS
-            if (mensaje.Contains("hilux"))
-            {
-                return BuscarVehiculos("Hilux", "Tenemos estas Toyota Hilux disponibles:");
-            }
-
-            if (mensaje.Contains("gol"))
-            {
-                return BuscarVehiculos("Gol", "Tenemos estos Volkswagen Gol disponibles:");
-            }
-
-            if (mensaje.Contains("fiesta"))
-            {
-                return BuscarVehiculos("Fiesta", "Tenemos estos Ford Fiesta disponibles:");
-            }
-
-            // 🔹 BUSQUEDA POR TIPO
-            if (mensaje.Contains("camioneta"))
-            {
-                return BuscarPorTipo("Camioneta", "Estas son algunas camionetas disponibles:");
-            }
-
-            if (mensaje.Contains("suv"))
-            {
-                return BuscarPorTipo("SUV", "Estas son algunas SUV disponibles:");
-            }
-
-            if (mensaje.Contains("auto"))
-            {
-                return BuscarPorTipo("Auto", "Estos son algunos autos disponibles:");
-            }
-
-
-            if (mensaje.Contains("camio"))
-            {
-                return BuscarPorTipo("Camioneta", "Estas son algunas camionetas disponibles:");
-            }
-
-            if (mensaje.Contains("4x4") || mensaje.Contains("alta") || mensaje.Contains("grande"))
-            {
-                return BuscarPorTipo("SUV", "Estas son algunas SUV disponibles:");
-            }
-
-            // 🔹 PRECIO
-            if (mensaje.Contains("precio") || mensaje.Contains("cuanto"))
-            {
-                return Ok(new { reply = "Los precios varían según el modelo y el año. ¿Qué vehículo te interesa?" });
-            }
-
-            // 🔹 FINANCIACIÓN
-            if (mensaje.Contains("financiacion") || mensaje.Contains("cuotas"))
-            {
-                return Ok(new { reply = "Sí, ofrecemos financiación en cuotas. ¿Querés que te asesore según tu presupuesto?" });
-            }
-
-            // 🔹 PERMUTA
-            if (mensaje.Contains("permuta"))
-            {
-                return Ok(new { reply = "Aceptamos permutas. Podés entregar tu vehículo como parte de pago. ¿Qué auto tenés?" });
-            }
-
-            // 🔹 UBICACIÓN
-            if (mensaje.Contains("donde") || mensaje.Contains("ubicacion"))
-            {
-                return Ok(new { reply = "Estamos en Av. España 1234, San Luis. ¿Querés que te pase la ubicación por WhatsApp?" });
-            }
-
-            // 🔹 HORARIOS
-            if (mensaje.Contains("horario"))
-            {
-                return Ok(new { reply = "Nuestro horario es de lunes a viernes de 9 a 20 hs y sábados de 9 a 13 hs." });
-            }
-
-            // 🔹 CONTACTO
-            if (mensaje.Contains("comprar") || mensaje.Contains("interesado"))
-            {
-                return Ok(new { reply = "¡Genial! Podés escribirnos por WhatsApp al +54 266 400-0000 y te asesoramos al instante 📲" });
-            }
-
-            // 🔹 DEFAULT
-            return Ok(new { reply = "Puedo ayudarte a encontrar el vehículo ideal 🚗 ¿Buscás auto, camioneta o algún modelo específico?" });
         }
 
         // 🔧 MÉTODO AUXILIAR PARA BUSCAR VEHÍCULOS
@@ -159,6 +126,46 @@ namespace Concesionario.Controllers
             }
 
             return Ok(new { reply = $"No tenemos {modelo} disponibles ahora, pero puedo mostrarte alternativas. ¿Te interesa algo similar?" });
+        }
+
+        private IActionResult BuscarPorPrecio(bool barato)
+        {
+            var query = _context.Vehiculos.AsQueryable();
+
+            query = barato 
+                ? query.OrderBy(v => v.Precio) 
+                : query.OrderByDescending(v => v.Precio);
+
+            var vehiculos = query.Take(3).ToList();
+
+            var respuesta = barato ? "Opciones económicas:\n" : "Opciones premium:\n";
+
+            foreach (var v in vehiculos)
+            {
+                respuesta += $"- {v.Marca} {v.Modelo} {v.Anio} - ${v.Precio:N0}\n";
+            }
+
+            return Ok(new { reply = respuesta });
+        }
+
+        private IActionResult BuscarPorModelo(string mensaje)
+        {
+            var vehiculos = _context.Vehiculos
+                .Where(v => mensaje.Contains(v.Modelo.ToLower()))
+                .Take(3)
+                .ToList();
+
+            if (!vehiculos.Any())
+                return Ok(new { reply = "No encontré ese modelo 😅 ¿Querés ver autos, camionetas o SUV?" });
+
+            var respuesta = "Encontré esto:\n";
+
+            foreach (var v in vehiculos)
+            {
+                respuesta += $"- {v.Marca} {v.Modelo} {v.Anio} - ${v.Precio:N0}\n";
+            }
+
+            return Ok(new { reply = respuesta });
         }
     }
 }

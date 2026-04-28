@@ -1,0 +1,19 @@
+public enum ChatIntent
+{
+    Saludo,
+    BuscarAuto,
+    BuscarCamioneta,
+    BuscarSUV,
+    BuscarModelo,
+    Precio,
+    Barato,
+    Caro,
+    Financiamiento,
+    Permuta,
+    Ubicacion,
+    Horario,
+    InteresCompra,
+    Desconocido,
+    Rechazo,
+    VerMas,
+}
