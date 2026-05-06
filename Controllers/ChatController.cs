@@ -46,7 +46,7 @@ namespace Concesionario.Controllers
             switch (intent)
             {
                 case ChatIntent.Saludo:
-                    return Ok(new { reply = "¡Hola! 👋 ¿Buscás auto, camioneta o SUV?" });
+                    return Ok(new { reply = "¡Hola! 👋 Bienvenido a Jonel Autos 🚗\nEstoy para ayudarte a encontrar tu próximo vehículo.\n\n¿Buscás auto, camioneta o SUV?" });
 
                 case ChatIntent.BuscarAuto:
                     ultimoTipo = "Auto";

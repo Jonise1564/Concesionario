@@ -2,6 +2,7 @@ using Concesionario.Models;
 
 public class IntentDetector
 {
+    
     public ChatIntent Detectar(string mensaje)
     {
         mensaje = mensaje.ToLower();
