@@ -40,7 +40,7 @@ namespace Concesionario.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] ChatRequest request)
         {
-            var detector = new IntentDetector();
+            var detector = new IntentDetector(_context);
             var intent = detector.Detectar(request.Message);
 
             switch (intent)
@@ -152,20 +152,40 @@ namespace Concesionario.Controllers
         {
             var vehiculos = _context.Vehiculos
                 .Where(v => mensaje.Contains(v.Modelo.ToLower()))
-                .Take(3)
+                .OrderBy(v => v.Precio)
                 .ToList();
 
             if (!vehiculos.Any())
-                return Ok(new { reply = "No encontré ese modelo 😅 ¿Querés ver autos, camionetas o SUV?" });
-
-            var respuesta = "Encontré esto:\n";
-
-            foreach (var v in vehiculos)
             {
-                respuesta += $"- {v.Marca} {v.Modelo} {v.Anio} - ${v.Precio:N0}\n";
+                return Ok(new { reply = "No encontré ese modelo 😅 ¿Querés ver autos, camionetas o SUV?" });
             }
 
-            return Ok(new { reply = respuesta });
+            // 🔥 si hay más de uno
+            if (vehiculos.Count > 1)
+            {
+                var respuesta = "Encontré varias opciones de ese modelo:\n";
+
+                int i = 1;
+                foreach (var v in vehiculos)
+                {
+                    respuesta += $"{i}. {v.Marca} {v.Modelo} {v.Anio} - ${v.Precio:N0}\n";
+                    i++;
+                }
+
+                respuesta += "\n¿Te interesa alguno en particular? Decime cuál.";
+
+                return Ok(new { reply = respuesta });
+            }
+
+            // 🔥 si hay uno solo
+            var vehiculo = vehiculos.First();
+
+            var detalle = $"Te cuento sobre este vehículo:\n" +
+                        $"- {vehiculo.Marca} {vehiculo.Modelo} {vehiculo.Anio}\n" +
+                        $"- Precio: ${vehiculo.Precio:N0}\n\n" +
+                        $"¿Querés coordinar por WhatsApp? 📲";
+
+            return Ok(new { reply = detalle });
         }
     }
 }

@@ -105,6 +105,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     @RenderSection("Styles", required: false)
 </head>
 <body>
@@ -273,6 +274,50 @@
             background: #2a2a2a;
             color: white;
         }
+
+        /* Icono en el chat*/
+        .chat-message {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: flex-start;
+        }
+
+        .chat-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #eb0a1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .chat-content {
+            background: #2a2a2a;
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 80%;
+            color: white;
+        }
+
+        .chat-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            color: #eb0a1e;
+        }
+
+        .chat-user .chat-avatar {
+            background: #444;
+        }
+
+        .chat-user .chat-name {
+            color: #ffffff;
+        }
     </style>
 
     <script>
@@ -295,7 +340,18 @@
             if (e.key === "Enter") {
                 const text = input.value;
                 input.value = "";
-                messages.innerHTML += `<div class="mensaje-user">${text}</div>`;
+                messages.innerHTML += `
+                <div class="chat-message chat-user">
+                    <div class="chat-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+
+                    <div class="chat-content">
+                        <div class="chat-name">Tú</div>
+                        <div>${text}</div>
+                    </div>
+                </div>
+                `;
 
                 const res = await fetch("/api/chat", {
                     method: "POST",
@@ -307,7 +363,18 @@
 
                 const textoFormateado = formatearPrecio(data.reply);
 
-                messages.innerHTML += `<div class="mensaje-bot">${textoFormateado.replace(/\n/g, "<br>")}</div>`;
+                messages.innerHTML += `
+                <div class="chat-message">
+                    <div class="chat-avatar">
+                        <i class="bi bi-robot"></i>
+                    </div>
+
+                    <div class="chat-content">
+                        <div class="chat-name">Bot Jonel</div>
+                        <div>${textoFormateado.replace(/\n/g, "<br>")}</div>
+                    </div>
+                </div>
+                `;
                 messages.scrollTop = messages.scrollHeight;
             }
         });

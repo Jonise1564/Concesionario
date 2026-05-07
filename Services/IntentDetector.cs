@@ -1,14 +1,28 @@
+using System.Linq;
+using Concesionario.Data;
 using Concesionario.Models;
 
 public class IntentDetector
 {
-    
+    private readonly ApplicationDbContext _context;
+
+    public IntentDetector(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
     public ChatIntent Detectar(string mensaje)
     {
         mensaje = mensaje.ToLower();
 
-        if (mensaje.Contains("no me interesa") || mensaje.Contains("no me gusto") || mensaje.Contains("no"))
+        if (
+            mensaje == "no" ||
+            mensaje.Contains("no me interesa") ||
+            mensaje.Contains("no me gusto")
+        )
+        {
             return ChatIntent.Rechazo;
+        }
 
         if (mensaje.Contains("todos") || mensaje.Contains("mas") || mensaje.Contains("más"))
             return ChatIntent.VerMas;
@@ -28,8 +42,10 @@ public class IntentDetector
         if (mensaje.Contains("auto"))
             return ChatIntent.BuscarAuto;
 
-        if (mensaje.Contains("hilux") || mensaje.Contains("gol") || mensaje.Contains("fiesta"))
+        if (_context.Vehiculos.Any(v => mensaje.Contains(v.Modelo.ToLower())))
+        {
             return ChatIntent.BuscarModelo;
+        }
 
         if (mensaje.Contains("precio") || mensaje.Contains("cuanto"))
             return ChatIntent.Precio;
@@ -52,8 +68,17 @@ public class IntentDetector
         if (mensaje.Contains("horario"))
             return ChatIntent.Horario;
 
-        if (mensaje.Contains("comprar") || mensaje.Contains("interesado"))
+        if (
+            mensaje.Contains("comprar") ||
+            mensaje.Contains("interesado") ||
+            mensaje.Contains("dale") ||
+            mensaje.Contains("bueno") ||
+            mensaje.Contains("ok") ||
+            mensaje.Contains("perfecto")
+        )
+        {
             return ChatIntent.InteresCompra;
+        }
 
         return ChatIntent.Desconocido;
     }
