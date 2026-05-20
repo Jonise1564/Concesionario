@@ -3,11 +3,18 @@ using Concesionario.Models;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Mvc;
 using MimeKit;
+using Concesionario.Data;
 
 namespace Concesionario.Controllers;
 
 public class HomeController : Controller
 {
+    private readonly ApplicationDbContext _context;
+
+    public HomeController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
     public IActionResult Index()
     {
         return View();
@@ -33,6 +40,22 @@ public class HomeController : Controller
         {
             return View("Contacto", model);
         }
+
+        //guardamos la consulta en la db
+
+        var consulta = new Consulta
+        {
+            Nombre = model.Nombre,
+            Email = model.Email,
+            Telefono = model.Telefono,
+            Interes = model.Interes,
+            Modelo = model.Modelo,
+            Mensaje = model.Mensaje,
+            Estado = "Pendiente",
+        };
+
+        _context.Consultas.Add(consulta);
+        await _context.SaveChangesAsync();
 
         var email = new MimeMessage();
         email.From.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
