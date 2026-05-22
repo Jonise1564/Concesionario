@@ -1,3 +1,6 @@
+
+
+
 @{
     ViewData["Title"] = "Panel de Control";
 }
@@ -266,8 +269,6 @@
                 btnVehiculos.classList.remove('active');
                 btnUsuarios.classList.add('active');
                 
-                // DISPARADOR DE CARGA AUTOMÁTICA DE USUARIOS
-                // Ejecuta la función del Partial si existe
                 if (typeof listarUsuarios === 'function') {
                     listarUsuarios();
                 } else if (typeof cargarUsuarios === 'function') {
@@ -297,12 +298,15 @@
                 const data = await resp.json();
                 const cuerpo = document.getElementById('tablaCuerpo');
                 
-                if (data.length === 0) {
+                // CORRECCIÓN AQUÍ: Evaluamos data.items ya que el backend devuelve un objeto paginado
+                const listaVehiculos = data.items ? data.items : data;
+
+                if (!listaVehiculos || listaVehiculos.length === 0) {
                     cuerpo.innerHTML = '<tr><td colspan="8" class="text-center text-muted p-4">No hay vehículos en el inventario</td></tr>';
                     return;
                 }
 
-                cuerpo.innerHTML = data.map(v => {
+                cuerpo.innerHTML = listaVehiculos.map(v => {
                     let imgPath = 'https://placehold.co/60x40/000?text=S/F';
                     if (v.imagenUrl) {
                         imgPath = v.imagenUrl.startsWith('http') ? v.imagenUrl : `/img/cars/${v.imagenUrl}`;
@@ -448,4 +452,4 @@
             }
         }
     </script>
-}
+} 
