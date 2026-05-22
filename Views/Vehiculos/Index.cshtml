@@ -103,9 +103,10 @@
 }
 
 <div class="container mt-5 pt-4 mainDiv">
+    <br>
     @* --- Cabecera --- *@
     <div class="mb-5">
-        <h2 class="text-uppercase fw-900 m-0 titulo-seccion"></h2>
+        <h2 class="text-uppercase fw-900 m-0 titulo-seccion">Nuestro Stock</h2>
     </div>
 
     @* --- Panel de Filtros --- *@
@@ -154,6 +155,9 @@
     <div class="row" id="gridVehiculos">
         @foreach (var item in Model)
         {
+            @* 👇 Si el vehículo no está marcado como activo, se saltea la tarjeta sin renderizarla *@
+            if (item.Activo == false) continue;
+
             <div class="col-12 col-md-6 col-lg-4 mb-4 tarjeta-vehiculo" 
                  data-marca="@item.Marca?.ToLower()"
                  data-modelo="@item.Modelo.ToLower()" 
@@ -161,7 +165,6 @@
                  data-km="@item.Kilometros"
                  data-anio="@item.Anio">
                  
-                
                 <div class="card h-100 tarjeta-dark overflow-hidden">
                     <div class="position-relative img-container">
                         @{

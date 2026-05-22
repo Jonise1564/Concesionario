@@ -1,74 +1,3 @@
-// using Microsoft.AspNetCore.Mvc;
-// using Microsoft.IdentityModel.Tokens;
-// using System.IdentityModel.Tokens.Jwt;
-// using System.Security.Claims;
-// using System.Text;
-// using Concesionario.Data;
-// using Concesionario.Models;
-// using Microsoft.EntityFrameworkCore;
-
-
-// namespace Concesionario.Controllers
-// {
-//     [ApiController]
-//     [Route("api/[controller]")]
-//     public class AccountController : ControllerBase
-//     {
-//         private readonly ApplicationDbContext _context;
-//         private readonly IConfiguration _configuration;
-
-//         public AccountController(ApplicationDbContext context, IConfiguration configuration)
-//         {
-//             _context = context;
-//             _configuration = configuration;
-//         }
-
-//         [HttpPost("login")]
-//         public async Task<IActionResult> Login([FromBody] LoginRequest model)
-//         {
-//             // 1. Buscamos el usuario en la base de datos MySQL
-//             var user = await _context.Usuarios
-//                 .FirstOrDefaultAsync(u => u.NombreUsuario == model.Username && u.Password == model.Password);
-
-//             if (user != null)
-//             {
-//                 // 2. Creamos los permisos (Claims)
-//                 var authClaims = new List<Claim>
-//                 {
-//                     new Claim(ClaimTypes.Name, user.NombreUsuario),
-//                     new Claim(ClaimTypes.Role, user.Rol), // "Admin" o "Vendedor"
-//                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-//                 };
-
-//                 // 3. Obtenemos la clave secreta desde appsettings.json
-//                 var authSigningKey = new SymmetricSecurityKey(
-//                     Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-
-//                 // 4. Generamos el Token
-//                 var token = new JwtSecurityToken(
-//                     issuer: _configuration["JWT:ValidIssuer"],
-//                     audience: _configuration["JWT:ValidAudience"],
-//                     expires: DateTime.Now.AddHours(3), // El token dura 3 horas
-//                     claims: authClaims,
-//                     signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-//                 );
-
-//                 return Ok(new LoginResponse
-//                 {
-//                     Token = new JwtSecurityTokenHandler().WriteToken(token),
-//                     Expiration = token.ValidTo,
-//                     Username = user.NombreUsuario
-//                 });
-//             }
-
-//             // Si el usuario no existe o la clave es incorrecta
-//             return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
-//         }
-//     }
-// }
-
-
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -77,6 +6,7 @@ using System.Text;
 using Concesionario.Data;
 using Concesionario.Models;
 using Microsoft.EntityFrameworkCore;
+using BCrypt.Net; 
 
 namespace Concesionario.Controllers
 {
@@ -96,65 +26,103 @@ namespace Concesionario.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
+            // DIAGNÓSTICO 1: Ver qué llega del Frontend
+            Console.WriteLine($"[DIAGNOSTICO LOGIN] -> Frontend envió Username: '{model?.Username}' y Password: '{model?.Password}'");
+
             if (model == null || string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.Password))
             {
                 return BadRequest(new { message = "El usuario y la contraseña son obligatorios." });
             }
 
-            // 1. Buscamos el usuario en MySQL validando que esté ACTIVO (Blindaje para el borrado lógico)
-            var user = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.NombreUsuario == model.Username 
-                                       && u.Password == model.Password 
-                                       && u.Activo == true); // <-- Validamos la baja lógica
-
-            if (user != null)
+            // Buscamos TODOS los usuarios activos para ver qué hay en la DB realmente
+            var listaUsuariosDb = await _context.Usuarios.ToListAsync();
+            Console.WriteLine($"[DIAGNOSTICO DB] -> Total de usuarios en la tabla: {listaUsuariosDb.Count}");
+            foreach(var u in listaUsuariosDb)
             {
-                // 2. Creamos los permisos (Claims) incluyendo su ID y Rol
-                var authClaims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.NombreUsuario),
-                    new Claim(ClaimTypes.Role, user.Rol), // "Admin" o "Vendedor"
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                };
-
-                // 3. Obtenemos la clave secreta desde appsettings.json
-                var secretKey = _configuration["JWT:Secret"];
-                if (string.IsNullOrEmpty(secretKey))
-                {
-                    return StatusCode(500, new { message = "Error de configuración del servidor (JWT Secret faltante)." });
-                }
-
-                var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-
-                // 4. Generamos el Token JWT (Expira en 3 horas)
-                var token = new JwtSecurityToken(
-                    issuer: _configuration["JWT:ValidIssuer"],
-                    audience: _configuration["JWT:ValidAudience"],
-                    expires: DateTime.Now.AddHours(3),
-                    claims: authClaims,
-                    signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-                );
-
-                // 5. Respuesta exitosa con el Token armado
-                return Ok(new LoginResponse
-                {
-                    Token = new JwtSecurityTokenHandler().WriteToken(token),
-                    Expiration = token.ValidTo,
-                    Username = user.NombreUsuario,
-                    Rol = user.Rol // Agregado para que el frontend sepa qué menú mostrar
-                });
+                Console.WriteLine($"   -> ID: {u.Id} | Username en DB: '{u.NombreUsuario}' | Activo: {u.Activo} | Hash: '{u.Password}'");
             }
 
-            // Si el usuario no existe, la clave es incorrecta o está desactivado (Activo == false)
-            return Unauthorized(new { message = "Usuario o contraseña incorrectos, o cuenta deshabilitada." });
+            // 1. Buscamos el usuario exacto (sin importar mayúsculas/minúsculas)
+            var user = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.NombreUsuario.ToLower() == model.Username.ToLower());
+
+            if (user == null)
+            {
+                Console.WriteLine($"[DIAGNOSTICO FALLO] -> No se encontró ningún usuario con el nombre '{model.Username}' en la base de datos.");
+                return Unauthorized(new { message = "Usuario o contraseña incorrectos, o cuenta deshabilitada." });
+            }
+
+            if (user.Activo == false)
+            {
+                Console.WriteLine($"[DIAGNOSTICO FALLO] -> El usuario '{model.Username}' existe pero está DESACTIVADO (Activo = false).");
+                return Unauthorized(new { message = "Usuario o contraseña incorrectos, o cuenta deshabilitada." });
+            }
+
+            bool passwordValida = false;
+
+            // 2. Verificación de contraseña con log detallado
+            try
+            {
+                if (!string.IsNullOrEmpty(user.Password) && user.Password.StartsWith("$2"))
+                {
+                    passwordValida = BCrypt.Net.BCrypt.Verify(model.Password, user.Password);
+                    Console.WriteLine($"[DIAGNOSTICO CONTRASEÑA] -> ¿Es válida usando BCrypt?: {passwordValida}");
+                }
+                else
+                {
+                    passwordValida = (model.Password == user.Password);
+                    Console.WriteLine($"[DIAGNOSTICO CONTRASEÑA] -> ¿Es válida usando Texto Plano?: {passwordValida} (DB: '{user.Password}' vs Input: '{model.Password}')");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DIAGNOSTICO ERROR] -> Falló la verificación: {ex.Message}");
+                passwordValida = (model.Password == user.Password);
+            }
+
+            if (!passwordValida)
+            {
+                Console.WriteLine($"[DIAGNOSTICO FALLO] -> La contraseña ingresada no coincide con la guardada.");
+                return Unauthorized(new { message = "Usuario o contraseña incorrectos, o cuenta deshabilitada." });
+            }
+
+            Console.WriteLine($"[DIAGNOSTICO ÉXITO] -> Login correcto para '{user.NombreUsuario}'. Generando Token...");
+
+            // 3. Generación de Token JWT común...
+            var authClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.NombreUsuario),
+                new Claim(ClaimTypes.Role, user.Rol), 
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            };
+
+            var secretKey = _configuration["JWT:Secret"];
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                return StatusCode(500, new { message = "Error de configuración del servidor (JWT Secret faltante)." });
+            }
+
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JWT:ValidIssuer"],
+                audience: _configuration["JWT:ValidAudience"],
+                expires: DateTime.Now.AddHours(3),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+            );
+
+            return Ok(new LoginResponse
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                Expiration = token.ValidTo,
+                Username = user.NombreUsuario,
+                Rol = user.Rol 
+            });
         }
     }
 
-    // ==========================================================
-    //  MODELOS DTO (Data Transfer Objects) PARA EL LOGIN
-    // ==========================================================
-    
     public class LoginRequest
     {
         public string Username { get; set; } = string.Empty;

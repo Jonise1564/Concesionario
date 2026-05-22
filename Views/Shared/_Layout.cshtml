@@ -12,7 +12,6 @@
 </head>
 <body>
     <header class="headerNav">
-        @* <nav class="navbar navbar-expand-sm navbar-dark navbar-custom position-absolute w-100 py-3"> *@
         <nav class="navbar navbar-expand-sm navbar-dark navbar-custom fixed-top w-100 py-3">
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
@@ -80,10 +79,28 @@
             const menuLogout = document.getElementById('menuLogout');
 
             if (token) {
-                // Si hay token, ocultamos "Acceso" y mostramos "Panel Admin" y "Salir"
                 if(menuAcceso) menuAcceso.style.display = 'none';
-                if(menuAdmin) menuAdmin.style.display = 'block';
                 if(menuLogout) menuLogout.style.display = 'block';
+
+                // Decodificamos el JWT para revisar los Claims de rol de .NET
+                try {
+                    const base64Url = token.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const payload = JSON.parse(window.atob(base64));
+
+                    // Buscamos los formatos típicos de claims que genera .NET para los roles
+                    const rol = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload["role"] || payload["Rol"];
+
+                    // SI Y SOLO SI es admin, habilitamos la visualización del botón
+                    if (rol && (rol.toLowerCase() === 'admin')) {
+                        if(menuAdmin) menuAdmin.style.display = 'block';
+                    } else {
+                        if(menuAdmin) menuAdmin.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error("Error al verificar el rol del token:", error);
+                    if(menuAdmin) menuAdmin.style.display = 'none';
+                }
             }
         });
 
@@ -153,7 +170,7 @@
             font-size: 14px;
             max-width: 80%;
             align-self: flex-start;
-            white-space: pre-line; /* 🔥 clave para los saltos */
+            white-space: pre-line;
         }
 
         /* MENSAJE USER */
@@ -262,7 +279,6 @@
                 });
 
                 const data = await res.json();
-
                 const textoFormateado = formatearPrecio(data.reply);
 
                 messages.innerHTML += `
@@ -281,6 +297,5 @@
             }
         });
     </script>
-
 </body>
 </html>
