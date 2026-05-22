@@ -47,7 +47,7 @@ builder.Services.AddAuthentication(options =>
             if (context.Request.Headers["Accept"].ToString().Contains("text/html"))
             {
                 context.HandleResponse();
-                context.Response.Redirect("/Home/Acceso");
+                context.Response.Redirect("Admin/Index");
             }
             return Task.CompletedTask;
         }
