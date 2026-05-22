@@ -1,4 +1,3 @@
-C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\appsettings.Development.json
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\appsettings.json
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Concesionario.staticwebassets.runtime.json
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\Concesionario.staticwebassets.endpoints.json
@@ -434,3 +433,4 @@ C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\MailKit.dll
 C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\MimeKit.dll
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-4zob8qzyy2-4zob8qzyy2.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-tfpz1ey6g5-tfpz1ey6g5.gz
+C:\Users\JSON\Desktop\Concesionario\bin\Debug\net10.0\BCrypt-Net-Next.dll

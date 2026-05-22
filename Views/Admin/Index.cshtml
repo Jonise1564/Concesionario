@@ -44,6 +44,7 @@
         font-weight: 600;
         text-transform: uppercase;
         font-size: 0.85rem;
+        cursor: pointer;
     }
 
     .nav-admin-link:hover, .nav-admin-link.active {
@@ -90,11 +91,9 @@
     <aside class="sidebar">
         <p class="text-muted small fw-bold mb-4 px-2">MENÚ ADMINISTRADOR</p>
         <nav>
-            <a href="#" class="nav-admin-link active"><i class="bi bi-car-front"></i> Vehículos</a>
-            <a href="#" class="nav-admin-link"><i class="bi bi-people"></i> Usuarios</a>
-            <a href="/Admin/Consultas" class="nav-admin-link">
-                <i class="bi bi-envelope"></i> Mensajes
-            </a>
+            <a onclick="cambiarSeccion('vehiculos')" id="btn-nav-vehiculos" class="nav-admin-link active"><i class="bi bi-car-front"></i> Vehículos</a>
+            <a onclick="cambiarSeccion('usuarios')" id="btn-nav-usuarios" class="nav-admin-link"><i class="bi bi-people"></i> Usuarios</a>
+            <a href="/Admin/Consultas" class="nav-admin-link"><i class="bi bi-envelope"></i> Mensajes</a>
             <a href="#" class="nav-admin-link"><i class="bi bi-gear"></i> Configuración</a>
             <hr class="border-secondary">
             <a href="/" class="nav-admin-link text-info"><i class="bi bi-arrow-left-circle"></i> Volver a la Web</a>
@@ -103,37 +102,41 @@
 
     <main class="main-content">
         <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-800 text-uppercase text-white">Gestión de <span class="text-danger">Stock</span></h2>
-                <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="abrirModal()">
-                    <i class="bi bi-plus-lg"></i> NUEVO INGRESO
-                </button>
+            <div id="seccion-vehiculos">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-800 text-uppercase text-white">Gestión de <span class="text-danger">Stock</span></h2>
+                    <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="abrirModal()">
+                        <i class="bi bi-plus-lg"></i> NUEVO INGRESO
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover border-secondary align-middle">
+                        <thead class="text-muted small">
+                            <tr>
+                                <th>FOTO</th>
+                                <th>ESTADO</th>
+                                <th>MARCA</th>
+                                <th>MODELO / VERSIÓN</th>
+                                <th>AÑO</th>
+                                <th>PRECIO</th>
+                                <th>STOCK</th>
+                                <th>ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaCuerpo">
+                            <tr>
+                                <td colspan="8" class="text-center p-5">
+                                    <div class="spinner-border text-danger" role="status"></div>
+                                    <p class="mt-2 text-muted">Cargando unidades...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-dark table-hover border-secondary align-middle">
-                    <thead class="text-muted small">
-                        <tr>
-                            <th>FOTO</th>
-                            <th>ESTADO</th>
-                            <th>MARCA</th>
-                            <th>MODELO / VERSIÓN</th>
-                            <th>AÑO</th>
-                            <th>PRECIO</th>
-                            <th>STOCK</th>
-                            <th>ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaCuerpo">
-                        <tr>
-                            <td colspan="8" class="text-center p-5">
-                                <div class="spinner-border text-danger" role="status"></div>
-                                <p class="mt-2 text-muted">Cargando unidades...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <partial name="_UsuariosModalYTabla" />
         </div>
     </main>
 </div>
@@ -234,6 +237,7 @@
     <script>
         const token = localStorage.getItem('jonel_token');
         const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
+        const modalUsuario = new bootstrap.Modal(document.getElementById('modalUsuario'));
 
         document.addEventListener("DOMContentLoaded", () => {
             if (!token) {
@@ -241,8 +245,40 @@
                 return;
             }
             listar();
+            cambiarSeccion('vehiculos');
         });
 
+        // --- FUNCIONES DE NAVEGACIÓN ---
+        function cambiarSeccion(seccion) {
+            const secVehiculos = document.getElementById('seccion-vehiculos');
+            const secUsuarios = document.getElementById('seccion-usuarios'); 
+            const btnVehiculos = document.getElementById('btn-nav-vehiculos');
+            const btnUsuarios = document.getElementById('btn-nav-usuarios');
+
+            if (seccion === 'vehiculos') {
+                if(secVehiculos) secVehiculos.style.display = 'block';
+                if(secUsuarios) secUsuarios.style.display = 'none';
+                btnVehiculos.classList.add('active');
+                btnUsuarios.classList.remove('active');
+            } else if (seccion === 'usuarios') {
+                if(secVehiculos) secVehiculos.style.display = 'none';
+                if(secUsuarios) secUsuarios.style.display = 'block';
+                btnVehiculos.classList.remove('active');
+                btnUsuarios.classList.add('active');
+                
+                // DISPARADOR DE CARGA AUTOMÁTICA DE USUARIOS
+                // Ejecuta la función del Partial si existe
+                if (typeof listarUsuarios === 'function') {
+                    listarUsuarios();
+                } else if (typeof cargarUsuarios === 'function') {
+                    cargarUsuarios();
+                } else if (typeof getUsuarios === 'function') {
+                    getUsuarios();
+                }
+            }
+        }
+
+        // --- LÓGICA DE VEHÍCULOS ---
         async function listar() {
             try {
                 const resp = await fetch('/Admin/GetVehiculos', {
@@ -267,7 +303,6 @@
                 }
 
                 cuerpo.innerHTML = data.map(v => {
-                    // Lógica para la ruta de la imagen
                     let imgPath = 'https://placehold.co/60x40/000?text=S/F';
                     if (v.imagenUrl) {
                         imgPath = v.imagenUrl.startsWith('http') ? v.imagenUrl : `/img/cars/${v.imagenUrl}`;
@@ -398,6 +433,7 @@
                 alert("Error de conexión al guardar.");
             }
         }
+
         async function eliminar(id) {
             if (confirm("¿Eliminar definitivamente este vehículo?")) {
                 try {
