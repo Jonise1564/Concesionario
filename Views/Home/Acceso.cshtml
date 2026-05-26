@@ -173,7 +173,7 @@
             this.querySelector('i').classList.toggle('bi-eye-slash');
         });
 
-        // 2. Lógica de Envío JWT con Mensaje de Éxito
+        // 2. Lógica de Envío JWT con validación estricta de Rol Administrador
         const form = document.getElementById('formLogin');
         const errorDiv = document.getElementById('loginError');
         const btnLogin = document.getElementById('btnLogin');
@@ -201,18 +201,42 @@
                 if (response.ok) {
                     const data = await response.json();
                     
-                    // --- EFECTO DE ÉXITO ---
+                    // Almacenamos el token devuelto por el servidor
                     localStorage.setItem('jonel_token', data.token);
                     localStorage.setItem('jonel_user', data.username);
 
-                    // Cambiamos el botón a modo "Éxito"
-                    btnLogin.style.backgroundColor = '#28a745'; // Color verde
+                    // --- DECODIFICACIÓN Y ANÁLISIS DEL ROL ---
+                    let esAdmin = false;
+                    try {
+                        const base64Url = data.token.split('.')[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const decodedPayload = JSON.parse(window.atob(base64));
+
+                        // Mapeo adaptativo según la estructura de Claims de tu backend (.NET Core)
+                        const rol = decodedPayload.Rol || 
+                                    decodedPayload.role || 
+                                    decodedPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
+                        if (rol === 'Admin') {
+                            esAdmin = true;
+                        }
+                    } catch (jwtError) {
+                        console.error("Error al procesar la estructura del token:", jwtError);
+                    }
+
+                    // --- EFECTO VISUAL DE ÉXITO ---
+                    btnLogin.style.backgroundColor = '#28a745'; 
                     btnLogin.style.borderColor = '#28a745';
                     btnText.innerHTML = '¡Acceso Concedido! <i class="bi bi-check-circle-fill ms-2"></i>';
 
-                    // Esperamos 1 segundo para que el usuario vea el éxito antes de ir al Home
+                    // Redirección condicionada al Rol del usuario posterior a la animación
                     setTimeout(() => {
-                        window.location.href = '/Admin/Index'; 
+                        if (esAdmin) {
+                            window.location.href = '/Admin/Index'; 
+                        } else {
+                            // Si es un rol de vendedor u otro no administrador, va a la raíz pública
+                            window.location.href = '/'; 
+                        }
                     }, 1200);
 
                 } else {

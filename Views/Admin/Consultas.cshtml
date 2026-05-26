@@ -1,3 +1,4 @@
+
 @{
     ViewData["Title"] = "Consultas";
 }
@@ -34,6 +35,18 @@
         font-size: 12px;
         font-weight: bold;
     }
+
+    .text-interes {
+        color: #ff3333; /* Rojo Jonel */
+        font-weight: bold;
+    }
+
+    /* Estilo sutil para diferenciar el texto de la respuesta del administrador */
+    .text-respuesta-admin {
+        color: #a0a0a0;
+        font-style: italic;
+        font-size: 0.95rem;
+    }
 </style>
 
 <div class="consultas-container">
@@ -55,8 +68,9 @@
                     <th>Cliente</th>
                     <th>Email</th>
                     <th>Teléfono</th>
+                    <th>Interés / Vehículo</th>
                     <th>Mensaje</th>
-                    <th>Fecha</th>
+                    <th>Respuesta</th> <th>Fecha</th>
                     <th>Estado</th>
                     <th>Acción</th>
                 </tr>
@@ -81,14 +95,20 @@
             </div>
 
             <div class="modal-body">
+                <div class="mb-3 p-2 bg-black border border-secondary rounded">
+                    <p class="mb-1 text-muted small">Interés del Cliente:</p>
+                    <h6 id="modalInteresInfo" class="text-interes mb-0">-</h6>
+                </div>
 
                 <input type="hidden" id="consultaId">
 
-                <textarea id="respuestaAdmin"
-                          class="form-control bg-black text-white border-secondary"
-                          rows="5"
-                          placeholder="Escribí la respuesta..."></textarea>
-
+                <div class="mb-2">
+                    <label class="form-label small text-muted">Escribí o modificá la respuesta:</label>
+                    <textarea id="respuestaAdmin"
+                              class="form-control bg-black text-white border-secondary"
+                              rows="5"
+                              placeholder="Escribí la respuesta..."></textarea>
+                </div>
             </div>
 
             <div class="modal-footer border-secondary">
@@ -110,84 +130,78 @@
 @section Scripts {
 
 <script>
-
     const token = localStorage.getItem('jonel_token');
-
-    const modal = new bootstrap.Modal(
-        document.getElementById('modalRespuesta')
-    );
+    const modal = new bootstrap.Modal(document.getElementById('modalRespuesta'));
+    
+    let consultasLocales = [];
 
     async function cargarConsultas() {
+        try {
+            const res = await fetch('/Admin/GetConsultas', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-        const res = await fetch('/Admin/GetConsultas', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+            const data = await res.json();
+            consultasLocales = data; 
 
-        const data = await res.json();
+            const tabla = document.getElementById('tablaConsultas');
 
-        const tabla = document.getElementById('tablaConsultas');
+            tabla.innerHTML = data.map(c => `
+                <tr>
+                    <td>${c.nombre}</td>
+                    <td>${c.email}</td>
+                    <td>${c.telefono}</td>
+                    <td class="text-interes">${c.interes || 'General / No especifica'}</td>
+                    <td style="max-width:200px;">${c.mensaje}</td>
+                    
+                    <td style="max-width:200px;" class="text-respuesta-admin">
+                        ${c.respuestaAdmin ? c.respuestaAdmin : '<span class="text-muted small">Sin responder aún</span>'}
+                    </td>
 
-        tabla.innerHTML = data.map(c => `
-
-            <tr>
-
-                <td>${c.nombre}</td>
-
-                <td>${c.email}</td>
-
-                <td>${c.telefono}</td>
-
-                <td style="max-width:250px;">
-                    ${c.mensaje}
-                </td>
-
-                <td>
-                    ${new Date(c.fecha).toLocaleDateString()}
-                </td>
-
-                <td>
-                    ${
-                        c.estado === "Pendiente"
-                        ? '<span class="badge-pendiente">Pendiente</span>'
-                        : '<span class="badge-respondido">Respondido</span>'
-                    }
-                </td>
-
-                <td>
-
-                    <button class="btn btn-sm btn-danger"
-                            onclick="abrirModal(${c.id})">
-
-                        Responder
-
-                    </button>
-
-                </td>
-
-            </tr>
-
-        `).join('');
+                    <td>${new Date(c.fecha).toLocaleDateString()}</td>
+                    <td>
+                        ${
+                            c.estado === "Pendiente"
+                            ? '<span class="badge-pendiente">Pendiente</span>'
+                            : '<span class="badge-respondido">Respondido</span>'
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="abrirModal(${c.id})">
+                            ${c.respuestaAdmin ? 'Editar Resp.' : 'Responder'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error("Error al cargar consultas:", error);
+        }
     }
 
     function abrirModal(id) {
-
         document.getElementById('consultaId').value = id;
 
-        document.getElementById('respuestaAdmin').value = "";
+        // Buscamos la consulta seleccionada en nuestra lista en memoria
+        const consultaSeleccionada = consultasLocales.find(c => c.id === id);
+        if (consultaSeleccionada) {
+            document.getElementById('modalInteresInfo').innerText = consultaSeleccionada.interes || 'General / No especifica';
+            
+            // 🆕 Si ya tenía una respuesta guardada antes, la cargamos en el textarea para que la pueda ver/editar
+            document.getElementById('respuestaAdmin').value = consultaSeleccionada.respuestaAdmin || "";
+        } else {
+            document.getElementById('respuestaAdmin').value = "";
+        }
 
         modal.show();
     }
 
     async function guardarRespuesta() {
-
         const id = document.getElementById('consultaId').value;
-
         const respuesta = document.getElementById('respuestaAdmin').value;
 
         const formData = new FormData();
-
         formData.append("id", id);
         formData.append("respuesta", respuesta);
 
@@ -200,17 +214,13 @@
         });
 
         if (res.ok) {
-
             modal.hide();
-
             cargarConsultas();
-
             alert("Respuesta guardada ✅");
         }
     }
 
     cargarConsultas();
-
 </script>
 
 }
