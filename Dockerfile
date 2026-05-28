@@ -10,7 +10,7 @@ RUN dotnet restore
 COPY . ./
 RUN dotnet publish -c Release -o out
 
-# 2. Etapa de ejecución usando el Runtime de .NET 10 (más liviano)
+# 2. Etapa de ejecución usando el Runtime de .NET 10
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build-env /app/out .
