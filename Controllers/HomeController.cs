@@ -34,6 +34,63 @@ public class HomeController : Controller
     public IActionResult Acceso() => View();
 
     [HttpPost]
+    // public async Task<IActionResult> EnviarContacto(ContactoModel model)
+    // {
+    //     if (!ModelState.IsValid)
+    //     {
+    //         return View("Contacto", model);
+    //     }
+
+    //     //guardamos la consulta en la db
+
+    //     var consulta = new Consulta
+    //     {
+    //         Nombre = model.Nombre,
+    //         Email = model.Email,
+    //         Telefono = model.Telefono,
+    //         Interes = model.Interes,
+    //         Modelo = model.Modelo,
+    //         Mensaje = model.Mensaje,
+    //         Estado = "Pendiente",
+    //     };
+
+    //     _context.Consultas.Add(consulta);
+    //     await _context.SaveChangesAsync();
+
+    //     var email = new MimeMessage();
+    //     email.From.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
+    //     email.To.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
+    //     email.Subject = "Nueva consulta desde la web";
+
+    //     email.Body = new TextPart("plain")
+    //     {
+    //         Text =
+    //             $"Nombre: {model.Nombre}\n"
+    //             + $"WhatsApp: {model.Telefono}\n"
+    //             + $"Email: {model.Email}\n"
+    //             + $"Interés: {model.Interes}\n"
+    //             + $"Mensaje: {model.Mensaje}",
+    //     };
+
+    //     using var smtp = new SmtpClient();
+
+    //     await smtp.ConnectAsync(
+    //         "smtp.gmail.com",
+    //         587,
+    //         MailKit.Security.SecureSocketOptions.StartTls
+    //     );
+
+    //     await smtp.AuthenticateAsync("roquerobertomiguellucero@gmail.com", "yxvw pnug qtdv rjvi");
+
+    //     await smtp.SendAsync(email);
+    //     await smtp.DisconnectAsync(true);
+
+    //     TempData["Mensaje"] = "Consulta enviada correctamente ✅";
+
+    //     return RedirectToAction("Contacto");
+    // }
+
+    [HttpPost]
     public async Task<IActionResult> EnviarContacto(ContactoModel model)
     {
         if (!ModelState.IsValid)
@@ -41,8 +98,7 @@ public class HomeController : Controller
             return View("Contacto", model);
         }
 
-        //guardamos la consulta en la db
-
+        // 1. Guardamos la consulta en la DB de forma segura primero
         var consulta = new Consulta
         {
             Nombre = model.Nombre,
@@ -52,43 +108,59 @@ public class HomeController : Controller
             Modelo = model.Modelo,
             Mensaje = model.Mensaje,
             Estado = "Pendiente",
+            Fecha = DateTime.Now // Asegúrate de setear la fecha si no tiene valor por defecto
         };
 
         _context.Consultas.Add(consulta);
         await _context.SaveChangesAsync();
 
-        var email = new MimeMessage();
-        email.From.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
-        email.To.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
-        email.Subject = "Nueva consulta desde la web";
-
-        email.Body = new TextPart("plain")
+        // 2. Intentamos enviar el mail sin arriesgar la experiencia del usuario
+        try
         {
-            Text =
-                $"Nombre: {model.Nombre}\n"
-                + $"WhatsApp: {model.Telefono}\n"
-                + $"Email: {model.Email}\n"
-                + $"Interés: {model.Interes}\n"
-                + $"Mensaje: {model.Mensaje}",
-        };
+            var email = new MimeMessage();
+            email.From.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
+            email.To.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
+            email.Subject = "Nueva consulta desde la web";
 
-        using var smtp = new SmtpClient();
+            email.Body = new TextPart("plain")
+            {
+                Text = $"Nombre: {model.Nombre}\n"
+                     + $"WhatsApp: {model.Telefono}\n"
+                     + $"Email: {model.Email}\n"
+                     + $"Interés: {model.Interes}\n"
+                     + $"Mensaje: {model.Mensaje}",
+            };
 
-        await smtp.ConnectAsync(
-            "smtp.gmail.com",
-            587,
-            MailKit.Security.SecureSocketOptions.StartTls
-        );
+            using var smtp = new SmtpClient();
+            
+            // Definimos un timeout corto (ej. 10 segundos) para que no cuelgue la app si el hosting bloquea el puerto
+            smtp.Timeout = 10000; 
 
-        await smtp.AuthenticateAsync("roquerobertomiguellucero@gmail.com", "yxvw pnug qtdv rjvi");
+            await smtp.ConnectAsync(
+                "smtp.gmail.com",
+                587,
+                MailKit.Security.SecureSocketOptions.StartTls
+            );
 
-        await smtp.SendAsync(email);
-        await smtp.DisconnectAsync(true);
-
-        TempData["Mensaje"] = "Consulta enviada correctamente ✅";
+            await smtp.AuthenticateAsync("roquerobertomiguellucero@gmail.com", "yxvw pnug qtdv rjvi");
+            await smtp.SendAsync(email);
+            await smtp.DisconnectAsync(true);
+            
+            TempData["Mensaje"] = "Consulta enviada correctamente ✅";
+        }
+        catch (Exception ex)
+        {
+            // Si el correo falla por culpa de la red de Render, no interrumpimos el flujo.
+            // La consulta ya está a salvo en la base de datos y la verás en tu panel de administración.
+            TempData["Mensaje"] = "Consulta recibida correctamente ✅ (Aviso por email en mantenimiento)";
+            
+            // Opcional: Podés loguear el error exacto en los logs de Render para analizarlo después:
+            Console.WriteLine($"Error controlado en MailKit: {ex.Message}");
+        }
 
         return RedirectToAction("Contacto");
     }
+
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
