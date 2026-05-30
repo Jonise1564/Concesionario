@@ -517,168 +517,33 @@
     </script>
 } *@
 
+
 @{
     ViewData["Title"] = "Panel de Control";
 }
 
-<style>
-    /* Base y Reseteo */
-    .admin-container {
-        display: flex;
-        min-height: 100vh;
-        background-color: #000;
-        padding-top: 75px; /* Sincronizado para evitar cortes con el navbar general */
-        width: 100%;
-    }
-
-    /* Barra Lateral - Escritorio */
-    .sidebar {
-        width: 260px;
-        background-color: #0b0b0b;
-        border-right: 1px solid #222;
-        padding: 20px;
-        position: fixed;
-        top: 75px; /* Ajustado para acoplarse abajo de la Navbar */
-        left: 0;
-        bottom: 0;
-        z-index: 99;
-        overflow-y: auto;
-    }
-
-    /* Contenido Principal - Escritorio */
-    .main-content {
-        margin-left: 260px; 
-        flex: 1;
-        padding: 30px;
-        width: calc(100% - 260px);
-        background-color: #000;
-    }
-
-    /* Enlaces de Navegación */
-    .nav-admin-link {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        color: #888;
-        text-decoration: none;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        transition: 0.3s;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        cursor: pointer;
-    }
-
-    .nav-admin-link:hover, .nav-admin-link.active {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .nav-admin-link i { 
-        margin-right: 10px; 
-        font-size: 1.1rem; 
-    }
-
-    .table-dark { background-color: #0b0b0b !important; }
-    .fixed-top { z-index: 1030 !important; }
-
-    /* Estilos del Preview de Imagen */
-    .preview-container {
-        border: 2px dashed #333;
-        height: 250px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #050505;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    #imgPreview {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-    .img-thumb-table {
-        width: 60px;
-        height: 40px;
-        object-fit: cover;
-        border-radius: 4px;
-        border: 1px solid #333;
-    }
-
-    /* Estilo para el switch inactivo */
-    .form-check-input:not(:checked) {
-        background-color: #333;
-        border-color: #444;
-    }
-
-    /* ==========================================================
-        🛠️ SOLUCIÓN PARA EL MARCO BLANCO SUPERIOR (NAVBAR FIX)
-       ========================================================== */
-    .navbar, .fixed-top, nav.fixed-top {
-        background-color: #000000 !important; /* Forzamos fondo negro absoluto */
-        background-image: none !important;    /* Quitamos cualquier degradado transparente */
-        border-bottom: 1px solid #222 !important; /* Añade un sutil divisor estético */
-    }
-
-    /* ==========================================================
-        📱 CORRECCIÓN CRÍTICA DE DISEÑO RESPONSIVO (CELULARES/TABLETS)
-       ========================================================== */
-    @@media (max-width: 991.98px) {
-        .admin-container {
-            flex-direction: column !important;
-            padding-top: 65px;
-        }
-
-        .sidebar {
-            position: static !important; /* Destruye el fixed que rompe el layout */
-            width: 100% !important;
-            height: auto !important;
-            border-right: none;
-            border-bottom: 1px solid #222;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 0;
-        }
-
-        .main-content {
-            margin-left: 0 !important;
-            width: 100% !important;
-            padding: 15px;
-        }
-
-        nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        
-        .nav-admin-link {
-            margin-bottom: 0;
-            flex: 1 1 calc(50% - 8px); /* Dos botones por fila en móvil */
-            justify-content: center;
-            font-size: 0.75rem;
-            padding: 10px;
-        }
-        
-        .sidebar hr {
-            display: none; /* Oculta la línea divisoria en móvil para ganar espacio */
-        }
-    }
-</style>
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-panel.css" />
+}
 
 <div class="admin-container">
-    <br>
-    <br>
-    <br>
+    <br><br><br>
+    
     <aside class="sidebar">
         <p class="text-muted small fw-bold mb-4 px-2 d-none d-lg-block">MENÚ ADMINISTRADOR</p>
         <nav>
-            <a onclick="cambiarSeccion('vehiculos')" id="btn-nav-vehiculos" class="nav-admin-link active"><i class="bi bi-car-front"></i> Vehículos</a>
-            <a onclick="cambiarSeccion('usuarios')" id="btn-nav-usuarios" class="nav-admin-link"><i class="bi bi-people"></i> Usuarios</a>
-            <a href="/Admin/Consultas" class="nav-admin-link"><i class="bi bi-envelope"></i> Mensajes</a>
-            <a href="#" class="nav-admin-link"><i class="bi bi-gear"></i> Ajustes</a>
+            <a onclick="cambiarSeccion('vehiculos')" id="btn-nav-vehiculos" class="nav-admin-link active">
+                <i class="bi bi-car-front"></i> Vehículos
+            </a>
+            <a onclick="cambiarSeccion('usuarios')" id="btn-nav-usuarios" class="nav-admin-link">
+                <i class="bi bi-people"></i> Usuarios
+            </a>
+            <a href="/Admin/Consultas" class="nav-admin-link">
+                <i class="bi bi-envelope"></i> Mensajes
+            </a>
+            <a onclick="cambiarSeccion('ajustes')" id="btn-nav-ajustes" class="nav-admin-link">
+                <i class="bi bi-gear"></i> Ajustes
+            </a>
             <hr class="border-secondary">
             <a href="/" class="nav-admin-link text-info"><i class="bi bi-arrow-left-circle"></i> Web</a>
         </nav>
@@ -686,406 +551,70 @@
 
     <main class="main-content">
         <div class="container-fluid">
-            <div id="seccion-vehiculos">
-                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
-                    <h2 class="fw-800 text-uppercase text-white m-0">Gestión de <span class="text-danger">Stock</span></h2>
-                    <button class="btn btn-danger btn-sm px-4 fw-bold w-100 w-sm-auto" onclick="abrirModal()">
-                        <i class="bi bi-plus-lg"></i> NUEVO INGRESO
-                    </button>
-                </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-12 col-md-8">
-                        <div class="input-group">
-                            <span class="input-group-text bg-black border-secondary text-muted"><i class="bi bi-search"></i></span>
-                            <input type="text" id="buscarVehiculo" class="form-control bg-black border-secondary text-white" placeholder="Buscar por marca, modelo o versión..." oninput="filtrarVehiculos()">
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <select id="filtrarEstado" class="form-select bg-black border-secondary text-white" onchange="filtrarVehiculos()">
-                            <option value="todos">Todos los estados</option>
-                            <option value="activos">Visibles (Activos)</option>
-                            <option value="inactivos">Ocultos (Inactivos)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover border-secondary align-middle">
-                        <thead class="text-muted small">
-                            <tr>
-                                <th>FOTO</th>
-                                <th>ESTADO</th>
-                                <th>MARCA</th>
-                                <th>MODELO / VERSIÓN</th>
-                                <th>AÑO</th>
-                                <th>PRECIO</th>
-                                <th>STOCK</th>
-                                <th>ACCIONES</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaCuerpo">
-                            <tr>
-                                <td colspan="8" class="text-center p-5">
-                                    <div class="spinner-border text-danger" role="status"></div>
-                                    <p class="mt-2 text-muted">Cargando unidades...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            
+            <partial name="_VehiculosSection" />
 
             <partial name="_UsuariosModalYTabla" />
+
+            <partial name="_AjustesSection" />
+
         </div>
     </main>
-</div>
-
-<div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content bg-dark border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title fw-bold text-white" id="modalTitulo">DATOS DEL VEHÍCULO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-white">
-                <form id="formVehiculo" enctype="multipart/form-data">
-                    <input type="hidden" id="vId" name="Id" value="0">
-                    <input type="hidden" id="vImagenUrl" name="ImagenUrl">
-
-                    <div class="row">
-                        <div class="col-md-8 border-end border-secondary">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Marca</label>
-                                    <input type="text" id="vMarca" name="Marca" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Modelo</label>
-                                    <input type="text" id="vModelo" name="Modelo" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Versión</label>
-                                    <input type="text" id="vVersion" name="Version" class="form-control bg-black border-secondary text-white">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Año</label>
-                                    <input type="number" id="vAnio" name="Anio" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Kilómetros</label>
-                                    <input type="number" id="vKilometros" name="Kilometros" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Precio</label>
-                                    <input type="number" id="vPrecio" name="Precio" class="form-control bg-black border-secondary text-white" required>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Stock</label>
-                                    <input type="number" id="vStock" name="Stock" class="form-control bg-black border-secondary text-white" required value="1">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Categoría ID</label>
-                                    <input type="number" id="vCategoriaId" name="CategoriaId" class="form-control bg-black border-secondary text-white" required value="1">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Combustible</label>
-                                    <select id="vCombustible" name="Combustible" class="form-select bg-black border-secondary text-white">
-                                        <option value="Nafta">Nafta</option>
-                                        <option value="Diesel">Diesel</option>
-                                        <option value="Híbrido">Híbrido</option>
-                                        <option value="Eléctrico">Eléctrico</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Transmisión</label>
-                                    <select id="vTransmision" name="Transmision" class="form-select bg-black border-secondary text-white">
-                                        <option value="Manual">Manual</option>
-                                        <option value="Automática">Automática</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <div class="form-check form-switch p-3 bg-black rounded border border-secondary">
-                                        <input class="form-check-input" type="checkbox" id="vActivo" name="Activo" checked>
-                                        <label class="form-check-label small fw-bold text-white text-uppercase ms-2">Visible en la Web Pública</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold text-danger text-uppercase">Subir Fotografía</label>
-                                <input type="file" id="vFotoFile" name="FotoArchivo" class="form-control bg-black border-secondary text-white" accept="image/*" onchange="seleccionarArchivo(this)">
-                            </div>
-                            <div class="preview-container mt-2">
-                                <img id="imgPreview" src="" onerror="this.src='https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen'">
-                            </div>
-                            <p class="text-center small text-muted mt-2">Vista previa de la unidad</p>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
-                <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" onclick="guardar()">GUARDAR CAMBIOS</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 @section Scripts {
     <script>
         const token = localStorage.getItem('jonel_token');
-        const myModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
-        const modalUsuario = new bootstrap.Modal(document.getElementById('modalUsuario'));
-        
-        // 💾 ALMACENAMIENTO GLOBAL DEL STOCK PARA FILTRADO LOCAL
-        let cacheVehiculos = [];
+        const modalUsuario = document.getElementById('modalUsuario') ? new bootstrap.Modal(document.getElementById('modalUsuario')) : null;
 
         document.addEventListener("DOMContentLoaded", () => {
             if (!token) {
                 window.location.href = '/Home/Acceso';
                 return;
             }
-            listar();
+            if (typeof listar === 'function') listar();
             cambiarSeccion('vehiculos');
         });
 
-        // --- FUNCIONES DE NAVEGACIÓN ---
         function cambiarSeccion(seccion) {
             const secVehiculos = document.getElementById('seccion-vehiculos');
             const secUsuarios = document.getElementById('seccion-usuarios'); 
+            const secAjustes = document.getElementById('seccion-ajustes');
+
             const btnVehiculos = document.getElementById('btn-nav-vehiculos');
             const btnUsuarios = document.getElementById('btn-nav-usuarios');
+            const btnAjustes = document.getElementById('btn-nav-ajustes');
 
-            if (seccion === 'vehiculos') {
-                if(secVehiculos) secVehiculos.style.display = 'block';
-                if(secUsuarios) secUsuarios.style.display = 'none';
+            // Resetear visibilidad
+            if(secVehiculos) secVehiculos.style.display = 'none';
+            if(secUsuarios) secUsuarios.style.display = 'none';
+            if(secAjustes) secAjustes.style.display = 'none';
+
+            btnVehiculos?.classList.remove('active');
+            btnUsuarios?.classList.remove('active');
+            btnAjustes?.classList.remove('active');
+
+            // Activar sección seleccionada
+            if (seccion === 'vehiculos' && secVehiculos) {
+                secVehiculos.style.display = 'block';
                 btnVehiculos.classList.add('active');
-                btnUsuarios.classList.remove('active');
-            } else if (seccion === 'usuarios') {
-                if(secVehiculos) secVehiculos.style.display = 'none';
-                if(secUsuarios) secUsuarios.style.display = 'block';
-                btnVehiculos.classList.remove('active');
+            } else if (seccion === 'usuarios' && secUsuarios) {
+                secUsuarios.style.display = 'block';
                 btnUsuarios.classList.add('active');
                 
-                if (typeof listarUsuarios === 'function') {
-                    listarUsuarios();
-                } else if (typeof cargarUsuarios === 'function') {
-                    cargarUsuarios();
-                } else if (typeof getUsuarios === 'function') {
-                    getUsuarios();
-                }
-            }
-        }
-
-        // --- LÓGICA DE VEHÍCULOS ---
-        async function listar() {
-            try {
-                const resp = await fetch('/Admin/GetVehiculos', {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (resp.status === 401) {
-                    console.error("No autorizado");
-                    window.location.href = '/Home/Acceso';
-                    return;
-                }
-
-                if (!resp.ok) throw new Error("Error en el servidor: " + resp.status);
-
-                const data = await resp.json();
-                
-                // Guardamos el listado original en nuestra variable global
-                cacheVehiculos = data.items ? data.items : data;
-
-                // Renderizamos por primera vez
-                inyectarTabla(cacheVehiculos);
-
-            } catch (err) { 
-                console.error("Error al listar:", err);
-                document.getElementById('tablaCuerpo').innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error de conexión: ${err.message}</td></tr>`;
-            }
-        }
-
-        // 📊 FUNCIÓN PARA INYECTAR LOS CAMPOS EN LA TABLA
-        function inyectarTabla(lista) {
-            const cuerpo = document.getElementById('tablaCuerpo');
-
-            if (!lista || lista.length === 0) {
-                cuerpo.innerHTML = '<tr><td colspan="8" class="text-center text-muted p-4">No se encontraron vehículos coincidentes</td></tr>';
-                return;
-            }
-
-            cuerpo.innerHTML = lista.map(v => {
-                let imgPath = 'https://placehold.co/60x40/00?text=S/F';
-                if (v.imagenUrl) {
-                    imgPath = v.imagenUrl.startsWith('http') ? v.imagenUrl : `/img/cars/${v.imagenUrl}`;
-                }
-
-                return `
-                    <tr class="align-middle">
-                        <td>
-                            <img src="${imgPath}" class="img-thumb-table" onerror="this.src='https://placehold.co/60x40/00?text=S/F'">
-                        </td>
-                        <td>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" ${v.activo ? 'checked' : ''} onclick="toggleEstado(${v.id})">
-                            </div>
-                        </td>
-                        <td class="fw-bold text-white">${v.marca}</td>
-                        <td class="text-white">${v.modelo} <br><small class="text-muted">${v.version || ''}</small></td>
-                        <td class="text-white">${v.anio}</td>
-                        <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
-                        <td class="text-white">${v.stock}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'>
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        // ⚡ FILTRADO EN TIEMPO REAL (SIN RECARGAR DE BD)
-        function filtrarVehiculos() {
-            const textoBusqueda = document.getElementById('buscarVehiculo').value.toLowerCase().trim();
-            const filtroEstado = document.getElementById('filtrarEstado').value;
-
-            const resultadoFiltrado = cacheVehiculos.filter(v => {
-                // 1. Filtrado por texto (Marca, Modelo o Versión)
-                const cumpleTexto = 
-                    v.marca.toLowerCase().includes(textoBusqueda) || 
-                    v.modelo.toLowerCase().includes(textoBusqueda) || 
-                    (v.version && v.version.toLowerCase().includes(textoBusqueda));
-
-                // 2. Filtrado por estado del combo select
-                let cumpleEstado = true;
-                if (filtroEstado === 'activos') cumpleEstado = v.activo === true;
-                if (filtroEstado === 'inactivos') cumpleEstado = v.activo === false;
-
-                return cumpleTexto && cumpleEstado;
-            });
-
-            inyectarTabla(resultadoFiltrado);
-        }
-
-        function seleccionarArchivo(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('imgPreview').src = e.target.result;
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function actualizarPreview() {
-            const nombreArchivo = document.getElementById('vImagenUrl').value;
-            const imgElement = document.getElementById('imgPreview');
-            
-            if (nombreArchivo) {
-                imgElement.src = nombreArchivo.startsWith('http') ? nombreArchivo : `/img/cars/${nombreArchivo}`;
-            } else {
-                imgElement.src = 'https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen';
-            }
-        }
-
-        async function toggleEstado(id) {
-            try {
-                const resp = await fetch(`/Admin/CambiarEstado?id=${id}`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                // Actualizamos la caché local modificando el valor de la propiedad 'activo'
-                const vehiculo = cacheVehiculos.find(v => v.id === id);
-                if (vehiculo) vehiculo.activo = !vehiculo.activo;
-
-                if (!resp.ok) listar(); 
-            } catch (err) { 
-                console.error(err);
-                listar();
-            }
-        }
-
-        function abrirModal() {
-            document.getElementById('modalTitulo').innerText = "NUEVO INGRESO DE VEHÍCULO";
-            document.getElementById('formVehiculo').reset();
-            document.getElementById('vId').value = "0";
-            document.getElementById('vImagenUrl').value = "";
-            document.getElementById('vFotoFile').value = "";
-            document.getElementById('vActivo').checked = true;
-            actualizarPreview();
-            myModal.show();
-        }
-
-        function editar(v) {
-            document.getElementById('modalTitulo').innerText = "MODIFICAR VEHÍCULO";
-            document.getElementById('vId').value = v.id;
-            document.getElementById('vMarca').value = v.marca;
-            document.getElementById('vModelo').value = v.modelo;
-            document.getElementById('vVersion').value = v.version || '';
-            document.getElementById('vAnio').value = v.anio;
-            document.getElementById('vKilometros').value = v.kilometros;
-            document.getElementById('vPrecio').value = v.precio;
-            document.getElementById('vStock').value = v.stock;
-            document.getElementById('vCombustible').value = v.combustible;
-            document.getElementById('vTransmision').value = v.transmision;
-            document.getElementById('vCategoriaId').value = v.categoriaId;
-            document.getElementById('vImagenUrl').value = v.imagenUrl || '';
-            document.getElementById('vActivo').checked = v.activo;
-            document.getElementById('vFotoFile').value = ""; 
-            actualizarPreview();
-            myModal.show();
-        }
-
-        async function guardar() {
-            const form = document.getElementById('formVehiculo');
-            if(!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            const formData = new FormData(form);
-            formData.set('Activo', document.getElementById('vActivo').checked);
-
-            try {
-                const response = await fetch('/Admin/Guardar', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    myModal.hide();
-                    listar();
-                } else {
-                    const error = await response.json();
-                    alert("Error: " + (error.message || "No se pudo guardar."));
-                }
-            } catch (err) {
-                alert("Error de conexión al guardar.");
-            }
-        }
-
-        async function eliminar(id) {
-            if (confirm("¿Eliminar definitivamente este vehículo?")) {
-                try {
-                    const resp = await fetch(`/Admin/Eliminar?id=${id}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if(resp.ok) listar();
-                } catch (err) {
-                    alert("Error al eliminar.");
-                }
+                if (typeof listarUsuarios === 'function') listarUsuarios();
+                else if (typeof cargarUsuarios === 'function') cargarUsuarios();
+                else if (typeof getUsuarios === 'function') getUsuarios();
+            } else if (seccion === 'ajustes' && secAjustes) {
+                secAjustes.style.display = 'block';
+                btnAjustes.classList.add('active');
             }
         }
     </script>
+    
+    <script src="~/js/admin-vehiculos.js"></script>
 }
+
+
+
+
