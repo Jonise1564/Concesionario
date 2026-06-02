@@ -3,7 +3,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/admin-panel.css" />
+    <link rel="stylesheet" href="~/css/admin-panel.css" asp-append-version="true" />
 }
 
 <div class="admin-container">
@@ -17,6 +17,9 @@
             </a>
             <a onclick="cambiarSeccion('usuarios')" id="btn-nav-usuarios" class="nav-admin-link">
                 <i class="bi bi-people"></i> Usuarios
+            </a>
+            <a onclick="cambiarSeccion('vendedores')" id="btn-nav-vendedores" class="nav-admin-link">
+                <i class="bi bi-person-badge"></i> Vendedores
             </a>
             <a href="/Admin/Consultas" class="nav-admin-link">
                 <i class="bi bi-envelope"></i> Mensajes
@@ -35,6 +38,8 @@
             <partial name="_VehiculosSection" />
 
             <partial name="_UsuariosModalYTabla" />
+
+            <partial name="_VendedoresSection" />
 
             <partial name="_AjustesSection" />
 
@@ -59,19 +64,23 @@
         function cambiarSeccion(seccion) {
             const secVehiculos = document.getElementById('seccion-vehiculos');
             const secUsuarios = document.getElementById('seccion-usuarios'); 
+            const secVendedores = document.getElementById('seccion-vendedores'); 
             const secAjustes = document.getElementById('seccion-ajustes');
 
             const btnVehiculos = document.getElementById('btn-nav-vehiculos');
             const btnUsuarios = document.getElementById('btn-nav-usuarios');
+            const btnVendedores = document.getElementById('btn-nav-vendedores'); 
             const btnAjustes = document.getElementById('btn-nav-ajustes');
 
             // Resetear visibilidad
             if(secVehiculos) secVehiculos.style.display = 'none';
             if(secUsuarios) secUsuarios.style.display = 'none';
+            if(secVendedores) secVendedores.style.display = 'none'; 
             if(secAjustes) secAjustes.style.display = 'none';
 
             btnVehiculos?.classList.remove('active');
             btnUsuarios?.classList.remove('active');
+            btnVendedores?.classList.remove('active'); 
             btnAjustes?.classList.remove('active');
 
             // Activar sección seleccionada
@@ -85,6 +94,12 @@
                 if (typeof listarUsuarios === 'function') listarUsuarios();
                 else if (typeof cargarUsuarios === 'function') cargarUsuarios();
                 else if (typeof getUsuarios === 'function') getUsuarios();
+            } else if (seccion === 'vendedores' && secVendedores) {
+                secVendedores.style.display = 'block';
+                btnVendedores.classList.add('active');
+                
+                if (typeof listarVendedores === 'function') listarVendedores();
+                else if (typeof cargarVendedores === 'function') cargarVendedores();
             } else if (seccion === 'ajustes' && secAjustes) {
                 secAjustes.style.display = 'block';
                 btnAjustes.classList.add('active');
@@ -92,9 +107,6 @@
         }
     </script>
     
-    <script src="~/js/admin-vehiculos.js"></script>
+    <script src="~/js/admin-vehiculos.js" asp-append-version="true"></script>
+    <script src="~/js/admin-vendedores.js" asp-append-version="true"></script>
 }
-
-
-
-

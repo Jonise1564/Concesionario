@@ -136,3 +136,54 @@
         display: none;
     }
 }
+
+/* ========================================================
+   Componentes: Modales y Formularios (Modo Oscuro)
+   ======================================================== */
+
+/* Forzar que el fondo del modal acompañe la estética del panel */
+.modal-content {
+    background-color: #0b0b0b !important;
+    border: 1px solid #222 !important;
+}
+
+/* Títulos de secciones y etiquetas de campos legibles */
+.modal-body label, 
+.modal-body .form-label,
+.modal-body h5 {
+    color: #f8f9fa !important;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+/* Inputs, Selects y Textareas con fondo oscuro y texto claro */
+.modal-content input.form-control,
+.modal-content select.form-select,
+.modal-content textarea.form-control {
+    background-color: #161616 !important;
+    color: #ffffff !important;
+    border: 1px solid #333333 !important;
+}
+
+/* Focus de los controles integrado al color del sistema (Rojo) */
+.modal-content input.form-control:focus,
+.modal-content select.form-select:focus,
+.modal-content textarea.form-control:focus {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Contraste corregido para los textos de ejemplo (Placeholders) */
+.modal-content input.form-control::placeholder,
+.modal-content textarea.form-control::placeholder {
+    color: #6c757d !important;
+}
+
+/* Ajustes de bordes de estructura interna y botón cerrar */
+.modal-header, .modal-footer {
+    border-color: #222222 !important;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
