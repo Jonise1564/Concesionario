@@ -359,10 +359,8 @@ C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\scopedcss\Views\Shared\_La
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\scopedcss\bundle\Concesionario.styles.css
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\scopedcss\projectbundle\Concesionario.bundle.scp.css
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-4zob8qzyy2-4zob8qzyy2.gz
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-tfpz1ey6g5-tfpz1ey6g5.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\ofy8utyl77-{0}-61n19gt1b8-61n19gt1b8.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\fldndm23ei-{0}-prpvbov7ls-prpvbov7ls.gz
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\u14ttytn8p-{0}-xhlkhg360j-xhlkhg360j.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\pok7n4mbzr-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\g2r8xc8vtw-{0}-t1cqhe9u97-t1cqhe9u97.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\nws25mg7fo-{0}-c2jlpeoesf-c2jlpeoesf.gz
@@ -437,3 +435,5 @@ C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\Concesionario.pdb
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\Concesionario.genruntimeconfig.cache
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\ref\Concesionario.dll
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\w99nbukeao-{0}-xvu42978hz-xvu42978hz.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-cuusv5nrul-cuusv5nrul.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\u14ttytn8p-{0}-o79mu520gw-o79mu520gw.gz

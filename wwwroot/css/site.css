@@ -1,4 +1,63 @@
-/* NAVBAR */
+/* ========================================================
+   1. DEFINICIÓN DE VARIABLES POR TEMA
+   ======================================================== */
+
+/* --- CONFIGURACIÓN PARA MODO OSCURO (Default) --- */
+[data-bs-theme="dark"] {
+    --bg-principal: #121212;
+    --bg-surface: #1e1e1e;
+    --bg-bienvenida: #000000;
+    
+    --text-principal: #ffffff;
+    --text-secundario: #dbdbdb;
+    --text-mutado: #777777;
+    --text-navbar: rgba(255, 255, 255, 0.85);
+    --text-navbar-hover: #ffffff;
+    
+    --border-color: #333333;
+    --chat-bg: #1e1e1e;
+    --chat-msg-bot: #2a2a2a;
+}
+
+/* --- CONFIGURACIÓN PARA MODO CLARO --- */
+[data-bs-theme="light"] {
+    --bg-principal: #ffffff;
+    --bg-surface: #f8f9fa;
+    --bg-bienvenida: #f1f3f5;
+    
+    --text-principal: #212529;
+    --text-secundario: #495057;
+    --text-mutado: #6c757d;
+    --text-navbar: rgba(33, 37, 41, 0.85);
+    --text-navbar-hover: #000000;
+    
+    --border-color: #dee2e6;
+    --chat-bg: #ffffff;
+    --chat-msg-bot: #f1f3f5;
+}
+
+/* ========================================================
+   2. ESTILOS UNIFICADOS (Estructura base del sitio)
+   ======================================================== */
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-principal);
+    color: var(--text-principal);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3 {
+    font-weight: 800;
+    color: var(--text-principal);
+}
+
+p {
+    font-weight: 400;
+    color: var(--text-secundario);
+}
+
+/* --- NAVBAR --- */
 .navbar-custom {
     background: transparent;
     backdrop-filter: blur(10px);
@@ -12,45 +71,127 @@
     z-index: 1000;
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-}
-
-h1, h2, h3 {
-    font-weight: 800;
-}
-
-p {
-    font-weight: 400;
-}
-
-/* LOGO */
 .logo {
     height: 90px;
 }
 
-/* LINKS */
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-principal) !important;
+}
+
 .nav-link {
     text-transform: uppercase;
     font-size: 0.85rem;
     font-weight: 600;
     margin: 0 10px;
-    color: white !important;
+    color: var(--text-navbar) !important;
+    transition: color 0.2s ease;
 }
 
-/* BRAND */
-.navbar-brand {
+.nav-link:hover {
+    color: var(--text-navbar-hover) !important;
+}
+
+/* Ajuste específico para no romper tus botones de navegación de colores */
+.nav-link.text-danger { color: #eb0a1e !important; }
+.nav-link.text-danger:hover { color: #c30817 !important; }
+
+/* --- SECCIÓN HERO (Siempre se mantiene oscura por la imagen de fondo) --- */
+.hero {
+    height: 100vh;
+    background: url('/img/auto.jpg') no-repeat center center/cover;
+    position: relative;
+}
+
+.hero-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.hero-content {
+    position: relative;
+    color: #ffffff !important;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.hero-content h1 {
+    color: #ffffff !important;
+    font-size: 3rem;
+}
+
+.subtitulo {
+    letter-spacing: 3px;
+    font-size: 0.8rem;
+    color: #eb0a1e;
+}
+
+.descripcion {
+    max-width: 600px;
+    margin: 10px auto;
+    color: #dbdbdb;
+}
+
+.btn-hero {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 25px;
+    border-radius: 30px;
+    background: #eb0a1e;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.btn-hero:hover {
+    background: #c30817;
+}
+
+/* --- SECCIÓN BIENVENIDA --- */
+.bienvenida {
+    padding: 80px 0;
+    background-color: var(--bg-bienvenida);
+    transition: background-color 0.3s ease;
+}
+
+.titulo-bienvenida {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-secundario);
+}
+
+.titulo-bienvenida span {
     font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: white !important;
+    color: var(--text-principal);
 }
 
-/* FOOTER */
+.linea {
+    width: 60px;
+    height: 3px;
+    background: #eb0a1e;
+    margin: 20px auto;
+    border-radius: 10px;
+}
+
+.texto-bienvenida {
+    color: var(--text-secundario);
+    max-width: 500px;
+    margin: auto;
+}
+
+/* --- FOOTER --- */
 .footer {
-    background: #111;
-    color: white;
+    background-color: var(--bg-surface);
+    color: var(--text-principal);
     padding: 40px 0;
+    border-top: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .footer-title {
@@ -59,7 +200,7 @@ p {
 }
 
 .footer-text {
-    color: #aaa;
+    color: var(--text-secundario);
     font-size: 0.9rem;
 }
 
@@ -72,6 +213,73 @@ p {
 
 .footer-copy {
     font-size: 0.8rem;
-    color: #777;
+    color: var(--text-mutado);
 }
 
+/* --- COMPONENTE CHAT FLOTANTE --- */
+#chat-bubble {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #eb0a1e;
+    color: white;
+    padding: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+#chat-box {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 340px;
+    height: 550px;
+    background-color: var(--chat-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 9999;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+#chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    color: var(--text-principal);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.chat-content {
+    background-color: var(--chat-msg-bot);
+    padding: 10px 14px;
+    border-radius: 12px;
+    max-width: 80%;
+    color: var(--text-principal);
+}
+
+#chat-input {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    padding: 12px;
+    outline: none;
+    width: 100%;
+    background-color: var(--chat-msg-bot);
+    color: var(--text-principal);
+}
+
+.mensaje-user {
+    background: #eb0a1e;
+    color: white !important;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    max-width: 80%;
+    align-self: flex-end;
+}

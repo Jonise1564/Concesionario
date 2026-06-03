@@ -7,65 +7,57 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     <style>
-        /* Estilos Base Modo Oscuro */
-        body { background-color: #121212; color: #e0e0e0; margin-top: 6rem; }
+        /* Estilos Base Adaptables al Tema */
+        body { margin-top: 6rem; }
 
         .fw-900 { font-weight: 900; }
         .text-danger { color: #eb0a1e !important; }
 
         /* Cabecera */
-        .titulo-seccion { color: #ffffff; border-left: 5px solid #eb0a1e; padding-left: 15px; }
+        .titulo-seccion { border-left: 5px solid #eb0a1e; padding-left: 15px; }
 
-        /* Panel de Filtros Dark */
-        .filtro-dark {
-            background-color: #1e1e1e !important;
-            border: 1px solid #333 !important;
-            color: #fff;
-        }
+        /* Panel de Filtros Variables */
+        [data-bs-theme="dark"] .filtro-dark { background-color: #1e1e1e !important; border: 1px solid #333 !important; color: #fff; }
+        [data-bs-theme="light"] .filtro-dark { background-color: #f8f9fa !important; border: 1px solid #dee2e6 !important; color: #212529; }
         
-        /* Estilo para que las letras de los labels sean blancas */
         .filtro-dark label {
-            color: #ffffff !important;
-            opacity: 0.9;
             margin-bottom: 0.5rem;
         }
 
-        .filtro-dark .form-control, .filtro-dark .input-group-text {
-            background-color: #2a2a2a;
-            border-color: #444;
-            color: #fff !important; /* Texto que escribe el usuario en blanco */
+        [data-bs-theme="dark"] .filtro-dark .form-control, [data-bs-theme="dark"] .filtro-dark .input-group-text {
+            background-color: #2a2a2a; border-color: #444; color: #fff !important;
         }
-
-        .filtro-dark .form-control::placeholder {
-            color: #777 !important;
+        [data-bs-theme="light"] .filtro-dark .form-control, [data-bs-theme="light"] .filtro-dark .input-group-text {
+            background-color: #ffffff; border-color: #ced4da; color: #212529 !important;
         }
 
         .filtro-dark .form-control:focus {
-            background-color: #333;
             border-color: #eb0a1e;
-            color: #fff;
             box-shadow: none;
         }
 
-        /* Tarjetas Dark */
-        .tarjeta-dark {
-            background-color: #1e1e1e !important;
-            border: 1px solid #2a2a2a !important;
-            transition: all 0.3s ease;
-        }
+        /* Tarjetas Variables */
+        [data-bs-theme="dark"] .tarjeta-dark { background-color: #1e1e1e !important; border: 1px solid #2a2a2a !important; }
+        [data-bs-theme="light"] .tarjeta-dark { background-color: #ffffff !important; border: 1px solid #e3e6f0 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .tarjeta-dark { transition: all 0.3s ease; }
         .tarjeta-dark:hover {
             transform: translateY(-8px);
             border-color: #eb0a1e !important;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important;
         }
+        [data-bs-theme="dark"] .tarjeta-dark:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important; }
+        [data-bs-theme="light"] .tarjeta-dark:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important; }
 
         .img-container { 
             width: 100%; 
             aspect-ratio: 16 / 9; 
-            background-color: #2a2a2a; 
             overflow: hidden; 
         }
-        .img-container img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+        [data-bs-theme="dark"] .img-container { background-color: #2a2a2a; }
+        [data-bs-theme="light"] .img-container { background-color: #eaecf4; }
+
+        .img-container img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
+        [data-bs-theme="dark"] .img-container img { opacity: 0.85; }
         .tarjeta-dark:hover img { opacity: 1; }
 
         .info-tag { 
@@ -74,10 +66,11 @@
             gap: 6px; 
             font-size: 0.85rem; 
             font-weight: 600; 
-            color: #bbb; 
         }
 
-        .border-top-dark { border-top: 1px solid #333 !important; }
+        /* Separadores adaptables */
+        [data-bs-theme="dark"] .border-top-dark { border-top: 1px solid #333 !important; }
+        [data-bs-theme="light"] .border-top-dark { border-top: 1px solid #eaecf4 !important; }
 
         /* Botones y Badges */
         .btn-red {
@@ -96,9 +89,15 @@
             font-weight: 800; letter-spacing: 1px; border-radius: 2px; z-index: 2;
         }
 
-        /* Range Slider Custom */
         .form-range::-webkit-slider-thumb { background: #eb0a1e; }
         .form-range::-moz-range-thumb { background: #eb0a1e; }
+
+        /* Estilos personalizados para el Modal de Detalle */
+        .modal-header-red { border-bottom: 3px solid #eb0a1e; }
+        .modal-img-container { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 4px; }
+        .modal-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        .ficha-tecnica { background-color: var(--bs-dependency-bg, rgba(0,0,0,0.03)); border-radius: 6px; }
+        [data-bs-theme="dark"] .ficha-tecnica { background-color: #2a2a2a; }
     </style>
 }
 
@@ -155,7 +154,6 @@
     <div class="row" id="gridVehiculos">
         @foreach (var item in Model)
         {
-            @* 👇 Si el vehículo no está marcado como activo, se saltea la tarjeta sin renderizarla *@
             if (item.Activo == false) continue;
 
             <div class="col-12 col-md-6 col-lg-4 mb-4 tarjeta-vehiculo" 
@@ -182,18 +180,18 @@
                     <div class="card-body d-flex flex-column p-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <small class="text-danger fw-bold text-uppercase" style="letter-spacing: 1px;">@item.Marca</small>
-                            <span class="fw-bold text-white">@item.Anio</span>
+                            <span class="fw-bold header-anio">@item.Anio</span>
                         </div>
                         
-                        <h4 class="text-uppercase fw-900 mb-1 text-white">@item.Modelo</h4>
+                        <h4 class="text-uppercase fw-900 mb-1 header-modelo">@item.Modelo</h4>
                         <p class="text-muted small mb-3">@item.Version | @item.Transmision</p>
 
                         <div class="d-flex gap-3 mb-4">
-                            <div class="info-tag">
+                            <div class="info-tag text-muted">
                                 <i class="bi bi-speedometer2 text-danger"></i>
                                 <span>@item.Kilometros.ToString("N0") KM</span>
                             </div>
-                            <div class="info-tag">
+                            <div class="info-tag text-muted">
                                 <i class="bi bi-fuel-pump text-danger"></i>
                                 <span>@item.Combustible</span>
                             </div>
@@ -203,15 +201,106 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <small class="text-muted d-block text-uppercase" style="font-size: 0.6rem;">Precio Sugerido</small>
-                                    <span class="h4 mb-0 fw-900 text-white">@item.Precio.ToString("C0")</span>
+                                    <span class="h4 mb-0 fw-900 precio-texto">@item.Precio.ToString("C0")</span>
                                 </div>
-                                <a href="#" class="btn btn-red btn-sm px-3">DETALLES</a>
+                                <button type="button" class="btn btn-red btn-sm px-3 btn-detalle"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#modalDetalleVehiculo"
+                                        data-id="@item.Id"
+                                        data-marca="@item.Marca"
+                                        data-modelo="@item.Modelo"
+                                        data-version="@item.Version"
+                                        data-anio="@item.Anio"
+                                        data-precio="@item.Precio.ToString("C0")"
+                                        data-km="@item.Kilometros.ToString("N0") KM"
+                                        data-combustible="@item.Combustible"
+                                        data-transmision="@item.Transmision"
+                                        data-img="@rutaFinal">
+                                    DETALLES
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         }
+    </div>
+</div>
+
+@* ========================================================
+   MODAL BOOTSTRAP 5: DETALLE DE VEHÍCULO Y CONSULTA
+   ======================================================== *@
+<div class="modal fade" id="modalDetalleVehiculo" tabindex="-1" aria-labelledby="modalDetalleLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-red">
+                <h5 class="modal-title fw-900 text-uppercase" id="modalDetalleLabel">Detalle del Vehículo</h5>
+                <button type="button" class="btn-close" data-bs-shadow="none" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    @* Vista de Especificaciones del Auto *@
+                    <div class="col-12 col-md-6">
+                        <div class="modal-img-container mb-3">
+                            <img id="modalImg" src="" alt="Vehículo" onerror="this.src='/img/cars/placeholder-dark.jpeg';">
+                        </div>
+                        <div class="d-flex justify-content-between align-items-baseline mb-1">
+                            <span id="modalMarca" class="badge bg-danger text-uppercase font-weight-bold"></span>
+                            <h4 id="modalPrecio" class="fw-900 text-danger m-0"></h4>
+                        </div>
+                        <h3 id="modalModelo" class="fw-900 text-uppercase mb-2"></h3>
+                        <p id="modalVersion" class="text-muted small mb-3"></p>
+                        
+                        <div class="p-3 ficha-tecnica row g-2 text-center m-0">
+                            <div class="col-6 border-end border-bottom pb-2">
+                                <small class="text-muted d-block">Año</small>
+                                <span id="modalAnio" class="fw-bold"></span>
+                            </div>
+                            <div class="col-6 border-bottom pb-2">
+                                <small class="text-muted d-block">Kilometraje</small>
+                                <span id="modalKm" class="fw-bold"></span>
+                            </div>
+                            <div class="col-6 border-end pt-2">
+                                <small class="text-muted d-block">Combustible</small>
+                                <span id="modalCombustible" class="fw-bold"></span>
+                            </div>
+                            <div class="col-6 pt-2">
+                                <small class="text-muted d-block">Transmisión</small>
+                                <span id="modalTransmision" class="fw-bold"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Formulario de Contacto directo *@
+                    <div class="col-12 col-md-6">
+                        <h5 class="fw-900 text-uppercase mb-3"><i class="bi bi-envelope-at text-danger me-2"></i>Consultar por este Auto</h5>
+                        <form id="formConsultaVehiculo" asp-controller="Home" asp-action="EnviarConsulta" method="post">
+                            <!-- Campos de control ocultos -->
+                            <input type="hidden" id="consultaVehiculoId" name="VehiculoId" />
+                            <input type="hidden" id="consultaVehiculoDetalle" name="VehiculoDetalle" />
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Nombre Completo</label>
+                                <input type="text" name="Nombre" class="form-control" placeholder="Ingresá tu nombre" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Teléfono de Contacto</label>
+                                <input type="tel" name="Telefono" class="form-control" placeholder="Ej: 2664123456" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Correo Electrónico</label>
+                                <input type="email" name="Email" class="form-control" placeholder="nombre@correo.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Tu Mensaje</label>
+                                <textarea name="Mensaje" class="form-control" rows="4" required id="modalMensajePorDefecto"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-red w-100 py-2.5">ENVIAR MI CONSULTA</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -291,6 +380,44 @@
             ordenar.addEventListener('change', ordenarTarjetas);
             filtrar();
             ordenarTarjetas();
+
+            // ========================================================
+            // LÓGICA PASAJE DE DATOS DINÁMICOS AL MODAL
+            // ========================================================
+            const modalDetalle = document.getElementById('modalDetalleVehiculo');
+            if (modalDetalle) {
+                modalDetalle.addEventListener('show.bs.modal', function (event) {
+                    const boton = event.relatedTarget; // Botón que disparó el modal
+                    
+                    // Extraer los atributos data-*
+                    const id = boton.getAttribute('data-id');
+                    const marca = boton.getAttribute('data-marca');
+                    const modelo = boton.getAttribute('data-modelo');
+                    const version = boton.getAttribute('data-version');
+                    const anio = boton.getAttribute('data-anio');
+                    const precio = boton.getAttribute('data-precio');
+                    const km = boton.getAttribute('data-km');
+                    const combustible = boton.getAttribute('data-combustible');
+                    const transmision = boton.getAttribute('data-transmision');
+                    const imgUrl = boton.getAttribute('data-img');
+
+                    // Mapear elementos del Modal
+                    document.getElementById('modalImg').src = imgUrl;
+                    document.getElementById('modalMarca').innerText = marca;
+                    document.getElementById('modalModelo').innerText = modelo;
+                    document.getElementById('modalVersion').innerText = version + " | " + transmision;
+                    document.getElementById('modalAnio').innerText = anio;
+                    document.getElementById('modalKm').innerText = km;
+                    document.getElementById('modalPrecio').innerText = precio;
+                    document.getElementById('modalCombustible').innerText = combustible;
+                    document.getElementById('modalTransmision').innerText = transmision;
+
+                    // Cargar valores en el Formulario
+                    document.getElementById('consultaVehiculoId').value = id;
+                    document.getElementById('consultaVehiculoDetalle').value = `${marca} ${modelo} (${anio})`;
+                    document.getElementById('modalMensajePorDefecto').value = `Hola, estoy interesado en el vehículo ${marca} ${modelo} año ${anio} visto en su sitio web. Me gustaría recibir más información.`;
+                });
+            }
         });
     </script>
 }

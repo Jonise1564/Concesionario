@@ -153,7 +153,7 @@ namespace Concesionario.Controllers
         {
             try
             {
-                var categorias = await _context.Categorias
+                var categories = await _context.Categorias
                     .Select(c => new { 
                         id = c.Id, 
                         nombre = c.Nombre 
@@ -161,7 +161,7 @@ namespace Concesionario.Controllers
                     .OrderBy(c => c.nombre)
                     .ToListAsync();
 
-                return Ok(categorias);
+                return Ok(categories);
             }
             catch (Exception ex)
             {
@@ -291,7 +291,7 @@ namespace Concesionario.Controllers
         }
 
         // ========================================================
-        // GESTIÓN DE VENDEDORES (Corregido a prueba de Nulls)
+        // GESTIÓN DE VENDEDORES (Validaciones de duplicados y edad)
         // ========================================================
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
@@ -312,7 +312,13 @@ namespace Concesionario.Controllers
                         Apellidos = v.Persona.Apellidos ?? "",
                         Email = v.Persona.Email ?? "",
                         Telefono = v.Persona.Telefono ?? "",
-                        // Se previene la excepción si la relación Usuario o la columna NombreUsuario son nulas
+                        
+                        FechaNacimiento = v.Persona.FechaNacimiento,
+                        Genero = v.Persona.Genero ?? "",
+                        EstadoCivil = v.Persona.EstadoCivil ?? "",
+                        Provincia = v.Persona.EstadoProvincia ?? "",
+                        CodigoPostal = v.Persona.CodigoPostal ?? "",
+
                         NombreUsuario = v.Usuario != null ? (v.Usuario.NombreUsuario ?? "Sin Usuario") : "Sin Usuario",
                         PorcentajeComision = v.PorcentajeComision,
                         Observaciones = v.Observaciones ?? ""
@@ -333,40 +339,86 @@ namespace Concesionario.Controllers
         {
             if (dto == null) return BadRequest(new { message = "Estructura de datos nula." });
 
+            // ========================================================
+            // ----- VALIDACIÓN DE EDAD (ENTRE 18 Y 70 AÑOS) -----
+            // ========================================================
+            if (dto.FechaNacimiento.HasValue)
+            {
+                var fechaNac = dto.FechaNacimiento.Value;
+                var hoy = DateTime.Today;
+                
+                // Cálculo exacto de la edad
+                int edad = hoy.Year - fechaNac.Year;
+                if (fechaNac.Date > hoy.AddYears(-edad)) edad--;
+
+                if (edad < 18)
+                {
+                    return BadRequest(new { message = "El vendedor debe ser mayor de 18 años de edad." });
+                }
+                if (edad >= 70)
+                {
+                    return BadRequest(new { message = "El vendedor debe ser menor de 70 años de edad." });
+                }
+            }
+            else
+            {
+                return BadRequest(new { message = "La fecha de nacimiento es un campo obligatorio." });
+            }
+
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
                     if (dto.Id == 0)
                     {
-                        // ----- ALTA DE VENDEDOR -----
+                        // ========================================================
+                        // ----- CONTROL DE DUPLICADOS PARA ALTA (CREAR) -----
+                        // ========================================================
+
+                        var dniExiste = await _context.Personas
+                            .AnyAsync(p => p.DocumentoIdentidad == dto.DocumentoIdentidad.Trim() && p.Activo == true);
+                        if (dniExiste)
+                            return BadRequest(new { message = "El Documento de Identidad (DNI) ingresado ya pertenece a un vendedor registrado." });
+
+                        if (!string.IsNullOrEmpty(dto.Email))
+                        {
+                            var emailExiste = await _context.Personas
+                                .AnyAsync(p => p.Email.ToLower() == dto.Email.Trim().ToLower() && p.Activo == true);
+                            if (emailExiste)
+                                return BadRequest(new { message = "El Correo Electrónico ingresado ya se encuentra registrado por otro usuario." });
+                        }
+
                         var usuarioExiste = await _context.Usuarios
-                            .AnyAsync(u => u.NombreUsuario.ToLower() == dto.NombreUsuario.ToLower());
-                        
+                            .AnyAsync(u => u.NombreUsuario.ToLower() == dto.NombreUsuario.Trim().ToLower());
                         if (usuarioExiste)
-                            return BadRequest(new { message = "El nombre de usuario ya está registrado en el sistema." });
+                            return BadRequest(new { message = "El Nombre de Usuario ya se encuentra registrado en el sistema." });
 
                         if (string.IsNullOrEmpty(dto.Password))
                             return BadRequest(new { message = "La contraseña es requerida para dar de alta al vendedor." });
 
-                        // 1. Insertar Persona
                         var nuevaPersona = new Persona
                         {
-                            DocumentoIdentidad = dto.DocumentoIdentidad,
-                            Nombres = dto.Nombres,
-                            Apellidos = dto.Apellidos,
-                            Email = dto.Email,
-                            Telefono = dto.Telefono,
+                            DocumentoIdentidad = dto.DocumentoIdentidad.Trim(),
+                            Nombres = dto.Nombres.Trim(),
+                            Apellidos = dto.Apellidos.Trim(),
+                            Email = !string.IsNullOrEmpty(dto.Email) ? dto.Email.Trim() : null,
+                            Telefono = dto.Telefono.Trim(),
+                            
+                            FechaNacimiento = dto.FechaNacimiento,
+                            Genero = dto.Genero,
+                            EstadoCivil = dto.EstadoCivil,
+                            EstadoProvincia = dto.Provincia, 
+                            CodigoPostal = dto.CodigoPostal,
+
                             CreadoEl = DateTime.Now,
                             Activo = true
                         };
                         _context.Personas.Add(nuevaPersona);
                         await _context.SaveChangesAsync();
 
-                        // 2. Insertar Cuenta de Usuario comercial
                         var nuevoUsuario = new Usuario
                         {
-                            NombreUsuario = dto.NombreUsuario,
+                            NombreUsuario = dto.NombreUsuario.Trim(),
                             Password = BCrypt.Net.BCrypt.HashPassword(dto.Password), 
                             Rol = "Vendedor",
                             Activo = true
@@ -374,7 +426,6 @@ namespace Concesionario.Controllers
                         _context.Usuarios.Add(nuevoUsuario);
                         await _context.SaveChangesAsync();
 
-                        // 3. Vincular Entidad Final Vendedor
                         var nuevoVendedor = new Vendedor
                         {
                             IdPersona = nuevaPersona.Id,
@@ -391,7 +442,10 @@ namespace Concesionario.Controllers
                     }
                     else
                     {
-                        // ----- EDICIÓN DE VENDEDOR EXISTENTE -----
+                        // ========================================================
+                        // ----- CONTROL DE DUPLICADOS PARA EDICIÓN (MODIFICAR) -----
+                        // ========================================================
+
                         var vExistente = await _context.Vendedores
                             .Include(v => v.Persona)
                             .Include(v => v.Usuario)
@@ -400,15 +454,43 @@ namespace Concesionario.Controllers
                         if (vExistente == null)
                             return NotFound(new { message = "No se encontró el registro del vendedor." });
 
-                        // Modificar Persona vinculada
-                        vExistente.Persona.DocumentoIdentidad = dto.DocumentoIdentidad;
-                        vExistente.Persona.Nombres = dto.Nombres;
-                        vExistente.Persona.Apellidos = dto.Apellidos;
-                        vExistente.Persona.Email = dto.Email;
-                        vExistente.Persona.Telefono = dto.Telefono;
+                        var dniDuplicado = await _context.Personas
+                            .AnyAsync(p => p.Id != vExistente.IdPersona && p.DocumentoIdentidad == dto.DocumentoIdentidad.Trim() && p.Activo == true);
+                        if (dniDuplicado)
+                            return BadRequest(new { message = "No se puede guardar el cambio: El DNI ingresado ya pertenece a otro vendedor activo." });
+
+                        if (!string.IsNullOrEmpty(dto.Email))
+                        {
+                            var emailDuplicado = await _context.Personas
+                                .AnyAsync(p => p.Id != vExistente.IdPersona && p.Email.ToLower() == dto.Email.Trim().ToLower() && p.Activo == true);
+                            if (emailDuplicado)
+                                return BadRequest(new { message = "No se puede guardar el cambio: El Correo Electrónico ya está en uso por otro usuario." });
+                        }
+
+                        if (vExistente.Usuario != null && vExistente.Usuario.NombreUsuario.ToLower() != dto.NombreUsuario.Trim().ToLower())
+                        {
+                            var usuarioDuplicado = await _context.Usuarios
+                                .AnyAsync(u => u.Id != vExistente.IdUsuario && u.NombreUsuario.ToLower() == dto.NombreUsuario.Trim().ToLower());
+                            if (usuarioDuplicado)
+                                return BadRequest(new { message = "El Nombre de Usuario ingresado ya está en uso por otra cuenta." });
+                            
+                            vExistente.Usuario.NombreUsuario = dto.NombreUsuario.Trim();
+                        }
+
+                        vExistente.Persona.DocumentoIdentidad = dto.DocumentoIdentidad.Trim();
+                        vExistente.Persona.Nombres = dto.Nombres.Trim();
+                        vExistente.Persona.Apellidos = dto.Apellidos.Trim();
+                        vExistente.Persona.Email = !string.IsNullOrEmpty(dto.Email) ? dto.Email.Trim() : null;
+                        vExistente.Persona.Telefono = dto.Telefono.Trim();
+                        
+                        vExistente.Persona.FechaNacimiento = dto.FechaNacimiento;
+                        vExistente.Persona.Genero = dto.Genero;
+                        vExistente.Persona.EstadoCivil = dto.EstadoCivil;
+                        vExistente.Persona.EstadoProvincia = dto.Provincia; 
+                        vExistente.Persona.CodigoPostal = dto.CodigoPostal;
+
                         vExistente.Persona.ActualizadoEl = DateTime.Now;
 
-                        // Modificar Contraseña solo si se llenó en el formulario
                         if (!string.IsNullOrEmpty(dto.Password))
                         {
                             if (vExistente.Usuario != null)
@@ -417,7 +499,6 @@ namespace Concesionario.Controllers
                             }
                         }
 
-                        // Modificar Parámetros de Comisión y Notas
                         vExistente.PorcentajeComision = dto.PorcentajeComision;
                         vExistente.Observaciones = dto.Observaciones;
 
@@ -450,7 +531,6 @@ namespace Concesionario.Controllers
                 if (vendedor == null) 
                     return NotFound(new { message = "El vendedor seleccionado no existe." });
 
-                // Borrado lógico para resguardar las relaciones de vehículos comercializados
                 vendedor.Persona.Activo = false;
                 vendedor.Persona.ActualizadoEl = DateTime.Now;
                 
