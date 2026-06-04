@@ -22,7 +22,12 @@
                 <i class="bi bi-person-badge"></i> Vendedores
             </a>
             <a href="/Admin/Consultas" class="nav-admin-link">
-                <i class="bi bi-envelope"></i> Mensajes
+                <i class="bi bi-envelope"></i>
+                Mensajes
+                <span id="badgeMensajes"
+                    class="badge bg-danger ms-2"
+                    style="display:none;">
+                </span>
             </a>
             <a onclick="cambiarSeccion('ajustes')" id="btn-nav-ajustes" class="nav-admin-link">
                 <i class="bi bi-gear"></i> Ajustes
@@ -57,9 +62,41 @@
                 window.location.href = '/Home/Acceso';
                 return;
             }
+
+            cargarPendientes();
+
             if (typeof listar === 'function') listar();
             cambiarSeccion('vehiculos');
         });
+
+        async function cargarPendientes() {
+            try {
+
+                const resp = await fetch('/Admin/GetConsultas', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!resp.ok) return;
+
+                const consultas = await resp.json();
+
+                const pendientes = consultas.filter(
+                    c => c.estado === "Pendiente"
+                ).length;
+
+                const badge = document.getElementById('badgeMensajes');
+
+                if (pendientes > 0) {
+                    badge.style.display = 'inline-block';
+                    badge.innerText = pendientes;
+                }
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
 
         function cambiarSeccion(seccion) {
             const secVehiculos = document.getElementById('seccion-vehiculos');

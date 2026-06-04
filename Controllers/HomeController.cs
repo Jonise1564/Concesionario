@@ -4,6 +4,7 @@ using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Mvc;
 using MimeKit;
 using Concesionario.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Concesionario.Controllers;
 
@@ -33,6 +34,11 @@ public class HomeController : Controller
 
     public IActionResult Acceso() => View();
 
+    public IActionResult MisConsultas()
+    {
+        return View();
+    }
+
        
 
     [HttpPost]
@@ -53,7 +59,8 @@ public class HomeController : Controller
             Modelo = model.Modelo,
             Mensaje = model.Mensaje,
             Estado = "Pendiente",
-            Fecha = DateTime.Now 
+            Fecha = DateTime.Now ,
+            UsuarioId = null
         };
 
         _context.Consultas.Add(consulta);
@@ -104,6 +111,17 @@ public class HomeController : Controller
         }
 
         return RedirectToAction("Contacto");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetMisConsultas(string email)
+    {
+        var consultas = await _context.Consultas
+            .Where(c => c.Email == email)
+            .OrderByDescending(c => c.Fecha)
+            .ToListAsync();
+
+        return Json(consultas);
     }
 
 

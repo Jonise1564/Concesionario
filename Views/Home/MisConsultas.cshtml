@@ -1,0 +1,132 @@
+@{
+    ViewData["Title"] = "Mis Consultas";
+}
+
+<style>
+
+body{
+    background:#000;
+    color:white;
+}
+
+.consultas-container{
+    padding:120px 40px;
+}
+
+.card-consulta{
+    background:#111;
+    border:1px solid #222;
+    border-radius:15px;
+    padding:25px;
+    margin-bottom:20px;
+}
+
+.estado{
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.pendiente{
+    background:orange;
+    color:black;
+}
+
+.respondido{
+    background:#198754;
+}
+
+</style>
+
+<div class="consultas-container">
+
+    <h1 class="fw-bold mb-5">
+        Mis Consultas
+    </h1>
+
+    <div id="contenedorConsultas"></div>
+
+</div>
+
+@section Scripts{
+
+<script>
+
+async function cargarConsultas(){
+
+    const email = localStorage.getItem("emailUsuario");
+
+    const res = await fetch(`/Home/GetMisConsultas?email=${email}`);
+
+    const data = await res.json();
+
+    const contenedor = document.getElementById("contenedorConsultas");
+
+    if(data.length === 0){
+
+        contenedor.innerHTML = `
+            <p class="text-muted">
+                No tenés consultas todavía.
+            </p>
+        `;
+
+        return;
+    }
+
+    contenedor.innerHTML = data.map(c => `
+
+        <div class="card-consulta">
+
+            <div class="d-flex justify-content-between mb-3">
+
+                <span class="estado ${
+                    c.estado === "Pendiente"
+                    ? "pendiente"
+                    : "respondido"
+                }">
+
+                    ${c.estado}
+
+                </span>
+
+                <small class="text-muted">
+                    ${new Date(c.fecha).toLocaleDateString()}
+                </small>
+
+            </div>
+
+            <h5 class="mb-3">
+                Tu consulta
+            </h5>
+
+            <p>
+                ${c.mensaje}
+            </p>
+
+            ${
+                c.respuestaAdmin
+                ? `
+                    <hr>
+
+                    <h5 class="text-danger">
+                        Respuesta de Jonel Autos
+                    </h5>
+
+                    <p>
+                        ${c.respuestaAdmin}
+                    </p>
+                `
+                : ''
+            }
+
+        </div>
+
+    `).join('');
+}
+
+cargarConsultas();
+
+</script>
+
+}

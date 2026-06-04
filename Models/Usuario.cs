@@ -20,5 +20,7 @@ namespace Concesionario.Models
         public string? Rol { get; set; }
 
         public bool Activo { get; set; } = true;
+
+        public string Email { get; set; }
     }
 }

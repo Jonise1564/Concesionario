@@ -190,8 +190,6 @@ C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compre
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\tcod515kaw-{0}-9vr69e8ynj-9vr69e8ynj.gz
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\3abwnihdz4-{0}-87fc7y1x7t-87fc7y1x7t.gz
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\5dwe7kf4uf-{0}-mlv21k5csn-mlv21k5csn.gz
-C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\shxf4bmmde-{0}-pg0fbpcr3e-pg0fbpcr3e.gz
-C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\nnhpt9h7n1-{0}-pg0fbpcr3e-pg0fbpcr3e.gz
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\staticwebassets.build.json
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\staticwebassets.build.json.cache
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\staticwebassets.development.json
@@ -212,7 +210,6 @@ C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Micros
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-4zob8qzyy2-4zob8qzyy2.gz
-C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-tfpz1ey6g5-tfpz1ey6g5.gz
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\dotnet-tools.json
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\MailKit.dll
 C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\MimeKit.dll
@@ -437,3 +434,10 @@ C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\ref\Concesionario.dll
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\w99nbukeao-{0}-xvu42978hz-xvu42978hz.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-cuusv5nrul-cuusv5nrul.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\u14ttytn8p-{0}-o79mu520gw-o79mu520gw.gz
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\bin\Debug\net10.0\BCrypt-Net-Next.dll
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\w99nbukeao-{0}-xvu42978hz-xvu42978hz.gz
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-cuusv5nrul-cuusv5nrul.gz
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\fldndm23ei-{0}-prpvbov7ls-prpvbov7ls.gz
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\u14ttytn8p-{0}-o79mu520gw-o79mu520gw.gz
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\shxf4bmmde-{0}-3s7msnn436-3s7msnn436.gz
+C:\Users\thefl\OneDrive\Documentos\GitHub\Concesionario\obj\Debug\net10.0\compressed\nnhpt9h7n1-{0}-3s7msnn436-3s7msnn436.gz

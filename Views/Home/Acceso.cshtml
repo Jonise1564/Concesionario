@@ -204,6 +204,7 @@
                     // Almacenamos el token devuelto por el servidor
                     localStorage.setItem('jonel_token', data.token);
                     localStorage.setItem('jonel_user', data.username);
+                    localStorage.setItem("emailUsuario", data.email);
 
                     // --- DECODIFICACIÓN Y ANÁLISIS DEL ROL ---
                     let esAdmin = false;

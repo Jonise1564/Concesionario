@@ -11,6 +11,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
+using MailKit.Net.Smtp;
+using MimeKit;
 
 namespace Concesionario.Controllers
 {
@@ -193,11 +195,57 @@ namespace Concesionario.Controllers
         public async Task<IActionResult> ResponderConsulta(int id, string respuesta)
         {
             var consulta = await _context.Consultas.FindAsync(id);
-            if (consulta == null) return NotFound();
+
+            if (consulta == null)
+                return NotFound();
 
             consulta.RespuestaAdmin = respuesta;
             consulta.Estado = "Respondido";
+
             await _context.SaveChangesAsync();
+
+            // =========================
+            // ENVIAR EMAIL AL CLIENTE
+            // =========================
+
+            var email = new MimeMessage();
+
+            email.From.Add(
+                MailboxAddress.Parse("roquerobertomiguellucero@gmail.com")
+            );
+
+            email.To.Add(
+                MailboxAddress.Parse(consulta.Email)
+            );
+
+            email.Subject = "Respuesta a tu consulta - Jonel Autos";
+
+            email.Body = new TextPart("plain")
+            {
+                Text =
+                    $"Hola {consulta.Nombre} 👋\n\n"
+                    + $"Respondimos tu consulta:\n\n"
+                    + $"{respuesta}\n\n"
+                    + $"Gracias por comunicarte con Jonel Autos 🚗"
+            };
+
+            using var smtp = new SmtpClient();
+
+            await smtp.ConnectAsync(
+                "smtp.gmail.com",
+                587,
+                MailKit.Security.SecureSocketOptions.StartTls
+            );
+
+            await smtp.AuthenticateAsync(
+                "roquerobertomiguellucero@gmail.com",
+                "yxvw pnug qtdv rjvi"
+            );
+
+            await smtp.SendAsync(email);
+
+            await smtp.DisconnectAsync(true);
+
             return Ok(new { success = true });
         }
 

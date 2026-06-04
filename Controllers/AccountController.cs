@@ -119,7 +119,8 @@ namespace Concesionario.Controllers
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 Expiration = token.ValidTo,
                 Username = user.NombreUsuario,
-                Rol = user.Rol 
+                Rol = user.Rol,
+                Email = user.Email
             });
         }
     }
@@ -136,5 +137,6 @@ namespace Concesionario.Controllers
         public DateTime Expiration { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Rol { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
 }
