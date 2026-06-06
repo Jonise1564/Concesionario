@@ -21,6 +21,7 @@ namespace Concesionario.Models
 
         public bool Activo { get; set; } = true;
 
-        public string Email { get; set; }
+        // SOLUCIÓN: Agregamos el '?' porque en MySQL esta columna tiene valores NULL
+        public string? Email { get; set; }
     }
 }

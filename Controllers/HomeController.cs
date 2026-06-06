@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Concesionario.Models;
 using MailKit.Net.Smtp;
@@ -16,6 +17,7 @@ public class HomeController : Controller
     {
         _context = context;
     }
+
     public IActionResult Index()
     {
         return View();
@@ -39,8 +41,6 @@ public class HomeController : Controller
         return View();
     }
 
-       
-
     [HttpPost]
     public async Task<IActionResult> EnviarContacto(ContactoModel model)
     {
@@ -59,7 +59,7 @@ public class HomeController : Controller
             Modelo = model.Modelo,
             Mensaje = model.Mensaje,
             Estado = "Pendiente",
-            Fecha = DateTime.Now ,
+            Fecha = DateTime.Now,
             UsuarioId = null
         };
 
@@ -84,8 +84,6 @@ public class HomeController : Controller
             };
 
             using var smtp = new SmtpClient();
-            
-            // Definimos un timeout corto (ej. 10 segundos) para que no cuelgue la app si el hosting bloquea el puerto
             smtp.Timeout = 5000; 
 
             await smtp.ConnectAsync(
@@ -102,15 +100,72 @@ public class HomeController : Controller
         }
         catch (Exception ex)
         {
-            // Si el correo falla por culpa de la red de Render, no interrumpimos el flujo.
-            // La consulta ya está a salvo en la base de datos y la verás en tu panel de administración.
             TempData["Mensaje"] = "Consulta recibida correctamente ✅ (Aviso por email en mantenimiento)";
-            
-            // Opcional: Podés loguear el error exacto en los logs de Render para analizarlo después:
             Console.WriteLine($"Error controlado en MailKit: {ex.Message}");
         }
 
         return RedirectToAction("Contacto");
+    }
+
+    // ========================================================
+    // ACCIÓN: PROCESA LAS CONSULTAS DESDE EL MODAL STOCK
+    // ========================================================
+    [HttpPost]
+    public async Task<IActionResult> EnviarConsulta(int vehiculoId, string vehiculoDetalle, string nombre, string telefono, string email, string mensaje)
+    {
+        // 1. Guardar la consulta del vehículo específico en la DB
+        var consulta = new Consulta
+        {
+            Nombre = nombre,
+            Email = email,
+            Telefono = telefono,
+            Interes = "Vehículo en Stock",
+            Modelo = vehiculoDetalle, 
+            Mensaje = mensaje,
+            Estado = "Pendiente",
+            Fecha = DateTime.Now,
+            UsuarioId = null // Se mantiene alineado con tu modelo de consultas
+        };
+
+        _context.Consultas.Add(consulta);
+        await _context.SaveChangesAsync();
+
+        // 2. Notificación por Correo Electrónico
+        try
+        {
+            var emailMsg = new MimeMessage();
+            emailMsg.From.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
+            emailMsg.To.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
+            emailMsg.Subject = $"Consulta de Stock: {vehiculoDetalle}";
+
+            emailMsg.Body = new TextPart("plain")
+            {
+                Text = $"Interés por vehículo de Stock ID: {vehiculoId}\n"
+                     + $"Vehículo: {vehiculoDetalle}\n"
+                     + $"Cliente: {nombre}\n"
+                     + $"WhatsApp: {telefono}\n"
+                     + $"Email: {email}\n"
+                     + $"Mensaje: {mensaje}",
+            };
+
+            using var smtp = new SmtpClient();
+            smtp.Timeout = 5000;
+
+            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync("roquerobertomiguellucero@gmail.com", "yxvw pnug qtdv rjvi");
+            await smtp.SendAsync(emailMsg);
+            await smtp.DisconnectAsync(true);
+
+            TempData["Mensaje"] = "¡Tu consulta por el vehículo fue enviada! ✅";
+        }
+        catch (Exception ex)
+        {
+            TempData["Mensaje"] = "Consulta recibida correctamente ✅ (Aviso por email en mantenimiento)";
+            Console.WriteLine($"Error en MailKit para stock: {ex.Message}");
+        }
+
+        // Redirige al Index del controlador de Vehículos y hace el scroll automático al catálogo
+        return RedirectToRoute(new { controller = "Vehiculos", action = "Index", fragment = "vehiculos" });
     }
 
     [HttpGet]
@@ -123,7 +178,6 @@ public class HomeController : Controller
 
         return Json(consultas);
     }
-
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()

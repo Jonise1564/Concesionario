@@ -1,36 +1,47 @@
 // Variables globales para interactuar con el inventario y modales
 let myModalVehiculo;
 let cacheVehiculos = []; // Guardará el stock original para filtrado local instantáneo
+let cacheCategorias = []; // <--- Guardamos las categorías en memoria para cruzarlas en la tabla
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const modalEl = document.getElementById('modalVehiculo');
     if (modalEl) {
         myModalVehiculo = new bootstrap.Modal(modalEl);
     }
     
-    // Si hay un token válido, cargamos los datos estructurales iniciales
-    if (localStorage.getItem('jonel_token')) {
-        cargarCategorias();
+    // Extraemos el token del almacenamiento local
+    token = localStorage.getItem('jonel_token');
+    
+    // Si hay un token válido, cargamos los datos estructurales iniciales y el listado de forma secuencial
+    if (token) {
+        await cargarCategorias();
+        await listar(); // <-- Forzamos el await para asegurar el orden de ejecución
+    } else {
+        window.location.href = '/Home/Acceso';
     }
 });
 
 // --- CARGA DINÁMICA DE CATEGORÍAS (SELECTS) ---
 async function cargarCategorias() {
     try {
-        const resp = await fetch('/Admin/GetCategorias', { // Reemplaza por tu endpoint real si difiere
+        const resp = await fetch('/Admin/GetCategorias', { 
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (resp.ok) {
             const categorias = await resp.json();
+            cacheCategorias = categorias; // <--- Almacenamos en la variable global para usar en la tabla
             const selectModal = document.getElementById('vCategoriaId');
 
             if (selectModal) {
                 // Mantenemos la opción deshabilitada por defecto
                 selectModal.innerHTML = '<option value="" disabled selected>Seleccione una categoría...</option>';
                 categorias.forEach(cat => {
-                    selectModal.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
+                    // Mapeo seguro por si id/nombre vienen capitalizados o en minúsculas
+                    const catId = cat.id !== undefined ? cat.id : cat.Id;
+                    const catNombre = cat.nombre || cat.Nombre;
+                    selectModal.innerHTML += `<option value="${catId}">${catNombre}</option>`;
                 });
             }
         }
@@ -64,7 +75,7 @@ async function listar() {
 
     } catch (err) { 
         console.error("Error al listar:", err);
-        document.getElementById('tablaCuerpo').innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error de conexión: ${err.message}</td></tr>`;
+        document.getElementById('tablaCuerpo').innerHTML = `<tr><td colspan="10" class="text-center text-danger">Error de conexión: ${err.message}</td></tr>`;
     }
 }
 
@@ -73,14 +84,42 @@ function inyectarTablaVehiculos(lista) {
     const cuerpo = document.getElementById('tablaCuerpo');
 
     if (!lista || lista.length === 0) {
-        cuerpo.innerHTML = '<tr><td colspan="8" class="text-center text-muted p-4">No hay vehículos coincidentes</td></tr>';
+        cuerpo.innerHTML = '<tr><td colspan="10" class="text-center text-muted p-4">No hay vehículos coincidentes</td></tr>';
         return;
     }
 
     cuerpo.innerHTML = lista.map(v => {
+        // Mapeo seguro con tolerancia a mayúsculas/minúsculas del Backend (C# PascalCase)
+        const idVehiculo = v.id !== undefined ? v.id : v.Id;
+        const txtMarca = v.marca || v.Marca || '-';
+        const txtModelo = v.modelo || v.Modelo || '-';
+        const txtVersion = v.version || v.Version || '';
+        const txtAnio = v.anio || v.Anio || '-';
+        const numPrecio = v.precio !== undefined ? v.precio : (v.Precio || 0);
+        const isActivo = v.activo !== undefined ? v.activo : v.Activo;
+        
+        const txtVin = v.vin || v.Vin || '-';
+        const txtPatente = v.patente || v.Patente || '-';
+        const rawCondicion = v.condicion || v.Condicion || 'Usado';
+        
+        // =========================================================================
+        // 🛠️ CRUCE DE DATOS LOCAL CON TOLERANCIA DE TIPOS (String vs Int)
+        // =========================================================================
+        const idCategoriaVehiculo = v.categoriaId !== undefined ? v.categoriaId : v.CategoriaId;
+        const categoriaEncontrada = cacheCategorias.find(cat => {
+            const catId = cat.id !== undefined ? cat.id : cat.Id;
+            return catId == idCategoriaVehiculo; // <-- Comparación flexible para romper discrepancias de tipo
+        });
+        const txtCategoria = categoriaEncontrada ? (categoriaEncontrada.nombre || categoriaEncontrada.Nombre) : 'Sin Categoría';
+        // =========================================================================
+
+        // Normalización visual para la insignia de la tabla
+        const txtCondicion = (rawCondicion === '0KM' || rawCondicion === 'Nuevo') ? 'Nuevo' : 'Usado';
+
         let imgPath = 'https://placehold.co/60x40/00?text=S/F';
-        if (v.imagenUrl) {
-            imgPath = v.imagenUrl.startsWith('http') ? v.imagenUrl : `/img/cars/${v.imagenUrl}`;
+        const urlBase = v.imagenUrl || v.ImagenUrl;
+        if (urlBase) {
+            imgPath = urlBase.startsWith('http') ? urlBase : `/img/cars/${urlBase}`;
         }
 
         return `
@@ -90,19 +129,26 @@ function inyectarTablaVehiculos(lista) {
                 </td>
                 <td>
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" ${v.activo ? 'checked' : ''} onclick="toggleEstado(${v.id})">
+                        <input class="form-check-input" type="checkbox" ${isActivo ? 'checked' : ''} onclick="toggleEstado(${idVehiculo})">
                     </div>
                 </td>
-                <td class="fw-bold text-white">${v.marca}</td>
-                <td class="text-white">${v.modelo} <br><small class="text-muted">${v.version || ''}</small></td>
-                <td class="text-white">${v.anio}</td>
-                <td class="text-danger fw-bold">$ ${v.precio.toLocaleString()}</td>
-                <td class="text-white">${v.stock}</td>
+                <td class="fw-bold text-white">
+                    ${txtMarca}
+                    <br><small class="text-danger text-uppercase" style="font-size: 0.75rem;">${txtCategoria}</small>
+                </td>
+                <td class="text-white">${txtModelo} <br><small class="text-muted">${txtVersion}</small></td>
+                <td>
+                    <span class="badge ${txtCondicion === 'Nuevo' ? 'bg-success' : 'bg-secondary'}">${txtCondicion === 'Nuevo' ? 'Nuevo (0Km)' : 'Usado'}</span>
+                </td>
+                <td class="text-white text-uppercase font-monospace">${txtPatente}</td>
+                <td class="text-white">${txtAnio}</td>
+                <td class="text-danger fw-bold">$ ${numPrecio.toLocaleString()}</td>
+                <td class="text-white text-uppercase font-monospace small">${txtVin}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-light me-2" onclick='editar(${JSON.stringify(v)})'>
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${v.id})">
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminar(${idVehiculo})">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
@@ -117,16 +163,26 @@ function filtrarVehiculos() {
     const filtroEstado = document.getElementById('filtrarEstado').value;
 
     const resultado = cacheVehiculos.filter(v => {
-        // 1. Macheo por texto (Marca, Modelo o Versión)
-        const cumpleTexto = 
-            v.marca.toLowerCase().includes(busqueda) || 
-            v.modelo.toLowerCase().includes(busqueda) || 
-            (v.version && v.version.toLowerCase().includes(busqueda));
+        // Extracción segura de datos para el filtro local
+        const marca = (v.marca || v.Marca || '').toLowerCase();
+        const modelo = (v.modelo || v.Modelo || '').toLowerCase();
+        const version = (v.version || v.Version || '').toLowerCase();
+        const vin = (v.vin || v.Vin || '').toLowerCase();
+        const patente = (v.patente || v.Patente || '').toLowerCase();
+        const activo = v.activo !== undefined ? v.activo : v.Activo;
 
-        // 2. Macheo por visibilidad web
+        // 1. Match por texto extensible
+        const cumpleTexto = 
+            marca.includes(busqueda) || 
+            modelo.includes(busqueda) || 
+            version.includes(busqueda) ||
+            vin.includes(busqueda) ||
+            patente.includes(busqueda);
+
+        // 2. Match por visibilidad web
         let cumpleEstado = true;
-        if (filtroEstado === 'activos') cumpleEstado = v.activo === true;
-        if (filtroEstado === 'inactivos') cumpleEstado = v.activo === false;
+        if (filtroEstado === 'activos') cumpleEstado = activo === true;
+        if (filtroEstado === 'inactivos') cumpleEstado = false;
 
         return cumpleTexto && cumpleEstado;
     });
@@ -162,9 +218,11 @@ async function toggleEstado(id) {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        // Actualizamos de forma inmediata el objeto en la memoria local para no perder el estado al escribir filtros
-        const vehiculo = cacheVehiculos.find(v => v.id === id);
-        if (vehiculo) vehiculo.activo = !vehiculo.activo;
+        const vehiculo = cacheVehiculos.find(v => (v.id === id || v.Id === id));
+        if (vehiculo) {
+            if (vehiculo.activo !== undefined) vehiculo.activo = !vehiculo.activo;
+            if (vehiculo.Activo !== undefined) vehiculo.Activo = !vehiculo.Activo;
+        }
 
         if (!resp.ok) listar(); 
     } catch (err) { 
@@ -179,7 +237,10 @@ function abrirModal() {
     document.getElementById('vId').value = "0";
     document.getElementById('vImagenUrl').value = "";
     document.getElementById('vFotoFile').value = "";
-    document.getElementById('vCategoriaId').value = ""; // Resetea el dropdown a la opción por defecto
+    document.getElementById('vVin').value = ""; 
+    document.getElementById('vPatente').value = "";      
+    document.getElementById('vCondicion').value = "Usado"; 
+    document.getElementById('vCategoriaId').value = ""; 
     document.getElementById('vActivo').checked = true;
     actualizarPreview();
     myModalVehiculo?.show();
@@ -187,23 +248,38 @@ function abrirModal() {
 
 function editar(v) {
     document.getElementById('modalTitulo').innerText = "MODIFICAR VEHÍCULO";
-    document.getElementById('vId').value = v.id;
-    document.getElementById('vMarca').value = v.marca;
-    document.getElementById('vModelo').value = v.modelo;
-    document.getElementById('vVersion').value = v.version || '';
-    document.getElementById('vAnio').value = v.anio;
-    document.getElementById('vKilometros').value = v.kilometros;
-    document.getElementById('vPrecio').value = v.precio;
-    document.getElementById('vStock').value = v.stock;
-    document.getElementById('vCombustible').value = v.combustible;
-    document.getElementById('vTransmision').value = v.transmision;
     
-    // ✅ Autoselección limpia de la categoría en el dropdown usando el ID relacional
-    document.getElementById('vCategoriaId').value = v.categoriaId || "";
+    // Asignación con fallback estricto para C# (Mayúsculas / Minúsculas)
+    document.getElementById('vId').value = v.id !== undefined ? v.id : (v.Id || 0);
+    document.getElementById('vMarca').value = v.marca || v.Marca || '';
+    document.getElementById('vModelo').value = v.modelo || v.Modelo || '';
+    document.getElementById('vVersion').value = v.version || v.Version || '';
+    document.getElementById('vAnio').value = v.anio || v.Anio || '';
+    document.getElementById('vKilometros').value = v.kilometros !== undefined ? v.kilometros : (v.Kilometros || 0);
+    document.getElementById('vPrecio').value = v.precio !== undefined ? v.precio : (v.Precio || 0);
     
-    document.getElementById('vImagenUrl').value = v.imagenUrl || '';
-    document.getElementById('vActivo').checked = v.activo;
+    document.getElementById('vVin').value = v.vin || v.Vin || '';
+    document.getElementById('vPatente').value = v.patente || v.Patente || '';
+    
+    // Mapeo preciso del selector de condición ("0KM" de la base de datos se convierte en "Nuevo")
+    const rawCondicion = v.condicion || v.Condicion || 'Usado';
+    if (rawCondicion === '0KM' || rawCondicion === 'Nuevo') {
+        document.getElementById('vCondicion').value = "Nuevo";
+    } else {
+        document.getElementById('vCondicion').value = "Usado";
+    }
+    
+    document.getElementById('vCombustible').value = v.combustible || v.Combustible || 'Nafta';
+    document.getElementById('vTransmision').value = v.transmision || v.Transmision || 'Manual';
+    
+    // Seteo del combo de categorías de forma segura
+    const idCategoriaVehiculo = v.categoriaId !== undefined ? v.categoriaId : (v.CategoriaId || "");
+    document.getElementById('vCategoriaId').value = idCategoriaVehiculo;
+    
+    document.getElementById('vImagenUrl').value = v.imagenUrl || v.ImagenUrl || '';
+    document.getElementById('vActivo').checked = v.activo !== undefined ? v.activo : v.Activo;
     document.getElementById('vFotoFile').value = ""; 
+    
     actualizarPreview();
     myModalVehiculo?.show();
 }
@@ -216,7 +292,17 @@ async function guardar() {
     }
 
     const formData = new FormData(form);
-    formData.set('Activo', document.getElementById('vActivo').checked);
+    
+    // Homologación de condición al enviar al Backend para mantener limpia la BD
+    const condicionSeleccionada = document.getElementById('vCondicion').value;
+    if (condicionSeleccionada === 'Nuevo') {
+        formData.set('Condicion', '0KM');
+    } else {
+        formData.set('Condicion', 'Usado');
+    }
+    
+    const isChecked = document.getElementById('vActivo').checked;
+    formData.set('Activo', isChecked ? "True" : "False");
 
     try {
         const response = await fetch('/Admin/Guardar', {

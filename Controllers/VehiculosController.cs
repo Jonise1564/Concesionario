@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // Necesario para ToListAsync
-using Concesionario.Data; // Donde está tu ApplicationDbContext
+using Microsoft.EntityFrameworkCore; 
+using Concesionario.Data; 
 using Concesionario.Models;
 
 namespace Concesionario.Controllers;
@@ -15,12 +15,15 @@ public class VehiculosController : Controller
         _context = context;
     }
 
-    // Usamos Task para que la consulta sea asíncrona
+    // LISTADO PÚBLICO: Muestra el catálogo de autos en stock para los clientes
     public async Task<IActionResult> Index()
     {
-        // Consultamos la tabla 'Vehiculos' de MySQL
-        // .Include(v => v.Categoria) es opcional si quieres traer el nombre de la categoría
-        var inventario = await _context.Vehiculos.ToListAsync();
+        // Filtramos para traer solo los vehículos aptos para la venta:
+        // 1. Que estén comerciales como 'Disponible'
+        // 2. Que la bandera técnica 'Activo' sea verdadera (no borrado/oculto)
+        var inventario = await _context.Vehiculos
+            .Where(v => v.Estado == "Disponible" && v.Activo == true)
+            .ToListAsync();
 
         return View(inventario);
     }

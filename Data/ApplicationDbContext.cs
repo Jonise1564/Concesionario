@@ -9,16 +9,28 @@ namespace Concesionario.Data
         {
         }
 
-        // DbSets para vehículos y usuarios
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Vehiculo> Vehiculos { get; set; }
         public DbSet<Consulta> Consultas { get; set; }
-
-        
         public DbSet<Categoria> Categorias { get; set; }
-
-        // Nuevos DbSets para vendedores si ya los incluiste
         public DbSet<Persona> Personas { get; set; }
         public DbSet<Vendedor> Vendedores { get; set; }
+
+        // Mapeo explícito para asegurar la traducción de LINQ
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Vehiculo>(entity =>
+            {
+                entity.ToTable("Vehiculos"); // Nombre exacto de tu tabla en MySQL
+
+                // Forzamos el mapeo de las nuevas columnas de Jonel Autos
+                entity.Property(v => v.Estado).HasColumnName("Estado").HasMaxLength(50);
+                entity.Property(v => v.Condicion).HasColumnName("Condicion").HasMaxLength(50);
+                entity.Property(v => v.Patente).HasColumnName("Patente").HasMaxLength(20);
+                entity.Property(v => v.Vin).HasColumnName("Vin").HasMaxLength(50);
+            });
+        }
     }
 }

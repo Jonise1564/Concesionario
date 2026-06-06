@@ -1,6 +1,5 @@
-<div id="seccion-vehiculos">
-    <div
-        class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
+ <div id="seccion-vehiculos">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
         <h2 class="fw-800 text-uppercase text-white m-0">Gestión de <span class="text-danger">Stock</span></h2>
         <button class="btn btn-danger btn-sm px-4 fw-bold w-100 w-sm-auto" onclick="abrirModal()">
             <i class="bi bi-plus-lg"></i> NUEVO INGRESO
@@ -16,8 +15,7 @@
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <select id="filtrarEstado" class="form-select bg-black border-secondary text-white"
-                    onchange="filtrarVehiculos()">
+            <select id="filtrarEstado" class="form-select bg-black border-secondary text-white" onchange="filtrarVehiculos()">
                 <option value="todos">Todos los estados</option>
                 <option value="activos">Visibles (Activos)</option>
                 <option value="inactivos">Ocultos (Inactivos)</option>
@@ -30,18 +28,20 @@
             <thead class="text-muted small">
                 <tr>
                     <th>FOTO</th>
-                    <th>ESTADO</th>
+                    <th>ACTIVO</th>
                     <th>MARCA</th>
                     <th>MODELO / VERSIÓN</th>
+                    <th>CONDICIÓN</th> 
+                    <th>PATENTE</th>   
                     <th>AÑO</th>
                     <th>PRECIO</th>
-                    <th>STOCK</th>
+                    <th>VIN (CHASIS)</th> 
                     <th>ACCIONES</th>
                 </tr>
             </thead>
             <tbody id="tablaCuerpo">
                 <tr>
-                    <td colspan="8" class="text-center p-5">
+                    <td colspan="10" class="text-center p-5">
                         <div class="spinner-border text-danger" role="status"></div>
                         <p class="mt-2 text-muted">Cargando unidades...</p>
                     </td>
@@ -56,7 +56,7 @@
         <div class="modal-content bg-dark border-secondary">
             <div class="modal-header border-secondary">
                 <h5 class="modal-title fw-bold text-white" id="modalTitulo">DATOS DEL VEHÍCULO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-white">
                 <form id="formVehiculo" enctype="multipart/form-data">
@@ -68,58 +68,52 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label small fw-bold text-danger text-uppercase">Marca</label>
-                                    <input type="text" id="vMarca" name="Marca"
-                                           class="form-control bg-black border-secondary text-white" required>
+                                    <input type="text" id="vMarca" name="Marca" class="form-control bg-black border-secondary text-white" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label small fw-bold text-danger text-uppercase">Modelo</label>
-                                    <input type="text" id="vModelo" name="Modelo"
-                                           class="form-control bg-black border-secondary text-white" required>
+                                    <input type="text" id="vModelo" name="Modelo" class="form-control bg-black border-secondary text-white" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label small fw-bold text-danger text-uppercase">Versión</label>
-                                    <input type="text" id="vVersion" name="Version"
-                                           class="form-control bg-black border-secondary text-white">
+                                    <input type="text" id="vVersion" name="Version" class="form-control bg-black border-secondary text-white">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Condición</label> 
+                                    <select id="vCondicion" name="Condicion" class="form-select bg-black border-secondary text-white" required>
+                                        <option value="Usado">Usado</option>
+                                        <option value="Nuevo">Nuevo (0Km)</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label small fw-bold text-danger text-uppercase">Año</label>
-                                    <input type="number" id="vAnio" name="Anio"
-                                           class="form-control bg-black border-secondary text-white" required>
+                                    <input type="number" id="vAnio" name="Anio" class="form-control bg-black border-secondary text-white" required>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label
-                                    class="form-label small fw-bold text-danger text-uppercase">Kilómetros</label>
-                                    <input type="number" id="vKilometros" name="Kilometros"
-                                           class="form-control bg-black border-secondary text-white" required>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Patente</label> 
+                                    <input type="text" id="vPatente" name="Patente" class="form-control bg-black border-secondary text-white text-uppercase" placeholder="Ej: AA123BB o ABC123">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Kilómetros</label>
+                                    <input type="number" id="vKilometros" name="Kilometros" class="form-control bg-black border-secondary text-white" required>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label small fw-bold text-danger text-uppercase">Precio</label>
-                                    <input type="number" id="vPrecio" name="Precio"
-                                           class="form-control bg-black border-secondary text-white" required>
+                                    <input type="number" id="vPrecio" name="Precio" class="form-control bg-black border-secondary text-white" required>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Stock</label>
-                                    <input type="number" id="vStock" name="Stock"
-                                           class="form-control bg-black border-secondary text-white" required value="1">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">VIN / Chasis</label>
+                                    <input type="text" id="vVin" name="Vin" class="form-control bg-black border-secondary text-white text-uppercase" placeholder="Ej: 9BWZZZ...">
                                 </div>
-                                @* <div class="col-md-4 mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Categoría ID</label>
-                                    <input type="number" id="vCategoriaId" name="CategoriaId" class="form-control bg-black
-                                border-secondary text-white" required value="1">
-                                </div> *@
-
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-6 mb-3">
                                     <label class="form-label small fw-bold text-danger text-uppercase">Categoría</label>
-                                    <select id="vCategoriaId" name="CategoriaId"
-                                            class="form-select bg-black border-secondary text-white" required>
+                                    <select id="vCategoriaId" name="CategoriaId" class="form-select bg-black border-secondary text-white" required>
                                         <option value="" disabled selected>Seleccione una categoría...</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label
-                                    class="form-label small fw-bold text-danger text-uppercase">Combustible</label>
-                                    <select id="vCombustible" name="Combustible"
-                                            class="form-select bg-black border-secondary text-white">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Combustible</label>
+                                    <select id="vCombustible" name="Combustible" class="form-select bg-black border-secondary text-white">
                                         <option value="Nafta">Nafta</option>
                                         <option value="Diesel">Diesel</option>
                                         <option value="Híbrido">Híbrido</option>
@@ -127,47 +121,38 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label
-                                    class="form-label small fw-bold text-danger text-uppercase">Transmisión</label>
-                                    <select id="vTransmision" name="Transmision"
-                                            class="form-select bg-black border-secondary text-white">
+                                    <label class="form-label small fw-bold text-danger text-uppercase">Transmisión</label>
+                                    <select id="vTransmision" name="Transmision" class="form-select bg-black border-secondary text-white">
                                         <option value="Manual">Manual</option>
                                         <option value="Automática">Automática</option>
                                     </select>
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <div class="form-check form-switch p-3 bg-black rounded border border-secondary">
-                                        <input class="form-check-input" type="checkbox" id="vActivo" name="Activo"
-                                               checked>
-                                        <label
-                                            class="form-check-label small fw-bold text-white text-uppercase ms-2">Visible
-                                            en la Web Pública</label>
-                                        </div>
+                                        <input class="form-check-input" type="checkbox" id="vActivo" name="Activo" checked>
+                                        <label class="form-check-label small fw-bold text-white text-uppercase ms-2" for="vActivo">Visible en la Web Pública</label>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-danger text-uppercase">Subir
-                                        Fotografía</label>
-                                        <input type="file" id="vFotoFile" name="FotoArchivo"
-                                               class="form-control bg-black border-secondary text-white" accept="image/*"
-                                               onchange="seleccionarArchivo(this)">
-                                    </div>
-                                    <div class="preview-container mt-2">
-                                        <img id="imgPreview" src=""
-                                             onerror="this.src='https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen'">
-                                    </div>
-                                    <p class="text-center small text-muted mt-2">Vista previa de la unidad</p>
-                                </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-danger text-uppercase">Subir Fotografía</label>
+                                <input type="file" id="vFotoFile" name="FotoFile" class="form-control bg-black border-secondary text-white" accept="image/*" onchange="seleccionarArchivo(this)">
                             </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer border-secondary">
-                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
-                        <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" onclick="guardar()">GUARDAR
-                            CAMBIOS</button>
+                            <div class="preview-container mt-2">
+                                <img id="imgPreview" src="" class="img-fluid rounded border border-secondary" alt="Previsualización" onerror="this.src='https://placehold.co/400x300/000000/FFFFFF?text=Sin+Imagen'">
+                            </div>
+                            <p class="text-center small text-muted mt-2">Vista previa de la unidad</p>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">CANCELAR</button>
+                <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" onclick="guardar()">GUARDAR CAMBIOS</button>
+            </div>
+        </div>
+    </div>
+</div>

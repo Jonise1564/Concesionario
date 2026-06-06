@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using MailKit.Net.Smtp;
 using MimeKit;
+using System.Collections.Generic;
 
 namespace Concesionario.Controllers
 {
@@ -29,7 +30,6 @@ namespace Concesionario.Controllers
             _env = env;
         }
 
-        // Vista principal: Se permite abrir el contenedor HTML sin loops
         [AllowAnonymous] 
         [HttpGet]
         [HttpGet("Index")]
@@ -39,7 +39,7 @@ namespace Concesionario.Controllers
         }
 
         // ========================================================
-        // GESTIÓN DE VEHÍCULOS (Bloqueo estricto por Rol)
+        // GESTIÓN DE VEHÍCULOS (Modificado con .Include)
         // ========================================================
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
@@ -48,10 +48,13 @@ namespace Concesionario.Controllers
         {
             try
             {
+                // Agregamos .Include(v => v.Categoria) para asegurar que los datos relacionales viajen al cliente
+                // var query = _context.Vehiculos.Include(v => v.Categoria).AsQueryable();
                 var query = _context.Vehiculos.AsQueryable();
+                
                 if (!string.IsNullOrEmpty(filtro))
                 {
-                    query = query.Where(v => v.Marca.Contains(filtro) || v.Modelo.Contains(filtro));
+                    query = query.Where(v => v.Marca.Contains(filtro) || v.Modelo.Contains(filtro) || v.Patente.Contains(filtro));
                 }
 
                 if (pagina == null)
@@ -114,8 +117,63 @@ namespace Concesionario.Controllers
                     model.ImagenUrl = nombreArchivo;
                 }
 
-                if (model.Id == 0) _context.Vehiculos.Add(model);
-                else _context.Vehiculos.Update(model);
+                if (model.Id == 0)
+                {
+                    if (!string.IsNullOrEmpty(model.Vin))
+                    {
+                        var existeVin = await _context.Vehiculos.AnyAsync(v => v.Vin == model.Vin.Trim());
+                        if (existeVin) return BadRequest(new { message = "El número de chasis (VIN) ya se encuentra registrado." });
+                    }
+
+                    if (!string.IsNullOrEmpty(model.Patente))
+                    {
+                        var existePatente = await _context.Vehiculos.AnyAsync(v => v.Patente == model.Patente.Trim());
+                        if (existePatente) return BadRequest(new { message = "La patente ingresada ya pertenece a otro vehículo en stock." });
+                    }
+
+                    _context.Vehiculos.Add(model);
+                }
+                else
+                {
+                    var vehiculoDb = await _context.Vehiculos.FindAsync(model.Id);
+                    if (vehiculoDb == null) return NotFound(new { message = "Vehículo no encontrado." });
+
+                    if (!string.IsNullOrEmpty(model.Vin) && vehiculoDb.Vin != model.Vin.Trim())
+                    {
+                        var existeVin = await _context.Vehiculos.AnyAsync(v => v.Id != model.Id && v.Vin == model.Vin.Trim());
+                        if (existeVin) return BadRequest(new { message = "El número de chasis (VIN) ya está en uso." });
+                    }
+
+                    if (!string.IsNullOrEmpty(model.Patente) && vehiculoDb.Patente != model.Patente.Trim())
+                    {
+                        var existePatente = await _context.Vehiculos.AnyAsync(v => v.Id != model.Id && v.Patente == model.Patente.Trim());
+                        if (existePatente) return BadRequest(new { message = "La patente ingresada ya está en uso por otro vehículo." });
+                    }
+
+                    vehiculoDb.Marca = model.Marca;
+                    vehiculoDb.Modelo = model.Modelo;
+                    vehiculoDb.Version = model.Version;
+                    vehiculoDb.Anio = model.Anio;
+                    vehiculoDb.Kilometros = model.Kilometros;
+                    vehiculoDb.Precio = model.Precio;
+                    vehiculoDb.Combustible = model.Combustible;
+                    vehiculoDb.Transmision = model.Transmision;
+                    vehiculoDb.CategoriaId = model.CategoriaId;
+                    vehiculoDb.Tipo = model.Tipo;
+                    vehiculoDb.Activo = model.Activo;
+                    
+                    vehiculoDb.Vin = model.Vin?.Trim();
+                    vehiculoDb.Patente = model.Patente?.Trim();
+                    vehiculoDb.Condicion = model.Condicion;
+                    vehiculoDb.Estado = model.Estado;
+
+                    if (model.ImagenUrl != null)
+                    {
+                        vehiculoDb.ImagenUrl = model.ImagenUrl;
+                    }
+
+                    _context.Vehiculos.Update(vehiculoDb);
+                }
 
                 await _context.SaveChangesAsync();
                 return Ok(new { message = "Éxito" });
@@ -146,7 +204,7 @@ namespace Concesionario.Controllers
         }
 
         // ========================================================
-        // APIs GESTIÓN DE CATEGORÍAS
+        // GESTIÓN DE CATEGORÍAS Y CONDICIONES (NUEVO ENDPOINT)
         // ========================================================
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
@@ -156,6 +214,7 @@ namespace Concesionario.Controllers
             try
             {
                 var categories = await _context.Categorias
+                    .AsNoTracking()
                     .Select(c => new { 
                         id = c.Id, 
                         nombre = c.Nombre 
@@ -171,8 +230,21 @@ namespace Concesionario.Controllers
             }
         }
 
+        // Endpoint agregado para alimentar el select de "Condición" en el Frontend
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
+        [HttpGet("GetCondiciones")]
+        public IActionResult GetCondiciones()
+        {
+            var condiciones = new List<object>
+            {
+                new { id = "Nuevo", nombre = "Nuevo" },
+                new { id = "Usado", nombre = "Usado" }
+            };
+            return Ok(condiciones);
+        }
+
         // ========================================================
-        // APIs GESTIÓN DE CONSULTAS (Bloqueo estricto por Rol)
+        // GESTIÓN DE CONSULTAS
         // ========================================================
 
         [AllowAnonymous] 
@@ -204,26 +276,14 @@ namespace Concesionario.Controllers
 
             await _context.SaveChangesAsync();
 
-            // =========================
-            // ENVIAR EMAIL AL CLIENTE
-            // =========================
-
             var email = new MimeMessage();
-
-            email.From.Add(
-                MailboxAddress.Parse("roquerobertomiguellucero@gmail.com")
-            );
-
-            email.To.Add(
-                MailboxAddress.Parse(consulta.Email)
-            );
-
+            email.From.Add(MailboxAddress.Parse("roquerobertomiguellucero@gmail.com"));
+            email.To.Add(MailboxAddress.Parse(consulta.Email));
             email.Subject = "Respuesta a tu consulta - Jonel Autos";
 
             email.Body = new TextPart("plain")
             {
-                Text =
-                    $"Hola {consulta.Nombre} 👋\n\n"
+                Text = $"Hola {consulta.Nombre} 👋\n\n"
                     + $"Respondimos tu consulta:\n\n"
                     + $"{respuesta}\n\n"
                     + $"Gracias por comunicarte con Jonel Autos 🚗"
@@ -231,26 +291,16 @@ namespace Concesionario.Controllers
 
             using var smtp = new SmtpClient();
 
-            await smtp.ConnectAsync(
-                "smtp.gmail.com",
-                587,
-                MailKit.Security.SecureSocketOptions.StartTls
-            );
-
-            await smtp.AuthenticateAsync(
-                "roquerobertomiguellucero@gmail.com",
-                "yxvw pnug qtdv rjvi"
-            );
-
+            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync("roquerobertomiguellucero@gmail.com", "yxvw pnug qtdv rjvi");
             await smtp.SendAsync(email);
-
             await smtp.DisconnectAsync(true);
 
             return Ok(new { success = true });
         }
 
         // ========================================================
-        // APIs GESTIÓN DE USUARIOS (Diagnóstico de Acceso)
+        // APIs GESTIÓN DE USUARIOS
         // ========================================================
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -339,7 +389,7 @@ namespace Concesionario.Controllers
         }
 
         // ========================================================
-        // GESTIÓN DE VENDEDORES (Validaciones de duplicados y edad)
+        // GESTIÓN DE VENDEDORES
         // ========================================================
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
@@ -360,13 +410,11 @@ namespace Concesionario.Controllers
                         Apellidos = v.Persona.Apellidos ?? "",
                         Email = v.Persona.Email ?? "",
                         Telefono = v.Persona.Telefono ?? "",
-                        
                         FechaNacimiento = v.Persona.FechaNacimiento,
                         Genero = v.Persona.Genero ?? "",
                         EstadoCivil = v.Persona.EstadoCivil ?? "",
                         Provincia = v.Persona.EstadoProvincia ?? "",
                         CodigoPostal = v.Persona.CodigoPostal ?? "",
-
                         NombreUsuario = v.Usuario != null ? (v.Usuario.NombreUsuario ?? "Sin Usuario") : "Sin Usuario",
                         PorcentajeComision = v.PorcentajeComision,
                         Observaciones = v.Observaciones ?? ""
@@ -387,26 +435,16 @@ namespace Concesionario.Controllers
         {
             if (dto == null) return BadRequest(new { message = "Estructura de datos nula." });
 
-            // ========================================================
-            // ----- VALIDACIÓN DE EDAD (ENTRE 18 Y 70 AÑOS) -----
-            // ========================================================
             if (dto.FechaNacimiento.HasValue)
             {
                 var fechaNac = dto.FechaNacimiento.Value;
                 var hoy = DateTime.Today;
                 
-                // Cálculo exacto de la edad
                 int edad = hoy.Year - fechaNac.Year;
                 if (fechaNac.Date > hoy.AddYears(-edad)) edad--;
 
-                if (edad < 18)
-                {
-                    return BadRequest(new { message = "El vendedor debe ser mayor de 18 años de edad." });
-                }
-                if (edad >= 70)
-                {
-                    return BadRequest(new { message = "El vendedor debe ser menor de 70 años de edad." });
-                }
+                if (edad < 18) return BadRequest(new { message = "El vendedor debe ser mayor de 18 años de edad." });
+                if (edad >= 70) return BadRequest(new { message = "El vendedor debe ser menor de 70 años de edad." });
             }
             else
             {
@@ -419,10 +457,6 @@ namespace Concesionario.Controllers
                 {
                     if (dto.Id == 0)
                     {
-                        // ========================================================
-                        // ----- CONTROL DE DUPLICADOS PARA ALTA (CREAR) -----
-                        // ========================================================
-
                         var dniExiste = await _context.Personas
                             .AnyAsync(p => p.DocumentoIdentidad == dto.DocumentoIdentidad.Trim() && p.Activo == true);
                         if (dniExiste)
@@ -451,13 +485,11 @@ namespace Concesionario.Controllers
                             Apellidos = dto.Apellidos.Trim(),
                             Email = !string.IsNullOrEmpty(dto.Email) ? dto.Email.Trim() : null,
                             Telefono = dto.Telefono.Trim(),
-                            
                             FechaNacimiento = dto.FechaNacimiento,
                             Genero = dto.Genero,
                             EstadoCivil = dto.EstadoCivil,
                             EstadoProvincia = dto.Provincia, 
                             CodigoPostal = dto.CodigoPostal,
-
                             CreadoEl = DateTime.Now,
                             Activo = true
                         };
@@ -490,10 +522,6 @@ namespace Concesionario.Controllers
                     }
                     else
                     {
-                        // ========================================================
-                        // ----- CONTROL DE DUPLICADOS PARA EDICIÓN (MODIFICAR) -----
-                        // ========================================================
-
                         var vExistente = await _context.Vendedores
                             .Include(v => v.Persona)
                             .Include(v => v.Usuario)
@@ -530,21 +558,16 @@ namespace Concesionario.Controllers
                         vExistente.Persona.Apellidos = dto.Apellidos.Trim();
                         vExistente.Persona.Email = !string.IsNullOrEmpty(dto.Email) ? dto.Email.Trim() : null;
                         vExistente.Persona.Telefono = dto.Telefono.Trim();
-                        
                         vExistente.Persona.FechaNacimiento = dto.FechaNacimiento;
                         vExistente.Persona.Genero = dto.Genero;
                         vExistente.Persona.EstadoCivil = dto.EstadoCivil;
                         vExistente.Persona.EstadoProvincia = dto.Provincia; 
                         vExistente.Persona.CodigoPostal = dto.CodigoPostal;
-
                         vExistente.Persona.ActualizadoEl = DateTime.Now;
 
-                        if (!string.IsNullOrEmpty(dto.Password))
+                        if (!string.IsNullOrEmpty(dto.Password) && vExistente.Usuario != null)
                         {
-                            if (vExistente.Usuario != null)
-                            {
-                                vExistente.Usuario.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-                            }
+                            vExistente.Usuario.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password);
                         }
 
                         vExistente.PorcentajeComision = dto.PorcentajeComision;
