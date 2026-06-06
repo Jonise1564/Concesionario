@@ -32,14 +32,14 @@ async function listarVendedores() {
             }
         });
 
-        if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                alert("Sesión expirada o no tenés permisos de administrador.");
-                window.location.href = '/Home/Acceso';
-                return;
-            }
-            throw new Error("No se pudieron cargar los vendedores.");
-        }
+        // if (!response.ok) {
+        //     if (response.status === 401 || response.status === 403) {
+        //         alert("Sesión expirada o no tenés permisos de administrador.");
+        //         window.location.href = '/Home/Acceso';
+        //         return;
+        //     }
+        //     throw new Error("No se pudieron cargar los vendedores.");
+        // }
 
         vendedores = await response.json();
         renderizarTablaVendedores(vendedores);
