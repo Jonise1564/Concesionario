@@ -15,6 +15,9 @@
             <a onclick="cambiarSeccion('vehiculos')" id="btn-nav-vehiculos" class="nav-admin-link solo-admin active">
                 <i class="bi bi-car-front"></i> Vehículos
             </a>
+            <a onclick="cambiarSeccion('clientes')" id="btn-nav-clientes" class="nav-admin-link solo-admin">
+                <i class="bi bi-people-fill"></i> Clientes
+            </a>
             <a onclick="cambiarSeccion('usuarios')" id="btn-nav-usuarios" class="nav-admin-link solo-admin">
                 <i class="bi bi-people"></i> Usuarios
             </a>
@@ -39,6 +42,10 @@
             
             <partial name="_VehiculosSection" />
 
+            <div id="seccion-clientes" style="display: none;">
+                <partial name="_ClientesSection" />
+            </div>
+
             <partial name="_UsuariosModalYTabla" />
 
             <partial name="_VendedoresSection" />
@@ -59,6 +66,10 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/admin-vehiculos.js" asp-append-version="true"></script>
+    <script src="~/js/admin-vendedores.js" asp-append-version="true"></script>
+    <script src="~/js/admin-clientes.js" asp-append-version="true"></script>
+
     <script>
         const token = localStorage.getItem('jonel_token');
         const modalUsuario = document.getElementById('modalUsuario') ? new bootstrap.Modal(document.getElementById('modalUsuario')) : null;
@@ -84,7 +95,7 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", async () => {
             if (!token) {
                 window.location.href = '/Home/Acceso';
                 return;
@@ -110,7 +121,16 @@
             // Si es Administrador, el flujo continúa normal como antes
             cargarPendientes();
 
-            if (typeof listar === 'function') listar();
+            // Ejecutamos la carga de categorías primero de forma asíncrona
+            if (typeof cargarCategorias === 'function') {
+                await cargarCategorias();
+            }
+
+            // Luego listamos los vehículos correspondientes
+            if (typeof listar === 'function') {
+                await listar();
+            }
+            
             cambiarSeccion('vehiculos');
         });
 
@@ -137,30 +157,34 @@
             }
         }
 
+        // 4. LOGICA ADAPTADA PARA CONTROLAR EL DISPLAY DE CLIENTES
         function cambiarSeccion(seccion) {
-            // Protección extra: Si un vendedor burla el click e intenta ejecutar cambiarSeccion por consola
             if (usuarioRol === "Vendedor" || usuarioRol === "vendedor") {
                 window.location.href = '/Admin/Consultas';
                 return;
             }
 
             const secVehiculos = document.getElementById('seccion-vehiculos');
+            const secClientes = document.getElementById('seccion-clientes'); 
             const secUsuarios = document.getElementById('seccion-usuarios'); 
             const secVendedores = document.getElementById('seccion-vendedores'); 
             const secAjustes = document.getElementById('seccion-ajustes');
 
             const btnVehiculos = document.getElementById('btn-nav-vehiculos');
+            const btnClientes = document.getElementById('btn-nav-clientes'); 
             const btnUsuarios = document.getElementById('btn-nav-usuarios');
             const btnVendedores = document.getElementById('btn-nav-vendedores'); 
             const btnAjustes = document.getElementById('btn-nav-ajustes');
 
-            // Resetear visibilidad
+            // Resetear visibilidad de todos
             if(secVehiculos) secVehiculos.style.display = 'none';
+            if(secClientes) secClientes.style.display = 'none'; 
             if(secUsuarios) secUsuarios.style.display = 'none';
             if(secVendedores) secVendedores.style.display = 'none'; 
             if(secAjustes) secAjustes.style.display = 'none';
 
             btnVehiculos?.classList.remove('active');
+            btnClientes?.classList.remove('active'); 
             btnUsuarios?.classList.remove('active');
             btnVendedores?.classList.remove('active'); 
             btnAjustes?.classList.remove('active');
@@ -169,6 +193,10 @@
             if (seccion === 'vehiculos' && secVehiculos) {
                 secVehiculos.style.display = 'block';
                 btnVehiculos.classList.add('active');
+            } else if (seccion === 'clientes' && secClientes) { 
+                secClientes.style.display = 'block';
+                btnClientes.classList.add('active');
+                if (typeof listarClientes === 'function') listarClientes();
             } else if (seccion === 'usuarios' && secUsuarios) {
                 secUsuarios.style.display = 'block';
                 btnUsuarios.classList.add('active');
@@ -188,7 +216,4 @@
             }
         }
     </script>
-    
-    <script src="~/js/admin-vehiculos.js" asp-append-version="true"></script>
-    <script src="~/js/admin-vendedores.js" asp-append-version="true"></script>
 }

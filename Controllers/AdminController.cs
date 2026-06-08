@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Concesionario.Data;
 using Concesionario.Models;
 using Microsoft.EntityFrameworkCore;
-using BCrypt.Net; 
+using BCrypt.Net;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
 using System.IO;
@@ -30,7 +30,7 @@ namespace Concesionario.Controllers
             _env = env;
         }
 
-        [AllowAnonymous] 
+        [AllowAnonymous]
         [HttpGet]
         [HttpGet("Index")]
         public IActionResult Index()
@@ -39,7 +39,7 @@ namespace Concesionario.Controllers
         }
 
         // ========================================================
-        // GESTIÓN DE VEHÍCULOS (Modificado con .Include)
+        // GESTIÓN DE VEHÍCULOS
         // ========================================================
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
@@ -51,7 +51,7 @@ namespace Concesionario.Controllers
                 // Agregamos .Include(v => v.Categoria) para asegurar que los datos relacionales viajen al cliente
                 // var query = _context.Vehiculos.Include(v => v.Categoria).AsQueryable();
                 var query = _context.Vehiculos.AsQueryable();
-                
+
                 if (!string.IsNullOrEmpty(filtro))
                 {
                     query = query.Where(v => v.Marca.Contains(filtro) || v.Modelo.Contains(filtro) || v.Patente.Contains(filtro));
@@ -87,7 +87,7 @@ namespace Concesionario.Controllers
                 var v = await _context.Vehiculos.FindAsync(id);
                 if (v == null) return NotFound();
 
-                v.Activo = !v.Activo; 
+                v.Activo = !v.Activo;
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true, nuevoEstado = v.Activo });
             }
@@ -97,12 +97,14 @@ namespace Concesionario.Controllers
             }
         }
 
+                
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
         [HttpPost("Guardar")]
         public async Task<IActionResult> Guardar([FromForm] Vehiculo model, IFormFile? FotoArchivo)
         {
             try
             {
+                // 1. Procesamiento de la foto si se subió un archivo nuevo
                 if (FotoArchivo != null && FotoArchivo.Length > 0)
                 {
                     string nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(FotoArchivo.FileName);
@@ -114,9 +116,12 @@ namespace Concesionario.Controllers
                     {
                         await FotoArchivo.CopyToAsync(stream);
                     }
+                    
+                    // Guardamos el nombre generado en el modelo
                     model.ImagenUrl = nombreArchivo;
                 }
 
+                // 2. Lógica para NUEVO VEHÍCULO (Id == 0)
                 if (model.Id == 0)
                 {
                     if (!string.IsNullOrEmpty(model.Vin))
@@ -131,13 +136,19 @@ namespace Concesionario.Controllers
                         if (existePatente) return BadRequest(new { message = "La patente ingresada ya pertenece a otro vehículo en stock." });
                     }
 
+                    // Limpieza preventiva de campos clave antes de insertar
+                    model.Vin = model.Vin?.Trim();
+                    model.Patente = model.Patente?.Trim();
+
                     _context.Vehiculos.Add(model);
                 }
+                // 3. Lógica para EDICIÓN DE VEHÍCULO (Id > 0)
                 else
                 {
                     var vehiculoDb = await _context.Vehiculos.FindAsync(model.Id);
                     if (vehiculoDb == null) return NotFound(new { message = "Vehículo no encontrado." });
 
+                    // Validaciones de duplicados excluyendo el registro actual
                     if (!string.IsNullOrEmpty(model.Vin) && vehiculoDb.Vin != model.Vin.Trim())
                     {
                         var existeVin = await _context.Vehiculos.AnyAsync(v => v.Id != model.Id && v.Vin == model.Vin.Trim());
@@ -150,6 +161,7 @@ namespace Concesionario.Controllers
                         if (existePatente) return BadRequest(new { message = "La patente ingresada ya está en uso por otro vehículo." });
                     }
 
+                    // Mapeo de campos modificados
                     vehiculoDb.Marca = model.Marca;
                     vehiculoDb.Modelo = model.Modelo;
                     vehiculoDb.Version = model.Version;
@@ -161,15 +173,23 @@ namespace Concesionario.Controllers
                     vehiculoDb.CategoriaId = model.CategoriaId;
                     vehiculoDb.Tipo = model.Tipo;
                     vehiculoDb.Activo = model.Activo;
-                    
+
                     vehiculoDb.Vin = model.Vin?.Trim();
                     vehiculoDb.Patente = model.Patente?.Trim();
                     vehiculoDb.Condicion = model.Condicion;
                     vehiculoDb.Estado = model.Estado;
 
-                    if (model.ImagenUrl != null)
+                    // --- CONTROL DE PERSISTENCIA DE IMAGEN ---
+                    if (!string.IsNullOrEmpty(model.ImagenUrl))
                     {
+                        // Si viene un nombre de archivo (nuevo o mantenido por el frontend), se actualiza
                         vehiculoDb.ImagenUrl = model.ImagenUrl;
+                    }
+                    else if (FotoArchivo == null)
+                    {
+                        // Si model.ImagenUrl vino vacío pero TAMPOCO se subió un archivo físico,
+                        // significa que el JS no mandó el string. Mantenemos la imagen que ya estaba en la DB.
+                        // Bloque vacío intencional para retener el valor original de vehiculoDb.ImagenUrl
                     }
 
                     _context.Vehiculos.Update(vehiculoDb);
@@ -204,10 +224,11 @@ namespace Concesionario.Controllers
         }
 
         // ========================================================
-        // GESTIÓN DE CATEGORÍAS Y CONDICIONES (NUEVO ENDPOINT)
+        // GESTIÓN DE CATEGORÍAS Y CONDICIONES 
         // ========================================================
-
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
+        // Quitamos 'Roles = "Admin,admin"' para permitir que cualquier usuario autenticado (Admin o Vendedor) consulte las categorías
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [AllowAnonymous]
         [HttpGet("GetCategorias")]
         public async Task<IActionResult> GetCategorias()
         {
@@ -215,9 +236,10 @@ namespace Concesionario.Controllers
             {
                 var categories = await _context.Categorias
                     .AsNoTracking()
-                    .Select(c => new { 
-                        id = c.Id, 
-                        nombre = c.Nombre 
+                    .Select(c => new
+                    {
+                        id = c.Id,
+                        nombre = c.Nombre
                     })
                     .OrderBy(c => c.nombre)
                     .ToListAsync();
@@ -247,7 +269,7 @@ namespace Concesionario.Controllers
         // GESTIÓN DE CONSULTAS
         // ========================================================
 
-        [AllowAnonymous] 
+        [AllowAnonymous]
         [HttpGet("Consultas")]
         public IActionResult Consultas()
         {
@@ -355,7 +377,7 @@ namespace Concesionario.Controllers
 
                     if (!string.IsNullOrEmpty(model.Password))
                     {
-                        usuarioDb.Password = BCrypt.Net.BCrypt.HashPassword(model.Password); 
+                        usuarioDb.Password = BCrypt.Net.BCrypt.HashPassword(model.Password);
                     }
                     _context.Usuarios.Update(usuarioDb);
                 }
@@ -439,7 +461,7 @@ namespace Concesionario.Controllers
             {
                 var fechaNac = dto.FechaNacimiento.Value;
                 var hoy = DateTime.Today;
-                
+
                 int edad = hoy.Year - fechaNac.Year;
                 if (fechaNac.Date > hoy.AddYears(-edad)) edad--;
 
@@ -488,7 +510,7 @@ namespace Concesionario.Controllers
                             FechaNacimiento = dto.FechaNacimiento,
                             Genero = dto.Genero,
                             EstadoCivil = dto.EstadoCivil,
-                            EstadoProvincia = dto.Provincia, 
+                            EstadoProvincia = dto.Provincia,
                             CodigoPostal = dto.CodigoPostal,
                             CreadoEl = DateTime.Now,
                             Activo = true
@@ -499,7 +521,7 @@ namespace Concesionario.Controllers
                         var nuevoUsuario = new Usuario
                         {
                             NombreUsuario = dto.NombreUsuario.Trim(),
-                            Password = BCrypt.Net.BCrypt.HashPassword(dto.Password), 
+                            Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                             Rol = "Vendedor",
                             Activo = true
                         };
@@ -549,7 +571,7 @@ namespace Concesionario.Controllers
                                 .AnyAsync(u => u.Id != vExistente.IdUsuario && u.NombreUsuario.ToLower() == dto.NombreUsuario.Trim().ToLower());
                             if (usuarioDuplicado)
                                 return BadRequest(new { message = "El Nombre de Usuario ingresado ya está en uso por otra cuenta." });
-                            
+
                             vExistente.Usuario.NombreUsuario = dto.NombreUsuario.Trim();
                         }
 
@@ -561,7 +583,7 @@ namespace Concesionario.Controllers
                         vExistente.Persona.FechaNacimiento = dto.FechaNacimiento;
                         vExistente.Persona.Genero = dto.Genero;
                         vExistente.Persona.EstadoCivil = dto.EstadoCivil;
-                        vExistente.Persona.EstadoProvincia = dto.Provincia; 
+                        vExistente.Persona.EstadoProvincia = dto.Provincia;
                         vExistente.Persona.CodigoPostal = dto.CodigoPostal;
                         vExistente.Persona.ActualizadoEl = DateTime.Now;
 
@@ -599,12 +621,12 @@ namespace Concesionario.Controllers
                     .Include(v => v.Usuario)
                     .FirstOrDefaultAsync(v => v.Id == id);
 
-                if (vendedor == null) 
+                if (vendedor == null)
                     return NotFound(new { message = "El vendedor seleccionado no existe." });
 
                 vendedor.Persona.Activo = false;
                 vendedor.Persona.ActualizadoEl = DateTime.Now;
-                
+
                 if (vendedor.Usuario != null)
                 {
                     vendedor.Usuario.Activo = false;
