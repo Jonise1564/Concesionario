@@ -68,7 +68,7 @@ async function listarClientes() {
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="ps-4 fw-bold text-secondary">${c.id}</td>
+               
                 <td><span class="badge bg-light text-dark border">${p.documentoIdentidad}</span></td>
                 <td class="fw-semibold text-dark">${nombreCompleto}</td>
                 <td>
@@ -202,4 +202,55 @@ function limpiarFormularioCliente() {
     const hiddenPersonaId = document.getElementById('cIdPersonaId');
     if (hiddenId) hiddenId.value = "0";
     if (hiddenPersonaId) hiddenPersonaId.value = "0";
+}
+
+
+
+// Mapa de las principales ciudades por cada provincia argentina
+const ciudadesPorProvincia = {
+    "Buenos Aires": ["La Plata", "Mar del Plata", "Bahía Blanca", "Tandil", "Pilar", "San Isidro", "Lanús", "Quilmes", "Olavarría", "Pergamino"],
+    "Ciudad Autónoma de Buenos Aires": ["Palermo", "Caballito", "Flores", "Belgrano", "Retiro", "Recoleta", "San Telmo"],
+    "Catamarca": ["San Fernando del Valle de Catamarca", "Andalgalá", "Tinogasta", "Belén", "Santa María"],
+    "Chaco": ["Resistencia", "Presidencia Roque Sáenz Peña", "Villa Ángela", "Charata", "General José de San Martín"],
+    "Chubut": ["Rawson", "Comodoro Rivadavia", "Trelew", "Puerto Madryn", "Esquel"],
+    "Córdoba": ["Córdoba Capital", "Río Cuarto", "Villa María", "Carlos Paz", "San Francisco", "Alta Gracia", "Río Tercero"],
+    "Corrientes": ["Corrientes", "Goya", "Paso de los Libres", "Curuzú Cuatiá", "Mercedes", "Santo Tomé"],
+    "Entre Ríos": ["Paraná", "Concordia", "Gualeguaychú", "Concepción del Uruguay", "Federación", "Gualeguay"],
+    "Formosa": ["Formosa", "Clorinda", "Pirané", "El Colorado"],
+    "Jujuy": ["San Salvador de Jujuy", "San Pedro de Jujuy", "Palpalá", "Libertador General San Martín"],
+    "La Pampa": ["Santa Rosa", "General Pico", "Eduardo Castex", "Toay"],
+    "La Rioja": ["La Rioja", "Chilecito", "Aimogasta", "Chepes"],
+    "Mendoza": ["Mendoza Capital", "San Rafael", "Godoy Cruz", "Las Heras", "Maipú", "Luján de Cuyo", "San Martín"],
+    "Misiones": ["Posadas", "Oberá", "Eldorado", "Puerto Iguazú", "San Vicente"],
+    "Neuquén": ["Neuquén Capital", "San Martín de los Andes", "Cutral Có", "Plottier", "Centenario", "Zapala"],
+    "Río Negro": ["Viedma", "San Carlos de Bariloche", "General Roca", "Cipolletti", "San Antonio Oeste"],
+    "Salta": ["Salta Capital", "San Ramón de la Nueva Orán", "Tartagal", "General Güemes", "Cafayate"],
+    "San Juan": ["San Juan Capital", "Caucete", "Chimbas", "Rivadavia", "Santa Lucía"],
+    "San Luis": ["La Punta", "San Luis Capital", "Villa Mercedes", "Merlo", "Juana Koslay", "Justo Daract"],
+    "Santa Cruz": ["Río Gallegos", "Caleta Olivia", "El Calafate", "Puerto Deseado", "Las Heras"],
+    "Santa Fe": ["Santa Fe Capital", "Rosario", "Rafaela", "Venado Tuerto", "Reconquista", "Santo Tomé"],
+    "Santiago del Estero": ["Santiago del Estero", "La Banda", "Termas de Río Hondo", "Frías"],
+    "Tierra del Fuego": ["Ushuaia", "Río Grande", "Tolhuin"],
+    "Tucumán": ["San Miguel de Tucumán", "Yerba Buena", "Tafí Viejo", "Concepción", "Aguilares"]
+};
+
+function cargarCiudadesPorProvincia() {
+    const provinciaSelect = document.getElementById("cEstadoProvincia");
+    const ciudadSelect = document.getElementById("cCiudad");
+    const provinciaSeleccionada = provinciaSelect.value;
+
+    // Limpiar select de ciudades
+    ciudadSelect.innerHTML = '<option value="">Seleccionar...</option>';
+
+    if (provinciaSeleccionada && ciudadesPorProvincia[provinciaSeleccionada]) {
+        // Rellenar con las ciudades de la provincia elegida
+        ciudadesPorProvincia[provinciaSeleccionada].forEach(ciudad => {
+            const option = document.createElement("option");
+            option.value = ciudad;
+            option.textContent = ciudad;
+            ciudadSelect.appendChild(option);
+        });
+    } else {
+        ciudadSelect.innerHTML = '<option value="">Seleccione una provincia...</option>';
+    }
 }
