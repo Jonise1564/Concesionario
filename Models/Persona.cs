@@ -29,13 +29,23 @@ namespace Concesionario.Models
         public string? Genero { get; set; }
         public string? EstadoCivil { get; set; }
         public string? Direccion { get; set; }
-        public string? Ciudad { get; set; }
-        public string? EstadoProvincia { get; set; }
+        
+        //Clave foránea hacia la tabla de ciudades
+        [Required]
+        [Column("CiudadId")]
+        public int CiudadId { get; set; }
+
         public string? CodigoPostal { get; set; }
         public string? Pais { get; set; }
 
         public DateTime CreadoEl { get; set; } = DateTime.Now;
         public DateTime? ActualizadoEl { get; set; }
         public bool Activo { get; set; } = true;
+
+        // =================================================================
+        // PROPIEDADES DE NAVEGACIÓN (Relación N:1)
+        // =================================================================
+        [ForeignKey("CiudadId")]
+        public virtual Ciudad? Ciudad { get; set; }
     }
 }

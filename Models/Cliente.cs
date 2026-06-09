@@ -17,7 +17,7 @@ namespace Concesionario.Models
         public int IdPersonaId { get; set; }
 
         [Required]
-        [Column("FechaAlta")] // <-- CORREGIDO: Apuesta al nombre físico real en la tabla de MySQL
+        [Column("FechaAlta")] 
         public DateTime IdFechaAlta { get; set; } = DateTime.Now;
 
         [Column("CalificacionCrediticia")]

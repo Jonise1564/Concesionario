@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Concesionario.Data; // Ajustá al namespace de tu ApplicationDbContext
+using Concesionario.Data; 
 using Concesionario.Models;
 
 namespace Concesionario.Controllers
@@ -27,6 +27,7 @@ namespace Concesionario.Controllers
         {
             try
             {
+                // Traemos los clientes incluyendo la Persona para el listado estructurado de JS
                 var clientes = await _context.Clientes
                     .Include(c => c.Persona)
                     .OrderByDescending(c => c.Id)
@@ -57,8 +58,7 @@ namespace Concesionario.Controllers
             [FromForm] string? genero,
             [FromForm] string? estadoCivil,
             [FromForm] string? direccion,
-            [FromForm] string? ciudad,
-            [FromForm] string? estadoProvincia,
+            [FromForm] int? ciudadId, 
             [FromForm] string? codigoPostal,
             [FromForm] string? pais,
             [FromForm] string? calificacionCrediticia,
@@ -66,7 +66,7 @@ namespace Concesionario.Controllers
         {
             try
             {
-                // Validaciones de negocio obligatorias (según tus modificadores [Required])
+                // Validaciones de negocio obligatorias básicas
                 if (string.IsNullOrEmpty(documentoIdentidad)) 
                     return BadRequest(new { message = "El documento de identidad es obligatorio." });
                 if (string.IsNullOrEmpty(nombres) || string.IsNullOrEmpty(apellidos))
@@ -81,12 +81,12 @@ namespace Concesionario.Controllers
                 // =============================================================
                 if (id == 0)
                 {
-                    // Comprobamos si la persona ya existe físicamente en la base de datos por DocumentoIdentidad
+                    // Comprobamos si la persona ya existe en la DB por DocumentoIdentidad
                     var personaDb = await _context.Personas.FirstOrDefaultAsync(p => p.DocumentoIdentidad == documentoIdentidad);
 
                     if (personaDb == null)
                     {
-                        // Si no existe, creamos la nueva Persona con todos sus campos
+                        // Si no existe, instanciamos la nueva Persona asignando su CiudadId
                         personaDb = new Persona
                         {
                             DocumentoIdentidad = documentoIdentidad,
@@ -99,19 +99,18 @@ namespace Concesionario.Controllers
                             Genero = genero?.Trim(),
                             EstadoCivil = estadoCivil?.Trim(),
                             Direccion = direccion?.Trim(),
-                            Ciudad = ciudad?.Trim(),
-                            EstadoProvincia = estadoProvincia?.Trim(),
+                            CiudadId = ciudadId ?? 1, // Fallback preventivo al ID por defecto si llega nulo
                             CodigoPostal = codigoPostal?.Trim(),
                             Pais = pais?.Trim(),
                             CreadoEl = DateTime.Now,
                             Activo = true
                         };
                         _context.Personas.Add(personaDb);
-                        await _context.SaveChangesAsync(); // Guardamos para generar el ID primario de la persona
+                        await _context.SaveChangesAsync(); // Persistimos para obtener el ID autonumérico
                     }
                     else
                     {
-                        // Si la persona existía previamente, actualizamos su información de perfil por si cambió
+                        // Si la persona ya existía de forma independiente, actualizamos sus datos de contacto
                         personaDb.Nombres = nombres.Trim();
                         personaDb.Apellidos = apellidos.Trim();
                         personaDb.Email = email.Trim();
@@ -121,8 +120,7 @@ namespace Concesionario.Controllers
                         personaDb.Genero = genero?.Trim();
                         personaDb.EstadoCivil = estadoCivil?.Trim();
                         personaDb.Direccion = direccion?.Trim();
-                        personaDb.Ciudad = ciudad?.Trim();
-                        personaDb.EstadoProvincia = estadoProvincia?.Trim();
+                        personaDb.CiudadId = ciudadId ?? 1; 
                         personaDb.CodigoPostal = codigoPostal?.Trim();
                         personaDb.Pais = pais?.Trim();
                         personaDb.ActualizadoEl = DateTime.Now;
@@ -130,17 +128,17 @@ namespace Concesionario.Controllers
                         _context.Personas.Update(personaDb);
                     }
 
-                    // Validamos que esa persona no esté dada de alta ya en la tabla de clientes comerciales
+                    // Verificamos que esta persona física no posea ya una ficha comercial activa de cliente
                     var existeCliente = await _context.Clientes.AnyAsync(c => c.IdPersonaId == personaDb.Id);
                     if (existeCliente) 
-                        return BadRequest(new { message = "El documento ingresado ya se encuentra asociado a un cliente existente." });
+                        return BadRequest(new { message = "El documento ingresado ya se encuentra asociado a un cliente comercial existente." });
 
-                    // Creamos el registro comercial en la tabla de clientes
+                    // Creamos el registro comercial en la tabla de Clientes
                     var nuevoCliente = new Cliente
                     {
                         IdPersonaId = personaDb.Id,
                         IdFechaAlta = DateTime.Now,
-                        CalificacionCrediticia = calificacionCrediticia?.Trim(),
+                        CalificacionCrediticia = calificacionCrediticia?.Trim() ?? "Buena",
                         Observaciones = observaciones?.Trim()
                     };
 
@@ -156,17 +154,17 @@ namespace Concesionario.Controllers
                         .FirstOrDefaultAsync(c => c.Id == id);
 
                     if (clienteDb == null) 
-                        return NotFound(new { message = "Cliente no encontrado." });
+                        return NotFound(new { message = "El perfil de cliente comercial solicitado no existe." });
 
-                    // Validamos que si se editó el documento, no colisione con otra persona diferente en la DB
+                    // Validamos la unicidad del documento por si fue alterado en la edición
                     if (clienteDb.Persona.DocumentoIdentidad != documentoIdentidad)
                     {
                         var existeDoc = await _context.Personas.AnyAsync(p => p.Id != clienteDb.IdPersonaId && p.DocumentoIdentidad == documentoIdentidad);
                         if (existeDoc) 
-                            return BadRequest(new { message = "El documento de identidad ingresado ya pertenece a otro registro." });
+                            return BadRequest(new { message = "El documento de identidad ingresado ya se encuentra registrado por otro usuario." });
                     }
 
-                    // Seteamos las modificaciones de la Persona relacionada
+                    // Seteamos las modificaciones de la entidad Persona vinculada
                     clienteDb.Persona.DocumentoIdentidad = documentoIdentidad;
                     clienteDb.Persona.Nombres = nombres.Trim();
                     clienteDb.Persona.Apellidos = apellidos.Trim();
@@ -177,21 +175,19 @@ namespace Concesionario.Controllers
                     clienteDb.Persona.Genero = genero?.Trim();
                     clienteDb.Persona.EstadoCivil = estadoCivil?.Trim();
                     clienteDb.Persona.Direccion = direccion?.Trim();
-                    clienteDb.Persona.Id = clienteDb.Persona.Id; // Preservamos clave
-                    clienteDb.Persona.Ciudad = ciudad?.Trim();
-                    clienteDb.Persona.EstadoProvincia = estadoProvincia?.Trim();
+                    clienteDb.Persona.CiudadId = ciudadId ?? 1; // Actualización relacional directa
                     clienteDb.Persona.CodigoPostal = codigoPostal?.Trim();
                     clienteDb.Persona.Pais = pais?.Trim();
                     clienteDb.Persona.ActualizadoEl = DateTime.Now;
 
-                    // Seteamos modificaciones del Cliente comercial
-                    clienteDb.CalificacionCrediticia = calificacionCrediticia?.Trim();
+                    // Modificaciones específicas del registro del Cliente
+                    clienteDb.CalificacionCrediticia = calificacionCrediticia?.Trim() ?? "Buena";
                     clienteDb.Observaciones = observaciones?.Trim();
 
                     _context.Clientes.Update(clienteDb);
                 }
 
-                // Impactamos definitivamente todos los cambios de forma conjunta
+                // Confirmamos todos los cambios relacionales en una única transacción atómica
                 await _context.SaveChangesAsync();
                 return Ok(new { message = "Éxito" });
             }

@@ -1,72 +1,98 @@
+@* Vista Parcial: _VendedoresSection.cshtml o Sección de Vendedores
+
 <div id="seccion-vendedores" style="display: none;">
-    <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
-        <h2 class="text-white">Gestión de Vendedores</h2>
-        <button class="btn btn-danger" onclick="nuevoVendedor()">
-            <i class="bi bi-plus-circle"></i> + NUEVO VENDEDOR
-        </button>
+    <div class="row mb-4 align-items-center gy-3 mt-2">
+        <div class="col-sm-7 col-md-8">
+            <h2 class="mb-1 fw-bold text-white d-flex align-items-center">
+                <i class="bi bi-person-badge-fill me-2 text-danger"></i>Gestión de Vendedores
+            </h2>
+            <p class="text-muted mb-0 small">Administración de perfiles del equipo, credenciales de acceso y comisiones.</p>
+        </div>
+        <div class="col-sm-5 col-md-4 text-sm-end">
+            <button type="button" class="btn btn-danger shadow-sm w-100 w-sm-auto px-4" onclick="nuevoVendedor()">
+                <i class="bi bi-plus-circle-fill me-1"></i> Nuevo Vendedor
+            </button>
+        </div>
     </div>
     
-    <div class="table-responsive">
-        <table class="table table-dark table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>DOCUMENTO</th>
-                    <th>APELLIDOS Y NOMBRES</th>
-                    <th>TELÉFONO / WHATSAPP</th>
-                    <th>EMAIL</th>
-                    <th>COMISIÓN</th>
-                    <th class="text-end">ACCIONES</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-vendedores-body">
-            </tbody>
-        </table>
+    <div class="card border-0 shadow-sm rounded-3 bg-dark border border-secondary border-opacity-25">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0 text-nowrap" id="tabla-vendedores">
+                    <thead class="table-dark text-muted fw-semibold text-uppercase fs-7 border-bottom border-secondary border-opacity-50">
+                        <tr>
+                            <th>Documento</th>
+                            <th style="min-width: 220px;">Apellidos y Nombres</th>
+                            <th>Teléfono / WhatsApp</th>
+                            <th>Email</th>
+                            <th>Comisión</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-vendedores-body" class="border-0">
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>
+                                Cargando equipo de ventas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalVendedor" tabindex="-1" aria-labelledby="modalVendedorTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark text-white border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title" id="modalVendedorTitle">Nuevo Vendedor</h5>
+<div class="modal fade" id="modalVendedor" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalVendedorTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-0 shadow-lg rounded-3 border border-secondary border-opacity-50">
+            <div class="modal-header bg-black text-white rounded-top-3 py-3 border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold fs-5" id="modalVendedorTitle">
+                    <i class="bi bi-person-gear me-2 text-danger"></i><span>Nuevo Vendedor</span>
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form onsubmit="guardarVendedor(event)">
-                <div class="modal-body">
-                    <input type="hidden" id="vendedor-id" value="0" />
+            
+            <form id="formVendedor" autocomplete="off" onsubmit="guardarVendedor(event)">
+                <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
                     
-                    <p class="text-info small fw-bold text-uppercase border-bottom border-secondary pb-1 mb-3">1. Datos Personales</p>
+                    <input type="hidden" id="vendedor-id" name="id" value="0" />
+                    <input type="hidden" id="vendedor-persona-id" name="idPersonaId" value="0" />
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white-50 small">Nombres</label>
-                            <input type="text" id="vendedor-nombre" class="form-control bg-secondary text-white border-0" required />
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary border-opacity-50 pb-2">
+                        <i class="bi bi-card-text me-1"></i> 1. Datos Personales
+                    </h6>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Nombres *</label>
+                            <input type="text" id="vendedor-nombre" name="nombres" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" required />
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white-50 small">Apellidos</label>
-                            <input type="text" id="vendedor-apellido" class="form-control bg-secondary text-white border-0" required />
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Apellidos *</label>
+                            <input type="text" id="vendedor-apellido" name="apellidos" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" required />
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white-50 small">Documento de Identidad (DNI)</label>
-                            <input type="text" id="vendedor-documento" class="form-control bg-secondary text-white border-0" placeholder="Ej: 35123456" required />
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Documento de Identidad (DNI) *</label>
+                            <input type="text" id="vendedor-documento" name="documentoIdentidad" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="Ej: 35123456" required />
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white-50 small">Teléfono Principal</label>
-                            <input type="text" id="vendedor-telefono" class="form-control bg-secondary text-white border-0" placeholder="Ej: 2664123456" required />
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Teléfono Principal *</label>
+                            <input type="text" id="vendedor-telefono" name="telefono" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="Ej: 2664123456" required />
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
                             <label class="form-label text-white-50 small">Fecha de Nacimiento</label>
-                            <input type="date" id="vendedor-fecha-nacimiento" class="form-control bg-secondary text-white border-0" />
+                            <input type="date" id="vendedor-fecha-nacimiento" name="fechaNacimiento" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" />
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6">
                             <label class="form-label text-white-50 small">Género</label>
-                            <select id="vendedor-genero" class="form-select bg-secondary text-white border-0">
+                            <select id="vendedor-genero" name="genero" class="form-select bg-secondary text-white border-secondary shadow-sm">
                                 <option value="">Seleccione...</option>
                                 <option value="Masculino">Masculino</option>
                                 <option value="Femenino">Femenino</option>
@@ -75,10 +101,10 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
                             <label class="form-label text-white-50 small">Estado Civil</label>
-                            <select id="vendedor-estado-civil" class="form-select bg-secondary text-white border-0">
+                            <select id="vendedor-estado-civil" name="estadoCivil" class="form-select bg-secondary text-white border-secondary shadow-sm">
                                 <option value="">Seleccione...</option>
                                 <option value="Soltero/a">Soltero/a</option>
                                 <option value="Casado/a">Casado/a</option>
@@ -87,63 +113,275 @@
                                 <option value="Unión Libre">Unión Libre</option>
                             </select>
                         </div>
-                        <div class="col-md-5 mb-3">
-                            <label class="form-label text-white-50 small">Provincia</label>
-                            <input type="text" id="vendedor-provincia" class="form-control bg-secondary text-white border-0" placeholder="Ej: San Luis" />
+                        <div class="col-md-4">
+                            <label class="form-label text-white-50 small fw-semibold">Provincia *</label>
+                            <input type="text" id="vendedor-provincia" name="estadoProvincia" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" 
+                                   list="datalistProvinciasVendedores" placeholder="Escriba para buscar..." oninput="onProvinciaVendedorChange()" required />
+                            <datalist id="datalistProvinciasVendedores"></datalist>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-white-50 small fw-semibold">Ciudad *</label>
+                            <input type="hidden" id="vendedor-ciudad-id" name="ciudadId" value="1" />
+                            <input type="text" id="vendedor-ciudad" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" 
+                                   list="datalistCiudadesVendedores" placeholder="Seleccione provincia..." oninput="onCiudadVendedorSeleccionada()" required disabled />
+                            <datalist id="datalistCiudadesVendedores"></datalist>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
                             <label class="form-label text-white-50 small">Cód. Postal</label>
-                            <input type="text" id="vendedor-codigo-postal" class="form-control bg-secondary text-white border-0" placeholder="Ej: 5710" />
+                            <input type="text" id="vendedor-codigo-postal" name="codigoPostal" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="Ej: 5710" />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label text-white-50 small fw-semibold">Correo Electrónico *</label>
+                            <input type="email" id="vendedor-email" name="email" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="nombre@correo.com" required />
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label text-white-50 small">Correo Electrónico</label>
-                            <input type="email" id="vendedor-email" class="form-control bg-secondary text-white border-0" placeholder="nombre@correo.com" />
-                        </div>
-                    </div>
-
-                    <p class="text-info small fw-bold text-uppercase border-bottom border-secondary pb-1 mb-3 mt-2">2. Cuenta de Usuario</p>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white-50 small">Nombre de Usuario</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-secondary border-0 text-white"><i class="bi bi-person"></i></span>
-                                <input type="text" id="vendedor-user" class="form-control bg-secondary text-white border-0" placeholder="Ej: jgomez" required />
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary border-opacity-50 pb-2 mt-4">
+                        <i class="bi bi-shield-lock me-1"></i> 2. Cuenta de Usuario
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Nombre de Usuario *</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-secondary border-secondary text-white-50"><i class="bi bi-person"></i></span>
+                                <input type="text" id="vendedor-user" name="nombreUsuario" class="form-control bg-secondary bg-opacity-25 text-white border-secondary" placeholder="Ej: jgomez" required />
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6">
                             <label class="form-label text-white-50 small">Contraseña de Acceso</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-secondary border-0 text-white"><i class="bi bi-lock"></i></span>
-                                <input type="password" id="vendedor-password" class="form-control bg-secondary text-white border-0" placeholder="Asignar contraseña" />
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-secondary border-secondary text-white-50"><i class="bi bi-lock"></i></span>
+                                <input type="password" id="vendedor-password" name="password" class="form-control bg-secondary bg-opacity-25 text-white border-secondary" placeholder="Asignar contraseña" />
                             </div>
-                            <small id="vendedor-password-help" class="text-warning d-block mt-1" style="font-size: 0.75rem; display: none;">
-                                <i class="bi bi-exclamation-triangle"></i> Al editar un vendedor, podés dejar la contraseña en blanco si no la querés cambiar.
+                            <small id="vendedor-password-help" class="text-warning d-block mt-1 d-none" style="font-size: 0.75rem;">
+                                <i class="bi bi-info-circle-fill me-1"></i> Si no deseás cambiar la contraseña actual, podés dejar este campo vacío.
                             </small>
                         </div>
                     </div>
 
-                    <p class="text-info small fw-bold text-uppercase border-bottom border-secondary pb-1 mb-3 mt-2">3. Configuración Comercial</p>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label text-white-50 small">Comisión (%)</label>
-                            <div class="input-group">
-                                <input type="number" step="0.01" min="0" max="100" id="vendedor-comision" class="form-control bg-secondary text-white border-0" placeholder="0.00" required />
-                                <span class="input-group-text bg-secondary border-0 text-white">%</span>
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary border-opacity-50 pb-2 mt-4">
+                        <i class="bi bi-graph-up-arrow me-1"></i> 3. Configuración Comercial
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-white-50 small fw-semibold">Comisión (%) *</label>
+                            <div class="input-group shadow-sm">
+                                <input type="number" step="0.01" min="0" max="100" id="vendedor-comision" name="porcentajeComision" class="form-control bg-secondary bg-opacity-25 text-white border-secondary" placeholder="0.00" required />
+                                <span class="input-group-text bg-secondary border-secondary text-white">%</span>
                             </div>
                         </div>
-                        <div class="col-md-8 mb-3">
+                        <div class="col-md-8">
                             <label class="form-label text-white-50 small">Observaciones / Notas internas</label>
-                            <input type="text" id="vendedor-observaciones" class="form-control bg-secondary text-white border-0" placeholder="Ej: Horario de tarde, vendedor externo..." />
+                            <input type="text" id="vendedor-observaciones" name="observaciones" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="Ej: Horario de tarde, asesor externo..." />
                         </div>
                     </div>
 
                 </div>
-                <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-secondary text-white" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Guardar Vendedor</button>
+                <div class="modal-footer bg-black bg-opacity-20 border-top border-secondary border-opacity-25 p-3">
+                    <button type="button" class="btn btn-outline-secondary text-white px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4 shadow-sm" id="btnGuardarVendedor">
+                        <i class="bi bi-save2 me-1"></i> Guardar Vendedor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> *@
+
+
+
+
+
+@* Vista Parcial: _VendedoresSection.cshtml o Sección de Vendedores *@
+
+<div id="seccion-vendedores" style="display: none;">
+    <div class="row mb-4 align-items-center gy-3 mt-2">
+        <div class="col-sm-7 col-md-8">
+            <h2 class="mb-1 fw-bold text-white d-flex align-items-center">
+                <i class="bi bi-person-badge-fill me-2 text-danger"></i>Gestión de Vendedores
+            </h2>
+            <p class="text-muted mb-0 small">Administración de perfiles del equipo, credenciales de acceso y comisiones.</p>
+        </div>
+        <div class="col-sm-5 col-md-4 text-sm-end">
+            <button type="button" class="btn btn-danger shadow-sm w-100 w-sm-auto px-4" onclick="nuevoVendedor()">
+                <i class="bi bi-plus-circle-fill me-1"></i> Nuevo Vendedor
+            </button>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm rounded-3 bg-dark border border-secondary border-opacity-25">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0 text-nowrap" id="tabla-vendedores">
+                    <thead class="table-dark text-muted fw-semibold text-uppercase fs-7 border-bottom border-secondary border-opacity-50">
+                        <tr>
+                            <th>Documento</th>
+                            <th style="min-width: 220px;">Apellidos y Nombres</th>
+                            <th>Teléfono / WhatsApp</th>
+                            <th>Email</th>
+                            <th>Comisión</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-vendedores-body" class="border-0">
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>
+                                Cargando equipo de ventas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalVendedor" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalVendedorTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-0 shadow-lg rounded-3 border border-secondary border-opacity-50">
+            <div class="modal-header bg-black text-white rounded-top-3 py-3 border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold fs-5" id="modalVendedorTitle">
+                    <i class="bi bi-person-gear me-2 text-danger"></i><span>Nuevo Vendedor</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="formVendedor" autocomplete="off" onsubmit="guardarVendedor(event)">
+                <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+                    
+                    <input type="hidden" id="vendedor-id" name="id" value="0" />
+                    <input type="hidden" id="vendedor-persona-id" name="idPersonaId" value="0" />
+                    
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary border-opacity-50 pb-2">
+                        <i class="bi bi-card-text me-1"></i> 1. Datos Personales
+                    </h6>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Nombres *</label>
+                            <input type="text" id="vendedor-nombre" name="nombres" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Apellidos *</label>
+                            <input type="text" id="vendedor-apellido" name="apellidos" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" required />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Documento de Identidad (DNI) *</label>
+                            <input type="text" id="vendedor-documento" name="documentoIdentidad" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="Ej: 35123456" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Teléfono Principal *</label>
+                            <input type="text" id="vendedor-telefono" name="telefono" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="Ej: 2664123456" required />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small">Fecha de Nacimiento</label>
+                            <input type="date" id="vendedor-fecha-nacimiento" name="fechaNacimiento" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small">Género</label>
+                            <select id="vendedor-genero" name="genero" class="form-select bg-secondary text-white border-secondary shadow-sm">
+                                <option value="">Seleccione...</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-white-50 small">Estado Civil</label>
+                            <select id="vendedor-estado-civil" name="estadoCivil" class="form-select bg-secondary text-white border-secondary shadow-sm">
+                                <option value="">Seleccione...</option>
+                                <option value="Soltero/a">Soltero/a</option>
+                                <option value="Casado/a">Casado/a</option>
+                                <option value="Divorciado/a">Divorciado/a</option>
+                                <option value="Viudo/a">Viudo/a</option>
+                                <option value="Unión Libre">Unión Libre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white-50 small fw-semibold">Provincia *</label>
+                            <input type="text" id="vendedor-provincia" name="estadoProvincia" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" 
+                                   list="datalistProvinciasVendedores" placeholder="Escriba para buscar..." oninput="onProvinciaVendedorChange()" required />
+                            <datalist id="datalistProvinciasVendedores"></datalist>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white-50 small fw-semibold">Ciudad *</label>
+                            <input type="hidden" id="vendedor-ciudad-id" name="ciudadId" value="1" />
+                            <input type="text" id="vendedor-ciudad" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" 
+                                   list="datalistCiudadesVendedores" placeholder="Seleccione provincia..." oninput="onCiudadVendedorSeleccionada()" required disabled />
+                            <datalist id="datalistCiudadesVendedores"></datalist>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-white-50 small">Cód. Postal</label>
+                            <input type="text" id="vendedor-codigo-postal" name="codigoPostal" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="Ej: 5710" />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label text-white-50 small fw-semibold">Correo Electrónico *</label>
+                            <input type="email" id="vendedor-email" name="email" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="nombre@correo.com" required />
+                        </div>
+                    </div>
+
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary border-opacity-50 pb-2 mt-4">
+                        <i class="bi bi-shield-lock me-1"></i> 2. Cuenta de Usuario
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-semibold">Nombre de Usuario *</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-secondary border-secondary text-white-50"><i class="bi bi-person"></i></span>
+                                <input type="text" id="vendedor-user" name="nombreUsuario" class="form-control bg-secondary bg-opacity-25 text-white border-secondary" placeholder="Ej: jgomez" required />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small">Contraseña de Acceso</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-secondary border-secondary text-white-50"><i class="bi bi-lock"></i></span>
+                                <input type="password" id="vendedor-password" name="password" class="form-control bg-secondary bg-opacity-25 text-white border-secondary" placeholder="Asignar contraseña" />
+                            </div>
+                            <small id="vendedor-password-help" class="text-warning mt-1" style="font-size: 0.75rem; display: none;">
+                                <i class="bi bi-info-circle-fill me-1"></i> Si no deseás cambiar la contraseña actual, podés dejar este campo vacío.
+                            </small>
+                        </div>
+                    </div>
+
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary border-opacity-50 pb-2 mt-4">
+                        <i class="bi bi-graph-up-arrow me-1"></i> 3. Configuración Comercial
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-white-50 small fw-semibold">Comisión (%) *</label>
+                            <div class="input-group shadow-sm">
+                                <input type="number" step="0.01" min="0" max="100" id="vendedor-comision" name="porcentajeComision" class="form-control bg-secondary bg-opacity-25 text-white border-secondary" placeholder="0.00" required />
+                                <span class="input-group-text bg-secondary border-secondary text-white">%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label text-white-50 small">Observaciones / Notas internas</label>
+                            <input type="text" id="vendedor-observaciones" name="observations" class="form-control bg-secondary bg-opacity-25 text-white border-secondary shadow-sm" placeholder="Ej: Horario de tarde, asesor externo..." />
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-black bg-opacity-20 border-top border-secondary border-opacity-25 p-3">
+                    <button type="button" class="btn btn-outline-secondary text-white px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4 shadow-sm" id="btnGuardarVendedor">
+                        <i class="bi bi-save2 me-1"></i> Guardar Vendedor
+                    </button>
                 </div>
             </form>
         </div>

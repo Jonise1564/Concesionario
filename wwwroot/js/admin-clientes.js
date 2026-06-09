@@ -1,11 +1,9 @@
-
-
 // =========================================================================
-//GESTIÓN DE CLIENTES 
+// GESTIÓN DE CLIENTES 
 // =========================================================================
 
 let myModalCliente = null;
-// Asumimos que la variable 'token' ya está declarada globalmente en tu dashboard principal.
+let listaClientesMemoria = []; // Memoria caché local
 
 document.addEventListener("DOMContentLoaded", () => {
     // Inicializamos el modal de Bootstrap 5 de forma segura
@@ -13,10 +11,85 @@ document.addEventListener("DOMContentLoaded", () => {
     if (modalElement) {
         myModalCliente = new bootstrap.Modal(modalElement);
     }
-    
+
+    // Inicializar el datalist de provincias cargándolo desde la Base de Datos
+    cargarDatalistProvincias();
+
     // Ejecutamos la carga inicial del listado
     listarClientes();
 });
+
+// ---------------------------------------------------------------------
+// OBTENER PROVINCIAS Y CIUDADES DESDE LA BASE DE DATOS (DATALISTS)
+// ---------------------------------------------------------------------
+async function cargarDatalistProvincias() {
+    try {
+        // Reemplazar este endpoint por la ruta real de tu Controlador de C#
+        const response = await fetch('/api/Ubicacion/Provincias', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error("Error al obtener provincias");
+        const provincias = await response.json();
+        
+        const datalist = document.getElementById('datalistProvincias');
+        if (!datalist) return;
+        
+        datalist.innerHTML = '';
+        provincias.forEach(prov => {
+            const option = document.createElement('option');
+            // Se asume que tu objeto C# expone el nombre (ej: prov.nombre o prov.Nombre)
+            option.value = prov.nombre || prov.Nombre; 
+            datalist.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error al cargar el catálogo de provincias:", error);
+    }
+}
+
+async function onProvinciaChange() {
+    const provinciaSeleccionada = document.getElementById('cEstadoProvincia').value;
+    const inputCiudad = document.getElementById('cCiudad');
+    const datalistCiudades = document.getElementById('datalistCiudades');
+    
+    if (!inputCiudad || !datalistCiudades) return;
+
+    // Reiniciamos por completo el campo de ciudad al cambiar o borrar la provincia
+    inputCiudad.value = '';
+    datalistCiudades.innerHTML = '';
+    
+    if (!provinciaSeleccionada.trim()) {
+        inputCiudad.disabled = true;
+        return;
+    }
+
+    try {
+        // Enviamos la provincia elegida como parámetro para consultar las ciudades correspondientes
+        const url = `/api/Ubicacion/Ciudades?provincia=${encodeURIComponent(provinciaSeleccionada)}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error("Error al obtener ciudades");
+        const ciudades = await response.json();
+        
+        if (ciudades.length > 0) {
+            ciudades.forEach(ciu => {
+                const option = document.createElement('option');
+                option.value = ciu.nombre || ciu.Nombre;
+                datalistCiudades.appendChild(option);
+            });
+            inputCiudad.disabled = false;
+        } else {
+            inputCiudad.disabled = true;
+        }
+    } catch (error) {
+        console.error("Error al cargar el catálogo de ciudades de la BD:", error);
+        inputCiudad.disabled = true;
+    }
+}
 
 // ---------------------------------------------------------------------
 // OBTENER Y RENDERIZAR LISTADO DE CLIENTES
@@ -28,7 +101,7 @@ async function listarClientes() {
     try {
         const response = await fetch('/api/Clientes/Listar', {
             method: 'GET',
-            headers: { 
+            headers: {
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'
             }
@@ -37,49 +110,56 @@ async function listarClientes() {
         if (!response.ok) throw new Error("Error al responder");
 
         const clientes = await response.json();
-        tbody.innerHTML = ""; // Limpiamos el spinner de carga
+        listaClientesMemoria = clientes; 
+        tbody.innerHTML = ""; 
 
         if (clientes.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center py-4 text-muted">
+                    <td colspan="7" class="text-center py-4 text-muted">
                         <i class="bi bi-info-circle me-1"></i> No hay clientes registrados en el sistema.
                     </td>
                 </tr>`;
             return;
         }
 
-        // Iteramos el JSON compuesto (Cliente + Persona incluida por Entity Framework)
-        clientes.forEach(c => {
-            const p = c.persona; // Objeto de navegación de persona
-            const nombreCompleto = `${p.apellidos}, ${p.nombres}`;
+        clientes.forEach((c, index) => {
+            const p = c.persona || c.Persona; 
+            if (!p) return;
+
+            const apellidos = p.apellidos || p.Apellidos || '';
+            const nombres = p.nombres || p.Nombres || '';
+            const nombreCompleto = `${apellidos}, ${nombres}`;
             
-            // 🛠️ AJUSTE AQUÍ: EF Core serializa las propiedades respetando el nombre de C# (o camelCase si está configurado).
-            // Usamos 'c.idFechaAlta' tal como figura en tu modelo de C#.
-            const fechaAltaRaw = c.idFechaAlta || c.fechaAlta; 
+            const documento = p.documentoIdentidad || p.DocumentoIdentidad || 'N/D';
+            const email = p.email || p.Email || 'N/D';
+            const telefono = p.telefono || p.Telefono || 'N/D';
+            const ciudad = p.ciudad || p.Ciudad || '';
+            const provincia = p.estadoProvincia || p.EstadoProvincia || 'N/D';
+            const calificacion = c.calificacionCrediticia || c.CalificacionCrediticia || 'Buena';
+
+            const fechaAltaRaw = c.idFechaAlta || c.IdFechaAlta || c.fechaAlta || c.FechaAlta;
             const fechaAltaFormateada = fechaAltaRaw ? new Date(fechaAltaRaw).toLocaleDateString('es-AR') : 'N/D';
-            
-            // Evaluamos color del Badge de calificación crediticia
+
             let badgeColor = "bg-secondary";
-            if (c.calificacionCrediticia === "Excelente") badgeColor = "bg-success";
-            if (c.calificacionCrediticia === "Buena") badgeColor = "bg-info text-dark";
-            if (c.calificacionCrediticia === "Regular") badgeColor = "bg-warning text-dark";
-            if (c.calificacionCrediticia === "Riesgosa") badgeColor = "bg-danger";
+            if (calificacion === "Excelente") badgeColor = "bg-success";
+            if (calificacion === "Buena") badgeColor = "bg-info text-dark";
+            if (calificacion === "Regular") badgeColor = "bg-warning text-dark";
+            if (calificacion === "Riesgosa") badgeColor = "bg-danger";
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-               
-                <td><span class="badge bg-light text-dark border">${p.documentoIdentidad}</span></td>
+                <td><span class="badge bg-light text-dark border">${documento}</span></td>
                 <td class="fw-semibold text-dark">${nombreCompleto}</td>
                 <td>
-                    <div class="small"><i class="bi bi-envelope text-muted me-1"></i>${p.email}</div>
-                    <div class="small text-muted"><i class="bi bi-telephone me-1"></i>${p.telefono || 'N/D'}</div>
+                    <div class="small"><i class="bi bi-envelope text-muted me-1"></i>${email}</div>
+                    <div class="small text-muted"><i class="bi bi-telephone me-1"></i>${telefono}</div>
                 </td>
-                <td class="small text-secondary">${p.ciudad || ''} (${p.estadoProvincia || 'N/D'})</td>
-                <td><span class="badge ${badgeColor}">${c.calificacionCrediticia || 'Buena'}</span></td>
+                <td class="small text-secondary">${ciudad} (${provincia})</td>
+                <td><span class="badge ${badgeColor}">${calificacion}</span></td>
                 <td class="text-muted small">${fechaAltaFormateada}</td>
                 <td class="text-end pe-4">
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick='buscarClientePorId(${JSON.stringify(c)})' title="Editar Cliente">
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editarClientePorIndex(${index})" title="Editar Cliente">
                         <i class="bi bi-pencil-square"></i>
                     </button>
                 </td>
@@ -90,7 +170,7 @@ async function listarClientes() {
     } catch (err) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-4 text-danger fw-semibold">
+                <td colspan="7" class="text-center py-4 text-danger fw-semibold">
                     <i class="bi bi-exclamation-triangle-fill me-1"></i> Error de conexión al cargar el listado.
                 </td>
             </tr>`;
@@ -102,7 +182,7 @@ async function listarClientes() {
 // ---------------------------------------------------------------------
 function abrirModalCliente(id = 0) {
     limpiarFormularioCliente();
-    
+
     if (id === 0) {
         document.getElementById('modalClienteTitulo').innerText = "Nuevo Cliente";
         document.getElementById('cId').value = "0";
@@ -111,41 +191,59 @@ function abrirModalCliente(id = 0) {
     }
 }
 
+function editarClientePorIndex(index) {
+    const clienteSeleccionado = listaClientesMemoria[index];
+    if (clienteSeleccionado) {
+        buscarClientePorId(clienteSeleccionado);
+    }
+}
+
 // Función encargada de recibir el objeto seleccionado e inyectarlo en el formulario
-function buscarClientePorId(cliente) {
+async function buscarClientePorId(cliente) {
     limpiarFormularioCliente();
-    
+
     document.getElementById('modalClienteTitulo').innerText = "Modificar Perfil de Cliente";
+
+    const idCliente = cliente.id !== undefined ? cliente.id : cliente.Id;
+    const idPersonaId = cliente.idPersonaId !== undefined ? cliente.idPersonaId : cliente.IdPersonaId;
+
+    document.getElementById('cId').value = idCliente;
+    document.getElementById('cIdPersonaId').value = idPersonaId;
+
+    const p = cliente.persona || cliente.Persona;
+    if (!p) return;
+
+    document.getElementById('cDocumentoIdentidad').value = p.documentoIdentidad || p.DocumentoIdentidad || '';
+    document.getElementById('cNombres').value = p.nombres || p.Nombres || '';
+    document.getElementById('cApellidos').value = p.apellidos || p.Apellidos || '';
+    document.getElementById('cEmail').value = p.email || p.Email || '';
+    document.getElementById('cTelefono').value = p.telefono || p.Telefono || '';
+    document.getElementById('cTelefonoAlternativo').value = p.telefonoAlternativo || p.TelefonoAlternativo || '';
+    document.getElementById('cGenero').value = p.genero || p.Genero || '';
+    document.getElementById('cEstadoCivil').value = p.estadoCivil || p.EstadoCivil || '';
+    document.getElementById('cDireccion').value = p.direccion || p.Direccion || '';
     
-    // IDs de control relacional
-    document.getElementById('cId').value = cliente.id;
-    document.getElementById('cIdPersonaId').value = cliente.idPersonaId;
+    // Inyección asíncrona controlada del Datalist de Ubicación
+    const provActual = p.estadoProvincia || p.EstadoProvincia || '';
+    const ciuActual = p.ciudad || p.Ciudad || '';
+    
+    document.getElementById('cEstadoProvincia').value = provActual;
+    
+    // Esperamos que cargue las ciudades asociadas de la BD antes de setear el input de Ciudad
+    await onProvinciaChange(); 
+    document.getElementById('cCiudad').value = ciuActual;
 
-    // Datos extraídos del objeto embebido de la Persona
-    const p = cliente.persona;
-    document.getElementById('cDocumentoIdentidad').value = p.documentoIdentidad;
-    document.getElementById('cNombres').value = p.nombres;
-    document.getElementById('cApellidos').value = p.apellidos;
-    document.getElementById('cEmail').value = p.email;
-    document.getElementById('cTelefono').value = p.telefono || '';
-    document.getElementById('cTelefonoAlternativo').value = p.telefonoAlternativo || '';
-    document.getElementById('cGenero').value = p.genero || '';
-    document.getElementById('cEstadoCivil').value = p.estadoCivil || '';
-    document.getElementById('cDireccion').value = p.direccion || '';
-    document.getElementById('cCiudad').value = p.ciudad || '';
-    document.getElementById('cEstadoProvincia').value = p.estadoProvincia || '';
-    document.getElementById('cCodigoPostal').value = p.codigoPostal || '';
-    document.getElementById('cPais').value = p.pais || 'Argentina';
+    document.getElementById('cCodigoPostal').value = p.codigoPostal || p.PostalCode || p.CodigoPostal || '';
+    document.getElementById('cPais').value = p.pais || p.Pais || 'Argentina';
 
-    // Formateo de fecha de nacimiento si existe para que el input HTML tipo date lo interprete
-    if (p.fechaNacimiento) {
-        const fechaStr = p.fechaNacimiento.split('T')[0];
+    const fechaNac = p.fechaNacimiento || p.FechaNacimiento;
+    if (fechaNac) {
+        const fechaStr = fechaNac.split('T')[0];
         document.getElementById('cFechaNacimiento').value = fechaStr;
     }
 
-    // Datos directos de la Ficha Comercial del Cliente
-    document.getElementById('cCalificacionCrediticia').value = cliente.calificacionCrediticia || 'Buena';
-    document.getElementById('cObservaciones').value = cliente.observaciones || '';
+    document.getElementById('cCalificacionCrediticia').value = cliente.calificacionCrediticia || cliente.CalificacionCrediticia || 'Buena';
+    document.getElementById('cObservaciones').value = cliente.observaciones || cliente.Observaciones || '';
 
     myModalCliente?.show();
 }
@@ -160,27 +258,24 @@ async function guardarCliente() {
         return;
     }
 
-    // Inicializamos el FormData con las claves basadas en los "name" del HTML
     const formData = new FormData(form);
-
-    // Forzamos los parámetros clave con sus casings exactos para C# .NET
     const idCliente = document.getElementById('cId').value;
     const idPersona = document.getElementById('cIdPersonaId').value;
-    
+
     formData.set('id', idCliente);
     formData.set('idPersonaId', idPersona);
 
     try {
         const response = await fetch('/api/Clientes/Guardar', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }, // Envío directo del binario mutipart sin definir Content-Type
+            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
         });
 
         if (response.ok) {
             myModalCliente?.hide();
             limpiarFormularioCliente();
-            listarClientes(); // Refrescamos la tabla en tiempo real
+            listarClientes(); 
         } else {
             const error = await response.json();
             alert("Error del sistema: " + (error.message || "No se pudo procesar la transacción."));
@@ -191,66 +286,21 @@ async function guardarCliente() {
 }
 
 // ---------------------------------------------------------------------
-// 🧼 4. LIMPIEZA TOTAL DEL FORMULARIO Y RESIDUOS
+// 🧼 LIMPIEZA TOTAL DEL FORMULARIO Y RESIDUOS
 // ---------------------------------------------------------------------
 function limpiarFormularioCliente() {
     const form = document.getElementById('formCliente');
     if (form) form.reset();
 
-    // Limpieza explícita de los ID ocultos
     const hiddenId = document.getElementById('cId');
     const hiddenPersonaId = document.getElementById('cIdPersonaId');
     if (hiddenId) hiddenId.value = "0";
     if (hiddenPersonaId) hiddenPersonaId.value = "0";
-}
 
-
-
-// Mapa de las principales ciudades por cada provincia argentina
-const ciudadesPorProvincia = {
-    "Buenos Aires": ["La Plata", "Mar del Plata", "Bahía Blanca", "Tandil", "Pilar", "San Isidro", "Lanús", "Quilmes", "Olavarría", "Pergamino"],
-    "Ciudad Autónoma de Buenos Aires": ["Palermo", "Caballito", "Flores", "Belgrano", "Retiro", "Recoleta", "San Telmo"],
-    "Catamarca": ["San Fernando del Valle de Catamarca", "Andalgalá", "Tinogasta", "Belén", "Santa María"],
-    "Chaco": ["Resistencia", "Presidencia Roque Sáenz Peña", "Villa Ángela", "Charata", "General José de San Martín"],
-    "Chubut": ["Rawson", "Comodoro Rivadavia", "Trelew", "Puerto Madryn", "Esquel"],
-    "Córdoba": ["Córdoba Capital", "Río Cuarto", "Villa María", "Carlos Paz", "San Francisco", "Alta Gracia", "Río Tercero"],
-    "Corrientes": ["Corrientes", "Goya", "Paso de los Libres", "Curuzú Cuatiá", "Mercedes", "Santo Tomé"],
-    "Entre Ríos": ["Paraná", "Concordia", "Gualeguaychú", "Concepción del Uruguay", "Federación", "Gualeguay"],
-    "Formosa": ["Formosa", "Clorinda", "Pirané", "El Colorado"],
-    "Jujuy": ["San Salvador de Jujuy", "San Pedro de Jujuy", "Palpalá", "Libertador General San Martín"],
-    "La Pampa": ["Santa Rosa", "General Pico", "Eduardo Castex", "Toay"],
-    "La Rioja": ["La Rioja", "Chilecito", "Aimogasta", "Chepes"],
-    "Mendoza": ["Mendoza Capital", "San Rafael", "Godoy Cruz", "Las Heras", "Maipú", "Luján de Cuyo", "San Martín"],
-    "Misiones": ["Posadas", "Oberá", "Eldorado", "Puerto Iguazú", "San Vicente"],
-    "Neuquén": ["Neuquén Capital", "San Martín de los Andes", "Cutral Có", "Plottier", "Centenario", "Zapala"],
-    "Río Negro": ["Viedma", "San Carlos de Bariloche", "General Roca", "Cipolletti", "San Antonio Oeste"],
-    "Salta": ["Salta Capital", "San Ramón de la Nueva Orán", "Tartagal", "General Güemes", "Cafayate"],
-    "San Juan": ["San Juan Capital", "Caucete", "Chimbas", "Rivadavia", "Santa Lucía"],
-    "San Luis": ["La Punta", "San Luis Capital", "Villa Mercedes", "Merlo", "Juana Koslay", "Justo Daract"],
-    "Santa Cruz": ["Río Gallegos", "Caleta Olivia", "El Calafate", "Puerto Deseado", "Las Heras"],
-    "Santa Fe": ["Santa Fe Capital", "Rosario", "Rafaela", "Venado Tuerto", "Reconquista", "Santo Tomé"],
-    "Santiago del Estero": ["Santiago del Estero", "La Banda", "Termas de Río Hondo", "Frías"],
-    "Tierra del Fuego": ["Ushuaia", "Río Grande", "Tolhuin"],
-    "Tucumán": ["San Miguel de Tucumán", "Yerba Buena", "Tafí Viejo", "Concepción", "Aguilares"]
-};
-
-function cargarCiudadesPorProvincia() {
-    const provinciaSelect = document.getElementById("cEstadoProvincia");
-    const ciudadSelect = document.getElementById("cCiudad");
-    const provinciaSeleccionada = provinciaSelect.value;
-
-    // Limpiar select de ciudades
-    ciudadSelect.innerHTML = '<option value="">Seleccionar...</option>';
-
-    if (provinciaSeleccionada && ciudadesPorProvincia[provinciaSeleccionada]) {
-        // Rellenar con las ciudades de la provincia elegida
-        ciudadesPorProvincia[provinciaSeleccionada].forEach(ciudad => {
-            const option = document.createElement("option");
-            option.value = ciudad;
-            option.textContent = ciudad;
-            ciudadSelect.appendChild(option);
-        });
-    } else {
-        ciudadSelect.innerHTML = '<option value="">Seleccione una provincia...</option>';
-    }
+    // Reiniciar inputs y datalists del autocompletado
+    const inputCiudad = document.getElementById("cCiudad");
+    const datalistCiudades = document.getElementById("datalistCiudades");
+    
+    if (inputCiudad) inputCiudad.disabled = true;
+    if (datalistCiudades) datalistCiudades.innerHTML = '';
 }
