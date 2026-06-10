@@ -14,7 +14,7 @@ namespace Concesionario.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin,admin")]
     [ApiController]
-    [Route("Admin")] // Mantiene la ruta idéntica para que tu frontend no note la diferencia
+    [Route("Admin")] 
     public class VendedoresController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -24,7 +24,7 @@ namespace Concesionario.Controllers
             _context = context;
         }
 
-        // GET: /Admin/GetVendedores
+            // GET: /Admin/GetVendedores
         [HttpGet("GetVendedores")]
         public async Task<IActionResult> GetVendedores()
         {
@@ -32,6 +32,8 @@ namespace Concesionario.Controllers
             {
                 var lista = await _context.Vendedores
                     .Include(v => v.Persona)
+                        .ThenInclude(p => p.Ciudad)
+                            .ThenInclude(c => c.Provincia)
                     .Include(v => v.Usuario)
                     .Where(v => v.Persona.Activo == true)
                     .Select(v => new VendedorDto
@@ -45,7 +47,12 @@ namespace Concesionario.Controllers
                         FechaNacimiento = v.Persona.FechaNacimiento,
                         Genero = v.Persona.Genero ?? "",
                         EstadoCivil = v.Persona.EstadoCivil ?? "",
-                        // CiudadId = v.Persona.CiudadId.GetValueOrDefault(1),
+                        
+                        // 🗺️ CORREGIDO: Mapeo exacto según las propiedades de tu VendedorDto
+                        CiudadId = v.Persona.CiudadId,
+                        NombreCiudad = v.Persona.Ciudad != null ? v.Persona.Ciudad.Nombre : "",
+                        Provincia = v.Persona.Ciudad != null && v.Persona.Ciudad.Provincia != null ? v.Persona.Ciudad.Provincia.Nombre : "",
+                        
                         CodigoPostal = v.Persona.CodigoPostal ?? "",
                         NombreUsuario = v.Usuario != null ? (v.Usuario.NombreUsuario ?? "Sin Usuario") : "Sin Usuario",
                         PorcentajeComision = v.PorcentajeComision,
@@ -109,7 +116,7 @@ namespace Concesionario.Controllers
                             FechaNacimiento = dto.FechaNacimiento,
                             Genero = dto.Genero,
                             EstadoCivil = dto.EstadoCivil,
-                            CiudadId = dto.CiudadId ?? 1,
+                            CiudadId = dto.CiudadId ?? 1, // Tomas el id enviado o usas el fallback 1
                             CodigoPostal = dto.CodigoPostal,
                             CreadoEl = DateTime.Now,
                             Activo = true
@@ -183,7 +190,7 @@ namespace Concesionario.Controllers
                         vExistente.Persona.FechaNacimiento = dto.FechaNacimiento;
                         vExistente.Persona.Genero = dto.Genero;
                         vExistente.Persona.EstadoCivil = dto.EstadoCivil;
-                        vExistente.Persona.CiudadId = dto.CiudadId ?? 1;
+                        vExistente.Persona.CiudadId = dto.CiudadId ?? 1; // Permite guardar la actualización de ciudad
                         vExistente.Persona.CodigoPostal = dto.CodigoPostal;
                         vExistente.Persona.ActualizadoEl = DateTime.Now;
 

@@ -1,5 +1,7 @@
+
+
 using System;
-using System.Text.Json.Serialization; // 👈 Espectacularmente importante agregar este using
+using System.Text.Json.Serialization;
 
 namespace Concesionario.Models
 {
@@ -22,7 +24,6 @@ namespace Concesionario.Models
         [JsonPropertyName("telefono")]
         public string Telefono { get; set; }
 
-        // Nuevas propiedades agregadas para complementar los Datos Personales
         [JsonPropertyName("fechaNacimiento")]
         public DateTime? FechaNacimiento { get; set; }
         
@@ -32,8 +33,12 @@ namespace Concesionario.Models
         [JsonPropertyName("estadoCivil")]
         public string? EstadoCivil { get; set; }
         
+        // 🗺️ Ubicación Sincronizada:
         [JsonPropertyName("provincia")]
         public string? Provincia { get; set; }
+        
+        [JsonPropertyName("nombreCiudad")] // 👈 Agregamos esto para el mapeo visual
+        public string? NombreCiudad { get; set; }
         
         [JsonPropertyName("ciudadId")]
         public int? CiudadId { get; set; } 
@@ -41,8 +46,7 @@ namespace Concesionario.Models
         [JsonPropertyName("codigoPostal")]
         public string? CodigoPostal { get; set; }
 
-        // Cuenta de Usuario y Configuración Comercial
-        [JsonPropertyName("nombreUsuario")] // 🚨 Esto blinda el campo contra diferencias de mayúsculas/minúsculas
+        [JsonPropertyName("nombreUsuario")] 
         public string NombreUsuario { get; set; }
         
         [JsonPropertyName("password")]
