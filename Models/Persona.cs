@@ -42,9 +42,7 @@ namespace Concesionario.Models
         public DateTime? ActualizadoEl { get; set; }
         public bool Activo { get; set; } = true;
 
-        // =================================================================
-        // PROPIEDADES DE NAVEGACIÓN (Relación N:1)
-        // =================================================================
+       
         [ForeignKey("CiudadId")]
         public virtual Ciudad? Ciudad { get; set; }
     }

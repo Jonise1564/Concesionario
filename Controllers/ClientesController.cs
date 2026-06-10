@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Concesionario.Data; 
+using Concesionario.Data;
 using Concesionario.Models;
 
 namespace Concesionario.Controllers
@@ -20,17 +20,54 @@ namespace Concesionario.Controllers
         }
 
         // ---------------------------------------------------------------------
-        // 📑 LISTAR CLIENTES (Con su Persona vinculada)
+        // 📑 LISTAR CLIENTES (Optimizado con proyección para evitar ciclos de EF Core)
         // ---------------------------------------------------------------------
         [HttpGet("Listar")]
         public async Task<IActionResult> Listar()
         {
             try
             {
-                // Traemos los clientes incluyendo la Persona para el listado estructurado de JS
+                // Proyectamos directamente lo necesario para romper ciclos relacionales de EF
                 var clientes = await _context.Clientes
                     .Include(c => c.Persona)
+                        .ThenInclude(p => p.Ciudad)
+                            .ThenInclude(ciu => ciu.Provincia)
                     .OrderByDescending(c => c.Id)
+                    .Select(c => new
+                    {
+                        id = c.Id,
+                        idPersonaId = c.IdPersonaId,
+                        calificacionCrediticia = c.CalificacionCrediticia,
+                        idFechaAlta = c.IdFechaAlta,
+                        observaciones = c.Observaciones,
+                        persona = new
+                        {
+                            id = c.Persona.Id,
+                            documentoIdentidad = c.Persona.DocumentoIdentidad,
+                            nombres = c.Persona.Nombres,
+                            apellidos = c.Persona.Apellidos,
+                            email = c.Persona.Email,
+                            telefono = c.Persona.Telefono,
+                            telefonoAlternativo = c.Persona.TelefonoAlternativo,
+                            fechaNacimiento = c.Persona.FechaNacimiento,
+                            genero = c.Persona.Genero,
+                            estadoCivil = c.Persona.EstadoCivil,
+                            direccion = c.Persona.Direccion,
+                            codigoPostal = c.Persona.CodigoPostal,
+                            pais = c.Persona.Pais,
+                            ciudadId = c.Persona.CiudadId,
+                            ciudad = c.Persona.Ciudad != null ? new
+                            {
+                                id = c.Persona.Ciudad.Id,
+                                nombre = c.Persona.Ciudad.Nombre,
+                                provincia = c.Persona.Ciudad.Provincia != null ? new
+                                {
+                                    id = c.Persona.Ciudad.Provincia.Id,
+                                    nombre = c.Persona.Ciudad.Provincia.Nombre
+                                } : null
+                            } : null
+                        }
+                    })
                     .ToListAsync();
 
                 return Ok(clientes);
@@ -46,7 +83,7 @@ namespace Concesionario.Controllers
         // ---------------------------------------------------------------------
         [HttpPost("Guardar")]
         public async Task<IActionResult> Guardar(
-            [FromForm] int id, 
+            [FromForm] int id,
             [FromForm] int idPersonaId,
             [FromForm] string documentoIdentidad,
             [FromForm] string nombres,
@@ -58,7 +95,7 @@ namespace Concesionario.Controllers
             [FromForm] string? genero,
             [FromForm] string? estadoCivil,
             [FromForm] string? direccion,
-            [FromForm] int? ciudadId, 
+            [FromForm] int? ciudadId,
             [FromForm] string? codigoPostal,
             [FromForm] string? pais,
             [FromForm] string? calificacionCrediticia,
@@ -67,7 +104,7 @@ namespace Concesionario.Controllers
             try
             {
                 // Validaciones de negocio obligatorias básicas
-                if (string.IsNullOrEmpty(documentoIdentidad)) 
+                if (string.IsNullOrEmpty(documentoIdentidad))
                     return BadRequest(new { message = "El documento de identidad es obligatorio." });
                 if (string.IsNullOrEmpty(nombres) || string.IsNullOrEmpty(apellidos))
                     return BadRequest(new { message = "Los nombres y apellidos son obligatorios." });
@@ -120,17 +157,17 @@ namespace Concesionario.Controllers
                         personaDb.Genero = genero?.Trim();
                         personaDb.EstadoCivil = estadoCivil?.Trim();
                         personaDb.Direccion = direccion?.Trim();
-                        personaDb.CiudadId = ciudadId ?? 1; 
+                        personaDb.CiudadId = ciudadId ?? 1;
                         personaDb.CodigoPostal = codigoPostal?.Trim();
                         personaDb.Pais = pais?.Trim();
                         personaDb.ActualizadoEl = DateTime.Now;
-                        
+
                         _context.Personas.Update(personaDb);
                     }
 
                     // Verificamos que esta persona física no posea ya una ficha comercial activa de cliente
                     var existeCliente = await _context.Clientes.AnyAsync(c => c.IdPersonaId == personaDb.Id);
-                    if (existeCliente) 
+                    if (existeCliente)
                         return BadRequest(new { message = "El documento ingresado ya se encuentra asociado a un cliente comercial existente." });
 
                     // Creamos el registro comercial en la tabla de Clientes
@@ -153,14 +190,14 @@ namespace Concesionario.Controllers
                         .Include(c => c.Persona)
                         .FirstOrDefaultAsync(c => c.Id == id);
 
-                    if (clienteDb == null) 
+                    if (clienteDb == null)
                         return NotFound(new { message = "El perfil de cliente comercial solicitado no existe." });
 
                     // Validamos la unicidad del documento por si fue alterado en la edición
                     if (clienteDb.Persona.DocumentoIdentidad != documentoIdentidad)
                     {
                         var existeDoc = await _context.Personas.AnyAsync(p => p.Id != clienteDb.IdPersonaId && p.DocumentoIdentidad == documentoIdentidad);
-                        if (existeDoc) 
+                        if (existeDoc)
                             return BadRequest(new { message = "El documento de identidad ingresado ya se encuentra registrado por otro usuario." });
                     }
 
@@ -175,7 +212,7 @@ namespace Concesionario.Controllers
                     clienteDb.Persona.Genero = genero?.Trim();
                     clienteDb.Persona.EstadoCivil = estadoCivil?.Trim();
                     clienteDb.Persona.Direccion = direccion?.Trim();
-                    clienteDb.Persona.CiudadId = ciudadId ?? 1; // Actualización relacional directa
+                    clienteDb.Persona.CiudadId = ciudadId ?? 1; // Actualización relacional directa numérica
                     clienteDb.Persona.CodigoPostal = codigoPostal?.Trim();
                     clienteDb.Persona.Pais = pais?.Trim();
                     clienteDb.Persona.ActualizadoEl = DateTime.Now;

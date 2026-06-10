@@ -4,6 +4,7 @@
 
 let myModalCliente = null;
 let listaClientesMemoria = []; // Memoria caché local
+let ciudadesCargadasMemoria = []; // ✨ Guarda las ciudades con sus IDs reales de la BD
 
 document.addEventListener("DOMContentLoaded", () => {
     // Inicializamos el modal de Bootstrap 5 de forma segura
@@ -24,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // ---------------------------------------------------------------------
 async function cargarDatalistProvincias() {
     try {
-        // Reemplazar este endpoint por la ruta real de tu Controlador de C#
         const response = await fetch('/api/Ubicacion/Provincias', {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
@@ -39,7 +39,6 @@ async function cargarDatalistProvincias() {
         datalist.innerHTML = '';
         provincias.forEach(prov => {
             const option = document.createElement('option');
-            // Se asume que tu objeto C# expone el nombre (ej: prov.nombre o prov.Nombre)
             option.value = prov.nombre || prov.Nombre; 
             datalist.appendChild(option);
         });
@@ -48,16 +47,20 @@ async function cargarDatalistProvincias() {
     }
 }
 
-async function onProvinciaChange() {
+// ✨ Modificado: recibe un parámetro para saber si viene desde una edición
+async function onProvinciaChange(esEdicion = false) {
     const provinciaSeleccionada = document.getElementById('cEstadoProvincia').value;
     const inputCiudad = document.getElementById('cCiudad');
     const datalistCiudades = document.getElementById('datalistCiudades');
     
     if (!inputCiudad || !datalistCiudades) return;
 
-    // Reiniciamos por completo el campo de ciudad al cambiar o borrar la provincia
-    inputCiudad.value = '';
+    // Si no es edición, limpiamos la ciudad porque el usuario cambió de provincia manualmente
+    if (!esEdicion) {
+        inputCiudad.value = '';
+    }
     datalistCiudades.innerHTML = '';
+    ciudadesCargadasMemoria = []; 
     
     if (!provinciaSeleccionada.trim()) {
         inputCiudad.disabled = true;
@@ -65,7 +68,6 @@ async function onProvinciaChange() {
     }
 
     try {
-        // Enviamos la provincia elegida como parámetro para consultar las ciudades correspondientes
         const url = `/api/Ubicacion/Ciudades?provincia=${encodeURIComponent(provinciaSeleccionada)}`;
         const response = await fetch(url, {
             method: 'GET',
@@ -75,6 +77,9 @@ async function onProvinciaChange() {
         if (!response.ok) throw new Error("Error al obtener ciudades");
         const ciudades = await response.json();
         
+        // Guardamos las ciudades en caché para extraer sus IDs numéricos al guardar
+        ciudadesCargadasMemoria = ciudades;
+
         if (ciudades.length > 0) {
             ciudades.forEach(ciu => {
                 const option = document.createElement('option');
@@ -134,10 +139,16 @@ async function listarClientes() {
             const documento = p.documentoIdentidad || p.DocumentoIdentidad || 'N/D';
             const email = p.email || p.Email || 'N/D';
             const telefono = p.telefono || p.Telefono || 'N/D';
-            const ciudad = p.ciudad || p.Ciudad || '';
-            const provincia = p.estadoProvincia || p.EstadoProvincia || 'N/D';
+            
+            // Mapeo seguro del objeto relacional Ciudad enviado por EF Core
+            const ciudadObj = p.ciudad || p.Ciudad;
+            const ciudad = (ciudadObj && typeof ciudadObj === 'object') ? (ciudadObj.nombre || ciudadObj.Nombre) : (ciudadObj || 'N/D');
+            
+            // 🛠️ CORREGIDO: Mapeo tolerante a mayúsculas/minúsculas para extraer la Provincia de forma segura (Evita el "no ta")
+            const provObj = ciudadObj ? (ciudadObj.provincia || ciudadObj.Provincia) : null;
+            const provincia = provObj ? (provObj.nombre || provObj.Nombre || 'N/D') : (p.estadoProvincia || p.EstadoProvincia || 'N/D');
+            
             const calificacion = c.calificacionCrediticia || c.CalificacionCrediticia || 'Buena';
-
             const fechaAltaRaw = c.idFechaAlta || c.IdFechaAlta || c.fechaAlta || c.FechaAlta;
             const fechaAltaFormateada = fechaAltaRaw ? new Date(fechaAltaRaw).toLocaleDateString('es-AR') : 'N/D';
 
@@ -198,7 +209,7 @@ function editarClientePorIndex(index) {
     }
 }
 
-// Función encargada de recibir el objeto seleccionado e inyectarlo en el formulario
+// ✨ Modificado: Manejo síncrono secuencial con retraso preventivo para poblar el modal
 async function buscarClientePorId(cliente) {
     limpiarFormularioCliente();
 
@@ -222,17 +233,6 @@ async function buscarClientePorId(cliente) {
     document.getElementById('cGenero').value = p.genero || p.Genero || '';
     document.getElementById('cEstadoCivil').value = p.estadoCivil || p.EstadoCivil || '';
     document.getElementById('cDireccion').value = p.direccion || p.Direccion || '';
-    
-    // Inyección asíncrona controlada del Datalist de Ubicación
-    const provActual = p.estadoProvincia || p.EstadoProvincia || '';
-    const ciuActual = p.ciudad || p.Ciudad || '';
-    
-    document.getElementById('cEstadoProvincia').value = provActual;
-    
-    // Esperamos que cargue las ciudades asociadas de la BD antes de setear el input de Ciudad
-    await onProvinciaChange(); 
-    document.getElementById('cCiudad').value = ciuActual;
-
     document.getElementById('cCodigoPostal').value = p.codigoPostal || p.PostalCode || p.CodigoPostal || '';
     document.getElementById('cPais').value = p.pais || p.Pais || 'Argentina';
 
@@ -244,6 +244,34 @@ async function buscarClientePorId(cliente) {
 
     document.getElementById('cCalificacionCrediticia').value = cliente.calificacionCrediticia || cliente.CalificacionCrediticia || 'Buena';
     document.getElementById('cObservaciones').value = cliente.observaciones || cliente.Observaciones || '';
+
+    // 🗺️ EXTRACCIÓN Y ASIGNACIÓN JERÁRQUICA DE UBICACIÓN desde EF Core (Blindado contra Case-Sensitive)
+    const ciudadObj = p.ciudad || p.Ciudad;
+    let ciuActual = '';
+    let provActual = '';
+
+    if (ciudadObj && typeof ciudadObj === 'object') {
+        ciuActual = ciudadObj.nombre || ciudadObj.Nombre || '';
+        
+        // 🛠️ CORREGIDO: Mapeo tolerante a mayúsculas/minúsculas para el objeto Provincia en la edición
+        const provObj = ciudadObj.provincia || ciudadObj.Provincia;
+        if (provObj && typeof provObj === 'object') {
+            provActual = provObj.nombre || provObj.Nombre || '';
+        } else {
+            provActual = p.estadoProvincia || p.EstadoProvincia || '';
+        }
+    }
+    
+    // 1️⃣ Forzamos el nombre de la Provincia en el cuadro de texto
+    document.getElementById('cEstadoProvincia').value = provActual;
+    
+    // 2️⃣ Esperamos que termine el fetch que llena el datalist de ciudades de esa provincia
+    await onProvinciaChange(true); 
+    
+    // 3️⃣ Inyectamos la ciudad con un mini retraso controlado para asegurar su correcta asignación en los inputs
+    setTimeout(() => {
+        document.getElementById('cCiudad').value = ciuActual;
+    }, 120);
 
     myModalCliente?.show();
 }
@@ -264,6 +292,26 @@ async function guardarCliente() {
 
     formData.set('id', idCliente);
     formData.set('idPersonaId', idPersona);
+
+    // ✨ RESOLUCIÓN INTERNA DEL CIUDAD_ID EN EL FRONTEND:
+    const textoCiudadEscrita = document.getElementById('cCiudad').value.trim().toLowerCase();
+    let ciudadIdResuelto = null;
+
+    if (textoCiudadEscrita) {
+        const match = ciudadesCargadasMemoria.find(c => {
+            const n = c.nombre || c.Nombre;
+            return n.toLowerCase() === textoCiudadEscrita;
+        });
+        if (match) {
+            ciudadIdResuelto = match.id !== undefined ? match.id : match.Id;
+        }
+    }
+
+    if (ciudadIdResuelto) {
+        formData.set('ciudadId', ciudadIdResuelto);
+    } else {
+        formData.set('ciudadId', "1"); 
+    }
 
     try {
         const response = await fetch('/api/Clientes/Guardar', {
@@ -303,4 +351,5 @@ function limpiarFormularioCliente() {
     
     if (inputCiudad) inputCiudad.disabled = true;
     if (datalistCiudades) datalistCiudades.innerHTML = '';
+    ciudadesCargadasMemoria = []; 
 }

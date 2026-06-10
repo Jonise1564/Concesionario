@@ -152,6 +152,73 @@ function nuevoVendedor() {
 /**
  * Carga los datos del vendedor en el formulario dinámico para su edición
  */
+// async function editarVendedor(id) {
+//     const v = vendedores.find(vendedor => vendedor.id === id);
+//     if (!v || !modalVendedorBootstrap) return;
+
+//     const modalTitleEl = document.getElementById('modalVendedorTitle');
+//     if (modalTitleEl) {
+//         const span = modalTitleEl.querySelector('span');
+//         if (span) span.innerText = "Editar Vendedor";
+//         else modalTitleEl.innerText = "Editar Vendedor";
+//     }
+
+//     document.getElementById('vendedor-id').value = v.id;
+//     document.getElementById('vendedor-persona-id').value = v.idPersonaId || 0;
+    
+//     // 1. Personales Básicos
+//     document.getElementById('vendedor-nombre').value = v.nombres || "";
+//     document.getElementById('vendedor-apellido').value = v.apellidos || "";
+//     document.getElementById('vendedor-documento').value = v.documentoIdentidad || "";
+//     document.getElementById('vendedor-telefono').value = v.telefono || "";
+//     document.getElementById('vendedor-email').value = v.email || "";
+    
+//     // Carga de Campos Personales (Controlando nulos si vienen de la BD)
+//     if (v.fechaNacimiento) {
+//         document.getElementById('vendedor-fecha-nacimiento').value = v.fechaNacimiento.split('T')[0];
+//     } else {
+//         document.getElementById('vendedor-fecha-nacimiento').value = "";
+//     }
+//     document.getElementById('vendedor-genero').value = v.genero || "";
+//     document.getElementById('vendedor-estado-civil').value = v.estadoCivil || "";
+//     document.getElementById('vendedor-codigo-postal').value = v.codigoPostal || "";
+    
+//     // Asignación de Ubicación Geográfica Predictiva
+//     document.getElementById('vendedor-provincia').value = v.estadoProvincia || v.provincia || "";
+//     document.getElementById('vendedor-ciudad-id').value = v.ciudadId || "1";
+    
+//     const inputCiudad = document.getElementById('vendedor-ciudad');
+//     inputCiudad.value = v.nombreCiudad || v.ciudad || ""; 
+    
+//     // Rehidratar asíncronamente el Datalist de Ciudades dependientes de la Provincia asignada
+//     const provActual = v.estadoProvincia || v.provincia;
+//     if (provActual) {
+//         await cargarCiudadesPorProvincia(provActual);
+//         inputCiudad.disabled = false;
+//     } else {
+//         inputCiudad.disabled = true;
+//     }
+    
+//     // 2. Credenciales
+//     const inputUser = document.getElementById('vendedor-user');
+//     const inputPass = document.getElementById('vendedor-password');
+//     inputUser.value = v.nombreUsuario || v.userName || "";
+//     inputUser.disabled = true; 
+//     inputPass.value = ""; 
+//     inputPass.required = false; 
+    
+//     // Mostrar el texto de ayuda de la contraseña al editar
+//     const helpText = document.getElementById('vendedor-password-help');
+//     if (helpText) {
+//         helpText.style.setProperty('display', 'block', 'important');
+//     }
+    
+//     // 3. Comerciales
+//     document.getElementById('vendedor-comision').value = v.porcentajeComision !== undefined ? v.porcentajeComision : (v.comision || 0);
+//     document.getElementById('vendedor-observaciones').value = v.observaciones || "";
+
+//     modalVendedorBootstrap.show();
+// }
 async function editarVendedor(id) {
     const v = vendedores.find(vendedor => vendedor.id === id);
     if (!v || !modalVendedorBootstrap) return;
@@ -173,7 +240,7 @@ async function editarVendedor(id) {
     document.getElementById('vendedor-telefono').value = v.telefono || "";
     document.getElementById('vendedor-email').value = v.email || "";
     
-    // Carga de Campos Personales (Controlando nulos si vienen de la BD)
+    // Carga de Campos Personales 
     if (v.fechaNacimiento) {
         document.getElementById('vendedor-fecha-nacimiento').value = v.fechaNacimiento.split('T')[0];
     } else {
@@ -183,23 +250,27 @@ async function editarVendedor(id) {
     document.getElementById('vendedor-estado-civil').value = v.estadoCivil || "";
     document.getElementById('vendedor-codigo-postal').value = v.codigoPostal || "";
     
-    // Asignación de Ubicación Geográfica Predictiva
-    document.getElementById('vendedor-provincia').value = v.estadoProvincia || v.provincia || "";
-    document.getElementById('vendedor-ciudad-id').value = v.ciudadId || "1";
+    // 2. CONFIGURACIÓN GEOGRÁFICA (Orden corregido para evitar solapamientos)
+    const provActual = v.estadoProvincia || v.provincia || "";
+    document.getElementById('vendedor-provincia').value = provActual;
     
     const inputCiudad = document.getElementById('vendedor-ciudad');
-    inputCiudad.value = v.nombreCiudad || v.ciudad || ""; 
     
-    // Rehidratar asíncronamente el Datalist de Ciudades dependientes de la Provincia asignada
-    const provActual = v.estadoProvincia || v.provincia;
     if (provActual) {
+        // Primero esperamos de forma garantizada que las ciudades existan en el datalist
         await cargarCiudadesPorProvincia(provActual);
+        
+        // RECIÉN ACÁ asignamos el texto de la ciudad y el ID correspondiente de la BD
+        inputCiudad.value = v.nombreCiudad || v.ciudad || ""; 
+        document.getElementById('vendedor-ciudad-id').value = v.ciudadId || "1";
         inputCiudad.disabled = false;
     } else {
+        inputCiudad.value = "";
+        document.getElementById('vendedor-ciudad-id').value = "1";
         inputCiudad.disabled = true;
     }
     
-    // 2. Credenciales
+    // 3. Credenciales
     const inputUser = document.getElementById('vendedor-user');
     const inputPass = document.getElementById('vendedor-password');
     inputUser.value = v.nombreUsuario || v.userName || "";
@@ -207,13 +278,12 @@ async function editarVendedor(id) {
     inputPass.value = ""; 
     inputPass.required = false; 
     
-    // Mostrar el texto de ayuda de la contraseña al editar
     const helpText = document.getElementById('vendedor-password-help');
     if (helpText) {
         helpText.style.setProperty('display', 'block', 'important');
     }
     
-    // 3. Comerciales
+    // 4. Comerciales
     document.getElementById('vendedor-comision').value = v.porcentajeComision !== undefined ? v.porcentajeComision : (v.comision || 0);
     document.getElementById('vendedor-observaciones').value = v.observaciones || "";
 
