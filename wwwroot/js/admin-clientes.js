@@ -161,7 +161,7 @@ async function listarClientes() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><span class="badge bg-light text-dark border">${documento}</span></td>
-                <td class="fw-semibold text-dark">${nombreCompleto}</td>
+                <td class="fw-semibold text-white">${nombreCompleto}</td>
                 <td>
                     <div class="small"><i class="bi bi-envelope text-muted me-1"></i>${email}</div>
                     <div class="small text-muted"><i class="bi bi-telephone me-1"></i>${telefono}</div>

@@ -441,4 +441,4 @@ C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\refint\Concesionario.dll
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\Concesionario.pdb
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\Concesionario.genruntimeconfig.cache
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\ref\Concesionario.dll
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\7k7r7n5ex1-{0}-6zp8uwgqwy-6zp8uwgqwy.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\7k7r7n5ex1-{0}-vj33k2yl7y-vj33k2yl7y.gz
