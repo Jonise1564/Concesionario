@@ -1,0 +1,191 @@
+@* Vista Parcial: _VentasSection.cshtml *@
+
+<div class="row mb-4 align-items-center gy-3">
+    <div class="col-sm-7 col-md-8">
+        <h2 class="mb-1 fw-bold text-white d-flex align-items-center">
+            <i class="bi bi-cart-fill me-2 text-danger"></i>Gestión de Ventas
+        </h2>
+        <p class="text-muted mb-0 small">Administración de transacciones, facturación y estados de pedido.</p>
+    </div>
+    <div class="col-sm-5 col-md-4 text-sm-end">
+        <button type="button" class="btn btn-danger shadow-sm w-100 w-sm-auto px-4" onclick="abrirModalVenta(0)">
+            <i class="bi bi-plus-circle-fill me-1"></i> Nueva Venta
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3 bg-dark">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0 text-nowrap" id="tablaVentas" style="background-color: #0b0b0b;">
+                <thead class="text-white fw-semibold text-uppercase fs-7 border-bottom" style="border-color: #222 !important;">
+                    <tr>
+                        <th>Nro. Comprobante</th>
+                        <th style="min-width: 200px;">Cliente</th>
+                        <th>Fecha</th>
+                        <th>Medio de Pago</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyVentas" class="text-white">
+                    @* Ejemplo de estructura de fila con estilos forzados anti-opacidad *@
+                    <tr>
+                        <td style="color: #ffffff !important; font-weight: 600;">#V-000124</td>
+                        <td style="color: #ffffff !important;">Juan Pérez</td>
+                        <td style="color: #ced4da !important;">10/06/2026</td>
+                        <td style="color: #ced4da !important;"><i class="bi bi-credit-card me-1 text-info"></i> Tarjeta</td>
+                        <td style="color: #ffffff !important; font-weight: bold;">$350.000,00</td>
+                        <td><span class="badge bg-success bg-opacity-75 text-white">Completada</span></td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-info me-1" onclick="verDetalleVenta(124)" title="Ver Detalle">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="anularVenta(124)" title="Anular Venta">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    @* Spinner de carga por defecto *@
+                    <tr id="rowCargandoVentas">
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>
+                            Cargando historial de ventas...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalVenta" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+     aria-labelledby="modalVentaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-dark text-white rounded-top-3 py-3">
+                <h5 class="modal-title fw-bold fs-5" id="modalVentaLabel">
+                    <i class="bi bi-calculator me-2 text-info"></i><span id="modalVentaTitulo">Registrar Nueva Venta</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+                        onclick="limpiarFormularioVenta()"></button>
+            </div>
+
+            <form id="formVenta" autocomplete="off" onsubmit="event.preventDefault(); guardarVenta();">
+                <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto;">
+                    
+                    <input type="hidden" id="vId" name="id" value="0">
+
+                    <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
+                        <i class="bi bi-receipt me-1"></i> Datos de la Transacción
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold text-secondary small">Cliente *</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control border-start-0" id="vClienteBusqueda" 
+                                       list="datalistClientesVenta" placeholder="Buscar cliente por nombre o DNI..." required>
+                            </div>
+                            <datalist id="datalistClientesVenta"></datalist>
+                            <input type="hidden" id="vIdCliente" name="idCliente">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">Medio de Pago *</label>
+                            <select class="form-select shadow-sm" id="vMedioPago" name="medioPago" required>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Tarjeta">Tarjeta de Crédito / Débito</option>
+                                <option value="Transferencia">Transferencia Bancaria</option>
+                                <option value="MercadoPago">Mercado Pago / Billetera Digital</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-secondary small">Fecha de Venta *</label>
+                            <input type="datetime-local" class="form-control shadow-sm" id="vFecha" name="fecha" required>
+                        </div>
+                    </div>
+
+                    <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
+                        <i class="bi bi-box-seam me-1"></i> Agregar Productos o Vehículos
+                    </h6>
+                    <div class="row g-3 align-items-end mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary small">Seleccionar Ítem</label>
+                            <input type="text" class="form-control shadow-sm" id="vProductoBusqueda" 
+                                   list="datalistProductosVenta" placeholder="Escriba el nombre, patente o código...">
+                            <datalist id="datalistProductosVenta"></datalist>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-secondary small">Precio Unitario</label>
+                            <input type="number" step="0.01" class="form-control shadow-sm" id="vPrecioUnitario" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-secondary small">Cantidad</label>
+                            <input type="number" min="1" value="1" class="form-control shadow-sm" id="vCantidad">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-outline-danger w-100 shadow-sm" onclick="agregarItemDetalle()">
+                                <i class="bi bi-plus-lg me-1"></i> Añadir
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive rounded-3 mb-4 border border-secondary" style="border-color: #333 !important;">
+                        <table class="table table-dark align-middle mb-0 text-nowrap" id="tablaDetalleVenta" style="background-color: #121212;">
+                            <thead class="table-light text-dark fw-semibold small text-uppercase">
+                                <tr>
+                                    <th>Descripción / Concepto</th>
+                                    <th class="text-center" style="width: 120px;">Cantidad</th>
+                                    <th class="text-end" style="width: 160px;">P. Unitario</th>
+                                    <th class="text-end" style="width: 160px;">Subtotal</th>
+                                    <th class="text-center" style="width: 80px;">Quitar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyDetalleVenta">
+                                @* Filas dinámicas insertadas por JS *@
+                                <tr id="rowDetalleVacio">
+                                    <td colspan="5" class="text-center py-4 text-muted small">
+                                        No hay ítems cargados en la venta actual.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row justify-content-end g-3">
+                        <div class="col-md-4">
+                            <div class="card bg-light border-0 shadow-sm">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-secondary small fw-semibold">Subtotal:</span>
+                                        <span class="text-dark fw-bold" id="lblSubtotal">$0,00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-secondary small fw-semibold">Descuento / Recargo:</span>
+                                        <div style="width: 120px;">
+                                            <input type="number" class="form-control form-control-sm text-end" id="vDescuento" value="0" oninput="calcularTotalesVenta()">
+                                        </div>
+                                    </div>
+                                    <hr class="my-2 text-secondary">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-dark fw-bold">TOTAL FINAL:</span>
+                                        <span class="text-danger fw-extrabold fs-5" id="lblTotalFinal">$0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-dark rounded-bottom-3 p-3" style="border-top: 1px solid #222;">
+                    <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal"
+                            onclick="limpiarFormularioVenta()">Cancelar</button>
+                    <button type="submit" class="btn btn-danger shadow-sm" id="btnGuardarVenta">
+                        <i class="bi bi-printer me-1"></i> Registrar y Emitir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

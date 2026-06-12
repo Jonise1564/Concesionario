@@ -17,10 +17,10 @@
             </a>
             <a onclick="cambiarSeccion('clientes')" id="btn-nav-clientes" class="nav-admin-link solo-admin">
                 <i class="bi bi-people-fill"></i> Clientes
-            @* </a>
-            <a onclick="cambiarSeccion('usuarios')" id="btn-nav-usuarios" class="nav-admin-link solo-admin">
-                <i class="bi bi-people"></i> Usuarios
-            </a> *@
+            </a>
+            <a onclick="cambiarSeccion('ventas')" id="btn-nav-ventas" class="nav-admin-link solo-admin">
+                <i class="bi bi-cart-fill"></i> Ventas
+            </a>
             <a onclick="cambiarSeccion('vendedores')" id="btn-nav-vendedores" class="nav-admin-link solo-admin">
                 <i class="bi bi-person-badge"></i> Vendedores
             </a>
@@ -46,6 +46,10 @@
                 <partial name="_ClientesSection" />
             </div>
 
+            <div id="seccion-ventas" style="display: none;">
+                <partial name="_VentasSection" />
+            </div>
+
             <partial name="_UsuariosModalYTabla" />
 
             <partial name="_VendedoresSection" />
@@ -69,13 +73,13 @@
     <script src="~/js/admin-vehiculos.js" asp-append-version="true"></script>
     <script src="~/js/admin-vendedores.js" asp-append-version="true"></script>
     <script src="~/js/admin-clientes.js" asp-append-version="true"></script>
+    <script src="~/js/admin-ventas.js" asp-append-version="true"></script>
 
     <script>
         const token = localStorage.getItem('jonel_token');
         const modalUsuario = document.getElementById('modalUsuario') ? new bootstrap.Modal(document.getElementById('modalUsuario')) : null;
-        let usuarioRol = "Vendedor"; // Por defecto asumimos vendedor por seguridad
+        let usuarioRol = "Vendedor"; 
 
-        // Función auxiliar para decodificar el payload del JWT de forma segura en JS
         function obtenerRolDesdeToken(tokenJWT) {
             try {
                 if (!tokenJWT) return "Vendedor";
@@ -86,8 +90,6 @@
                 }).join(''));
 
                 const payload = JSON.parse(jsonPayload);
-                
-                // Mapeos típicos de roles en JWT (Claim estándar o personalizado)
                 return payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Vendedor";
             } catch (error) {
                 console.error("Error al decodificar el rol del token:", error);
@@ -101,32 +103,24 @@
                 return;
             }
 
-            // 1. Validar el rol del usuario actual
             usuarioRol = obtenerRolDesdeToken(token);
 
-            // 2. Aplicar restricciones de interfaz en base al rol
             if (usuarioRol === "Vendedor" || usuarioRol === "vendedor") {
-                // Ocultar todos los botones de navegación administrativa del Sidebar
                 document.querySelectorAll('.solo-admin').forEach(el => el.style.setProperty('display', 'none', 'important'));
                 
-                // Cambiar títulos informativos
                 const menuTxt = document.getElementById('menu-titulo');
                 if (menuTxt) menuTxt.innerText = "MENÚ VENDEDOR";
 
-                // Forzar redirección directa a la sección de consultas
                 window.location.href = '/Admin/Consultas';
                 return; 
             }
 
-            // Si es Administrador, el flujo continúa normal como antes
             cargarPendientes();
 
-            // Ejecutamos la carga de categorías primero de forma asíncrona
             if (typeof cargarCategorias === 'function') {
                 await cargarCategorias();
             }
 
-            // Luego listamos los vehículos correspondientes
             if (typeof listar === 'function') {
                 await listar();
             }
@@ -157,7 +151,6 @@
             }
         }
 
-        // 4. LOGICA ADAPTADA PARA CONTROLAR EL DISPLAY DE CLIENTES
         function cambiarSeccion(seccion) {
             if (usuarioRol === "Vendedor" || usuarioRol === "vendedor") {
                 window.location.href = '/Admin/Consultas';
@@ -166,30 +159,32 @@
 
             const secVehiculos = document.getElementById('seccion-vehiculos');
             const secClientes = document.getElementById('seccion-clientes'); 
+            const secVentas = document.getElementById('seccion-ventas'); 
             const secUsuarios = document.getElementById('seccion-usuarios'); 
             const secVendedores = document.getElementById('seccion-vendedores'); 
             const secAjustes = document.getElementById('seccion-ajustes');
 
             const btnVehiculos = document.getElementById('btn-nav-vehiculos');
             const btnClientes = document.getElementById('btn-nav-clientes'); 
+            const btnVentas = document.getElementById('btn-nav-ventas'); 
             const btnUsuarios = document.getElementById('btn-nav-usuarios');
             const btnVendedores = document.getElementById('btn-nav-vendedores'); 
             const btnAjustes = document.getElementById('btn-nav-ajustes');
 
-            // Resetear visibilidad de todos
             if(secVehiculos) secVehiculos.style.display = 'none';
             if(secClientes) secClientes.style.display = 'none'; 
+            if(secVentas) secVentas.style.display = 'none'; 
             if(secUsuarios) secUsuarios.style.display = 'none';
             if(secVendedores) secVendedores.style.display = 'none'; 
             if(secAjustes) secAjustes.style.display = 'none';
 
             btnVehiculos?.classList.remove('active');
             btnClientes?.classList.remove('active'); 
+            btnVentas?.classList.remove('active'); 
             btnUsuarios?.classList.remove('active');
             btnVendedores?.classList.remove('active'); 
             btnAjustes?.classList.remove('active');
 
-            // Activar sección seleccionada
             if (seccion === 'vehiculos' && secVehiculos) {
                 secVehiculos.style.display = 'block';
                 btnVehiculos.classList.add('active');
@@ -197,6 +192,10 @@
                 secClientes.style.display = 'block';
                 btnClientes.classList.add('active');
                 if (typeof listarClientes === 'function') listarClientes();
+            } else if (seccion === 'ventas' && secVentas) { 
+                secVentas.style.display = 'block';
+                btnVentas.classList.add('active');
+                if (typeof listarVentas === 'function') listarVentas();
             } else if (seccion === 'usuarios' && secUsuarios) {
                 secUsuarios.style.display = 'block';
                 btnUsuarios.classList.add('active');
