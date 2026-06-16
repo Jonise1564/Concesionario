@@ -96,7 +96,7 @@ public class HomeController : Controller
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);
             
-            TempData["Mensaje"] = "Consulta enviada correctamente ✅";
+            TempData["Mensaje"] = "Consulta enviada correctamente";
         }
         catch (Exception ex)
         {

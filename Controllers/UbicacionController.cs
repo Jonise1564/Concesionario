@@ -53,7 +53,6 @@ namespace Concesionario.Controllers
                 if (string.IsNullOrEmpty(provincia)) 
                     return BadRequest(new { message = "La provincia es requerida." });
 
-                // 🛠️ CORRECCIÓN AQUÍ: Comparamos el string 'provincia' contra c.Provincia.Nombre
                 var ciudades = await _context.Ciudades
                     .Where(c => c.Provincia.Nombre == provincia.Trim())
                     .Select(c => new { id = c.Id, nombre = c.Nombre }) 

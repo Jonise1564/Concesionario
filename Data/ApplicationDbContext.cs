@@ -17,8 +17,11 @@ namespace Concesionario.Data
         public DbSet<Vendedor> Vendedores { get; set; }
         public DbSet<Cliente> Clientes { get; set; }
         
-        // 🛒 Agregado para la gestión de transacciones
+        // 🛒 Agregados y normalizados según la estructura MySQL de Jonel Autos
         public DbSet<Venta> Ventas { get; set; }
+        public DbSet<DetalleVenta> DetallesVenta { get; set; }
+        public DbSet<FormaPago> FormasPago { get; set; }
+        public DbSet<TipoComprobante> TiposComprobante { get; set; }
         
         // DbSets para la normalización geográfica de Argentina
         public DbSet<Provincia> Provincias { get; set; }
@@ -62,18 +65,43 @@ namespace Concesionario.Data
             });
 
             // =================================================================
-            // MAPEO DE VENTAS (Mapeo exacto basado en estructura MySQL)
+            // MAPEO DE FORMAS DE PAGO
+            // =================================================================
+            modelBuilder.Entity<FormaPago>(entity =>
+            {
+                entity.ToTable("formas_pago");
+                entity.HasKey(fp => fp.Id);
+                entity.Property(fp => fp.Id).HasColumnName("Id");
+                entity.Property(fp => fp.Nombre).HasColumnName("Nombre").HasMaxLength(50).IsRequired();
+            });
+
+            // =================================================================
+            // MAPEO DE TIPOS DE COMPROBANTE
+            // =================================================================
+            modelBuilder.Entity<TipoComprobante>(entity =>
+            {
+                entity.ToTable("tipos_comprobante");
+                entity.HasKey(tc => tc.Id);
+                entity.Property(tc => tc.Id).HasColumnName("Id");
+                entity.Property(tc => tc.Nombre).HasColumnName("Nombre").HasMaxLength(50).IsRequired();
+            });
+
+            // =================================================================
+            // MAPEO DE VENTAS (Ajustado a maestro-detalle)
             // =================================================================
             modelBuilder.Entity<Venta>(entity =>
             {
-                entity.ToTable("ventas"); // Nombre en minúscula idéntico al motor MySQL
+                entity.ToTable("ventas"); 
 
                 entity.HasKey(v => v.Id);
                 entity.Property(v => v.Id).HasColumnName("Id");
                 
-                entity.Property(v => v.VehiculoId).HasColumnName("VehiculoId").IsRequired();
                 entity.Property(v => v.ClienteId).HasColumnName("ClienteId").IsRequired();
                 entity.Property(v => v.VendedorId).HasColumnName("VendedorId").IsRequired();
+                entity.Property(v => v.TipoComprobanteId).HasColumnName("TipoComprobanteId").IsRequired();
+                entity.Property(v => v.FormaPagoId).HasColumnName("FormaPagoId").IsRequired();
+                entity.Property(v => v.PuntoVenta).HasColumnName("PuntoVenta").IsRequired();
+                entity.Property(v => v.NroComprobante).HasColumnName("NroComprobante").IsRequired();
                 
                 entity.Property(v => v.FechaVenta)
                       .HasColumnName("FechaVenta")
@@ -82,35 +110,61 @@ namespace Concesionario.Data
 
                 entity.Property(v => v.MontoFinal)
                       .HasColumnName("MontoFinal")
-                      .HasColumnType("decimal(15,2)") // Precisión exacta asignada en la DB
-                      .IsRequired();
-
-                entity.Property(v => v.FormaPago)
-                      .HasColumnName("FormaPago")
-                      .HasMaxLength(50)
+                      .HasColumnType("decimal(15,2)") 
                       .IsRequired();
 
                 entity.Property(v => v.Observaciones)
                       .HasColumnName("Observaciones")
-                      .HasColumnType("text"); // Mapeo para tipos extensos
+                      .HasColumnType("text");
 
-                // Configuración del índice UNIQUE (Llave UNI en MySQL) para evitar doble venta del coche
-                entity.HasIndex(v => v.VehiculoId).IsUnique();
-
-                // Relaciones de Claves Foráneas (N:1) hacia sus tablas maestras
-                entity.HasOne(v => v.Vehiculo)
-                      .WithMany() 
-                      .HasForeignKey(v => v.VehiculoId)
-                      .OnDelete(DeleteBehavior.Restrict);
-
+                // Relaciones externas de la venta
                 entity.HasOne(v => v.Cliente)
                       .WithMany()
                       .HasForeignKey(v => v.ClienteId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(v => v.Vendedor)
+                entity.HasOne(v => v.FormaPago)
                       .WithMany()
-                      .HasForeignKey(v => v.VendedorId)
+                      .HasForeignKey(v => v.FormaPagoId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(v => v.TipoComprobante)
+                      .WithMany()
+                      .HasForeignKey(v => v.TipoComprobanteId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación 1:N hacia los detalles
+                entity.HasMany(v => v.DetallesVenta)
+                      .WithOne(d => d.Venta)
+                      .HasForeignKey(d => d.VentaId)
+                      .OnDelete(DeleteBehavior.Cascade); // Si borrás una venta, elimina sus detalles
+            });
+
+            // =================================================================
+            // MAPEO DE DETALLE VENTAS
+            // =================================================================
+            modelBuilder.Entity<DetalleVenta>(entity =>
+            {
+                entity.ToTable("detalle_ventas");
+
+                entity.HasKey(d => d.Id);
+                entity.Property(d => d.Id).HasColumnName("Id");
+                entity.Property(d => d.VentaId).HasColumnName("VentaId").IsRequired();
+                entity.Property(d => d.VehiculoId).HasColumnName("VehiculoId"); // Permite Null (YES)
+                entity.Property(d => d.RepuestoId).HasColumnName("RepuestoId"); // Permite Null (YES)
+                entity.Property(d => d.ServicioId).HasColumnName("ServicioId"); // Permite Null (YES)
+                
+                entity.Property(d => d.Cantidad).HasColumnName("Cantidad").HasDefaultValue(1).IsRequired();
+                
+                entity.Property(d => d.PrecioUnitario)
+                      .HasColumnName("PrecioUnitario")
+                      .HasColumnType("decimal(15,2)")
+                      .IsRequired();
+
+                // Relación condicional opcional con vehículos
+                entity.HasOne(d => d.Vehiculo)
+                      .WithMany()
+                      .HasForeignKey(d => d.VehiculoId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 

@@ -20,7 +20,7 @@ namespace Concesionario.Controllers
         }
 
         // ---------------------------------------------------------------------
-        // 📑 LISTAR CLIENTES (Optimizado con proyección para evitar ciclos de EF Core)
+        // LISTAR CLIENTES
         // ---------------------------------------------------------------------
         [HttpGet("Listar")]
         public async Task<IActionResult> Listar()
@@ -79,7 +79,7 @@ namespace Concesionario.Controllers
         }
 
         // ---------------------------------------------------------------------
-        // 💾 GUARDAR / EDITAR CLIENTE
+        // GUARDAR / EDITAR CLIENTE
         // ---------------------------------------------------------------------
         [HttpPost("Guardar")]
         public async Task<IActionResult> Guardar(

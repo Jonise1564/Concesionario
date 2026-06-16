@@ -48,7 +48,7 @@ namespace Concesionario.Controllers
                         Genero = v.Persona.Genero ?? "",
                         EstadoCivil = v.Persona.EstadoCivil ?? "",
                         
-                        // 🗺️ CORREGIDO: Mapeo exacto según las propiedades de tu VendedorDto
+                        
                         CiudadId = v.Persona.CiudadId,
                         NombreCiudad = v.Persona.Ciudad != null ? v.Persona.Ciudad.Nombre : "",
                         Provincia = v.Persona.Ciudad != null && v.Persona.Ciudad.Provincia != null ? v.Persona.Ciudad.Provincia.Nombre : "",

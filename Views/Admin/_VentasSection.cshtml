@@ -8,7 +8,7 @@
         <p class="text-muted mb-0 small">Administración de transacciones, facturación y estados de pedido.</p>
     </div>
     <div class="col-sm-5 col-md-4 text-sm-end">
-        <button type="button" class="btn btn-danger shadow-sm w-100 w-sm-auto px-4" onclick="abrirModalVenta(0)">
+        <button type="button" class="btn btn-danger shadow-sm w-100 w-sm-auto px-4" onclick="abrirModalVenta()">
             <i class="bi bi-plus-circle-fill me-1"></i> Nueva Venta
         </button>
     </div>
@@ -23,30 +23,13 @@
                         <th>Nro. Comprobante</th>
                         <th style="min-width: 200px;">Cliente</th>
                         <th>Fecha</th>
-                        <th>Medio de Pago</th>
+                        <th>Concepto / Ítems</th>
+                        <th>Comprobante / Pago</th>
                         <th>Total</th>
-                        <th>Estado</th>
                         <th class="text-end pe-4">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyVentas" class="text-white">
-                    @* Ejemplo de estructura de fila con estilos forzados anti-opacidad *@
-                    <tr>
-                        <td style="color: #ffffff !important; font-weight: 600;">#V-000124</td>
-                        <td style="color: #ffffff !important;">Juan Pérez</td>
-                        <td style="color: #ced4da !important;">10/06/2026</td>
-                        <td style="color: #ced4da !important;"><i class="bi bi-credit-card me-1 text-info"></i> Tarjeta</td>
-                        <td style="color: #ffffff !important; font-weight: bold;">$350.000,00</td>
-                        <td><span class="badge bg-success bg-opacity-75 text-white">Completada</span></td>
-                        <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-info me-1" onclick="verDetalleVenta(124)" title="Ver Detalle">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="anularVenta(124)" title="Anular Venta">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
                     @* Spinner de carga por defecto *@
                     <tr id="rowCargandoVentas">
                         <td colspan="7" class="text-center py-5 text-muted">
@@ -75,13 +58,17 @@
             <form id="formVenta" autocomplete="off" onsubmit="event.preventDefault(); guardarVenta();">
                 <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto;">
                     
+                    @* Inputs de control primario *@
                     <input type="hidden" id="vId" name="id" value="0">
+                    <input type="hidden" id="vTipoComprobante" value="1"> @* 1: Factura / Nota de Venta *@
+                    <input type="hidden" id="vPuntoVenta" value="1">
+                    <input type="hidden" id="vNroComprobante" value="0">
 
                     <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
                         <i class="bi bi-receipt me-1"></i> Datos de la Transacción
                     </h6>
                     <div class="row g-3 mb-4">
-                        <div class="col-md-5">
+                        <div class="col-md-7">
                             <label class="form-label fw-semibold text-secondary small">Cliente *</label>
                             <div class="input-group shadow-sm">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
@@ -91,41 +78,39 @@
                             <datalist id="datalistClientesVenta"></datalist>
                             <input type="hidden" id="vIdCliente" name="idCliente">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <label class="form-label fw-semibold text-secondary small">Medio de Pago *</label>
                             <select class="form-select shadow-sm" id="vMedioPago" name="medioPago" required>
-                                <option value="Efectivo">Efectivo</option>
-                                <option value="Tarjeta">Tarjeta de Crédito / Débito</option>
-                                <option value="Transferencia">Transferencia Bancaria</option>
-                                <option value="MercadoPago">Mercado Pago / Billetera Digital</option>
+                                <option value="1">Efectivo</option>
+                                <option value="2">Tarjeta de Crédito / Débito</option>
+                                <option value="3">Transferencia Bancaria</option>
+                                <option value="4">Mercado Pago / Billetera Digital</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold text-secondary small">Fecha de Venta *</label>
                             <input type="datetime-local" class="form-control shadow-sm" id="vFecha" name="fecha" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold text-secondary small">Observaciones internas</label>
+                            <input type="text" class="form-control shadow-sm" id="vObservaciones" placeholder="Detalles de la entrega, gestoría, etc...">
                         </div>
                     </div>
 
                     <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
-                        <i class="bi bi-box-seam me-1"></i> Agregar Productos o Vehículos
+                        <i class="bi bi-box-seam me-1"></i> Seleccionar Vehículo de Stock
                     </h6>
                     <div class="row g-3 align-items-end mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold text-secondary small">Seleccionar Ítem</label>
+                        <div class="col-md-9">
+                            <label class="form-label fw-semibold text-secondary small">Buscar Unidad Comercializable</label>
                             <input type="text" class="form-control shadow-sm" id="vProductoBusqueda" 
-                                   list="datalistProductosVenta" placeholder="Escriba el nombre, patente o código...">
+                                   list="datalistProductosVenta" placeholder="Escriba la marca, modelo o patente del vehículo disponible...">
                             <datalist id="datalistProductosVenta"></datalist>
+                            <input type="hidden" id="vIdVehiculo" value="">
+                            <input type="hidden" id="vPrecioUnitario" value="0">
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-secondary small">Precio Unitario</label>
-                            <input type="number" step="0.01" class="form-control shadow-sm" id="vPrecioUnitario" readonly>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-secondary small">Cantidad</label>
-                            <input type="number" min="1" value="1" class="form-control shadow-sm" id="vCantidad">
-                        </div>
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-outline-danger w-100 shadow-sm" onclick="agregarItemDetalle()">
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-danger w-100 shadow-sm" style="display: none;">
                                 <i class="bi bi-plus-lg me-1"></i> Añadir
                             </button>
                         </div>
@@ -135,15 +120,14 @@
                         <table class="table table-dark align-middle mb-0 text-nowrap" id="tablaDetalleVenta" style="background-color: #121212;">
                             <thead class="table-light text-dark fw-semibold small text-uppercase">
                                 <tr>
-                                    <th>Descripción / Concepto</th>
+                                    <th>Descripción / Concepto del Rodado</th>
                                     <th class="text-center" style="width: 120px;">Cantidad</th>
-                                    <th class="text-end" style="width: 160px;">P. Unitario</th>
+                                    <th class="text-end" style="width: 160px;">P. Lista</th>
                                     <th class="text-end" style="width: 160px;">Subtotal</th>
                                     <th class="text-center" style="width: 80px;">Quitar</th>
                                 </tr>
                             </thead>
                             <tbody id="tbodyDetalleVenta">
-                                @* Filas dinámicas insertadas por JS *@
                                 <tr id="rowDetalleVacio">
                                     <td colspan="5" class="text-center py-4 text-muted small">
                                         No hay ítems cargados en la venta actual.
@@ -160,16 +144,11 @@
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-secondary small fw-semibold">Subtotal:</span>
                                         <span class="text-dark fw-bold" id="lblSubtotal">$0,00</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="text-secondary small fw-semibold">Descuento / Recargo:</span>
-                                        <div style="width: 120px;">
-                                            <input type="number" class="form-control form-control-sm text-end" id="vDescuento" value="0" oninput="calcularTotalesVenta()">
-                                        </div>
+                                        <input type="hidden" id="vMontoFinalCalculado" value="0">
                                     </div>
                                     <hr class="my-2 text-secondary">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-dark fw-bold">TOTAL FINAL:</span>
+                                        <span class="text-dark fw-bold">TOTAL NETO:</span>
                                         <span class="text-danger fw-extrabold fs-5" id="lblTotalFinal">$0,00</span>
                                     </div>
                                 </div>
@@ -182,7 +161,7 @@
                     <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal"
                             onclick="limpiarFormularioVenta()">Cancelar</button>
                     <button type="submit" class="btn btn-danger shadow-sm" id="btnGuardarVenta">
-                        <i class="bi bi-printer me-1"></i> Registrar y Emitir
+                        <i class="bi bi-check-circle me-1"></i> Confirmar Operación
                     </button>
                 </div>
             </form>

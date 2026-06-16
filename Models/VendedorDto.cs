@@ -33,11 +33,11 @@ namespace Concesionario.Models
         [JsonPropertyName("estadoCivil")]
         public string? EstadoCivil { get; set; }
         
-        // 🗺️ Ubicación Sincronizada:
+        // Ubicación Sincronizada:
         [JsonPropertyName("provincia")]
         public string? Provincia { get; set; }
         
-        [JsonPropertyName("nombreCiudad")] // 👈 Agregamos esto para el mapeo visual
+        [JsonPropertyName("nombreCiudad")]
         public string? NombreCiudad { get; set; }
         
         [JsonPropertyName("ciudadId")]

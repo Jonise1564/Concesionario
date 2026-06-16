@@ -4,11 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Concesionario.Data;
 using Concesionario.Models;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Concesionario.Controllers
 {
-    [Route("Admin")] // Mantiene la estructura de rutas /Admin/GetVentas que usás en JS
-    [Authorize]      // Protege todo el controlador con tu esquema de tokens JWT
+    [Authorize]      
     public class VentasController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -20,81 +21,84 @@ namespace Concesionario.Controllers
 
         // ==========================================
         // 1. OBTENER LISTADO DE VENTAS (JSON)
+        // Ruta explícita: /Admin/GetVentas
         // ==========================================
-        [HttpGet("GetVentas")]
+        [HttpGet]
+        [Route("Admin/GetVentas")]
         public async Task<IActionResult> GetVentas()
         {
             try
             {
-                // Traemos las ventas e incluimos las tablas relacionadas
                 var listaVentas = await _context.Ventas
-                    .Include(v => v.Vehiculo)
                     .Include(v => v.Cliente)
-                        .ThenInclude(c => c!.Persona) // Bajamos un nivel para obtener los datos reales de la persona
+                        .ThenInclude(c => c!.Persona) 
+                    .Include(v => v.FormaPago)          
+                    .Include(v => v.TipoComprobante)    
+                    .Include(v => v.DetallesVenta)      
+                        .ThenInclude(d => d.Vehiculo)   
                     .OrderByDescending(v => v.FechaVenta)
                     .ToListAsync();
 
-                // Mapeamos dinámicamente las propiedades [NotMapped] que lee tu JS
-                foreach (var v in listaVentas)
-                {
-                    if (v.Cliente?.Persona != null)
-                    {
-                        v.NombreCliente = $"{v.Cliente.Persona.Nombres} {v.Cliente.Persona.Apellidos}";
-                    }
-                    else
-                    {
-                        v.NombreCliente = $"Cliente #{v.ClienteId}";
-                    }
+                var resultado = listaVentas.Select(v => new {
+                    id = v.Id,
+                    clienteId = v.ClienteId,
+                    vendedorId = v.VendedorId,
+                    tipoComprobanteId = v.TipoComprobanteId,
+                    formaPagoId = v.FormaPagoId,
+                    puntoVenta = v.PuntoVenta,
+                    nroComprobante = v.NroComprobante,
+                    fechaVenta = v.FechaVenta,
+                    montoFinal = v.MontoFinal,
+                    observaciones = v.Observaciones,
+                    nombreCliente = v.Cliente?.Persona != null 
+                        ? $"{v.Cliente.Persona.Nombres} {v.Cliente.Persona.Apellidos}" 
+                        : $"Cliente #{v.ClienteId}",
+                    formaPago = v.FormaPago?.Nombre ?? $"ID {v.FormaPagoId}",
+                    tipoComprobante = v.TipoComprobante?.Nombre ?? $"ID {v.TipoComprobanteId}",
+                    
+                    detalles = v.DetallesVenta.Select(d => new {
+                        id = d.Id,
+                        vehiculoId = d.VehiculoId,
+                        repuestoId = d.RepuestoId,
+                        servicioId = d.ServicioId,
+                        cantidad = d.Cantidad,
+                        precioUnitario = d.PrecioUnitario,
+                        descripcionItem = d.Vehiculo != null 
+                            ? $"Vehículo: {d.Vehiculo.Marca} {d.Vehiculo.Modelo} ({d.Vehiculo.Patente})"
+                            : d.RepuestoId != null ? $"Repuesto #{d.RepuestoId}" 
+                            : d.ServicioId != null ? $"Servicio #{d.ServicioId}" 
+                            : "Ítems de venta masiva"
+                    })
+                });
 
-                    if (v.Vehiculo != null)
-                    {
-                        v.DetalleVehiculo = $"{v.Vehiculo.Marca} {v.Vehiculo.Modelo} ({v.Vehiculo.Patente})";
-                    }
-                    else
-                    {
-                        v.DetalleVehiculo = $"Vehículo #{v.VehiculoId}";
-                    }
-                }
-
-                return Ok(listaVentas);
+                // Forzamos formato JSON nativo con propiedades en minúscula (camelCase) para Javascript
+                return Json(resultado);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { mensaje = "Error al recuperar las transacciones", error = ex.Message });
+                Response.StatusCode = 400;
+                return Json(new { mensaje = "Error al recuperar las transacciones", error = ex.Message });
             }
         }
 
         // ==========================================
-        // 2. GUARDAR / REGISTRAR NUEVA VENTA
+        // 2. GUARDAR / REGISTRAR NUEVA VENTA (MAESTRO-DETALLE)
+        // Ruta explícita: /Admin/GuardarVenta
         // ==========================================
-        [HttpPost("GuardarVenta")]
+        [HttpPost]
+        [Route("Admin/GuardarVenta")]
         public async Task<IActionResult> GuardarVenta([FromBody] Venta model)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new { mensaje = "Datos inválidos o faltantes en el formulario." });
+                Response.StatusCode = 400;
+                return Json(new { mensaje = "Datos inválidos o faltantes en el formulario." });
             }
 
-            // Iniciamos una transacción para asegurar que si falla el cambio de estado del auto, no se guarde la venta
             using var dbTransaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // 1. Validar disponibilidad del vehículo
-                var vehiculo = await _context.Vehiculos.FirstOrDefaultAsync(v => v.Id == model.VehiculoId);
-                if (vehiculo == null)
-                {
-                    return NotFound(new { mensaje = "El vehículo seleccionado no existe." });
-                }
-
-                // Modificá esto según cómo manejes las cadenas de estados en tu tabla Vehiculos
-                if (vehiculo.Estado?.ToLower() == "vendido")
-                {
-                    return BadRequest(new { mensaje = "Este vehículo ya fue vendido previamente." });
-                }
-
-                // 2. Extraer el VendedorId desde el Token JWT de forma automática (si es necesario)
-                // Si ya lo mandás calculado en el JSON del JS, podés omitir este bloque.
                 if (model.VendedorId == 0)
                 {
                     var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -104,52 +108,72 @@ namespace Concesionario.Controllers
                     }
                     else
                     {
-                        // Vendedor por defecto de contingencia si el token no expone el ID numérico directo
                         model.VendedorId = 1; 
                     }
                 }
 
-                // 3. Procesar Alta (Inserción)
+                if (model.FechaVenta == DateTime.MinValue)
+                {
+                    model.FechaVenta = DateTime.Now;
+                }
+
                 if (model.Id == 0)
                 {
-                    // Si el JS mandó la fecha vacía, la seteamos en el servidor
-                    if (model.FechaVenta == DateTime.MinValue)
+                    if (model.DetallesVenta == null || !model.DetallesVenta.Any())
                     {
-                        model.FechaVenta = DateTime.Now;
+                        Response.StatusCode = 400;
+                        return Json(new { mensaje = "No se puede registrar una venta sin ítems en el detalle." });
+                    }
+
+                    foreach (var detalle in model.DetallesVenta)
+                    {
+                        if (detalle.VehiculoId.HasValue && detalle.VehiculoId.Value > 0)
+                        {
+                            var vehiculo = await _context.Vehiculos.FirstOrDefaultAsync(veh => veh.Id == detalle.VehiculoId.Value);
+                            if (vehiculo == null)
+                            {
+                                Response.StatusCode = 404;
+                                return Json(new { mensaje = $"El vehículo con ID {detalle.VehiculoId} no existe." });
+                            }
+
+                            if (vehiculo.Estado?.ToLower() == "vendido")
+                            {
+                                Response.StatusCode = 400;
+                                return Json(new { mensaje = $"El vehículo {vehiculo.Marca} {vehiculo.Modelo} ({vehiculo.Patente}) ya fue vendido." });
+                            }
+
+                            vehiculo.Estado = "Vendido";
+                            _context.Vehiculos.Update(vehiculo);
+                        }
                     }
 
                     _context.Ventas.Add(model);
-
-                    // 4. Actualizar el estado del coche en stock de forma atómica
-                    vehiculo.Estado = "Vendido"; 
-                    _context.Vehiculos.Update(vehiculo);
                 }
                 else
                 {
-                    // Nota: Las ventas de vehículos por lo general no se editan por auditoría, 
-                    // pero si requerís lógica de edición, iría en este bloque.
                     _context.Ventas.Update(model);
                 }
 
                 await _context.SaveChangesAsync();
-                await dbTransaction.CommitAsync(); // Consolidamos los cambios en MySQL
+                await dbTransaction.CommitAsync(); 
 
-                return Ok(new { mensaje = "Transacción comercial registrada con éxito." });
+                return Json(new { mensaje = "Transacción comercial registrada con éxito.", ventaId = model.Id });
             }
             catch (DbUpdateException dbEx)
             {
                 await dbTransaction.RollbackAsync();
-                // Captura específica por si salta la restricción UNIQUE de la columna VehiculoId
+                Response.StatusCode = 400;
                 if (dbEx.InnerException?.Message.Contains("Duplicate entry") == true)
                 {
-                    return BadRequest(new { mensaje = "Error: El vehículo ya se encuentra asignado a otra venta activa." });
+                    return Json(new { mensaje = "Error: El número de comprobante o el ítem ya se encuentra registrado." });
                 }
-                return BadRequest(new { mensaje = "Error de base de datos al procesar la venta.", detalle = dbEx.Message });
+                return Json(new { mensaje = "Error de base de datos al procesar la venta.", detalle = dbEx.Message });
             }
             catch (Exception ex)
             {
                 await dbTransaction.RollbackAsync();
-                return BadRequest(new { mensaje = "No se pudo completar el registro.", error = ex.Message });
+                Response.StatusCode = 400;
+                return Json(new { mensaje = "No se pudo completar el registro.", error = ex.Message });
             }
         }
     }

@@ -1,4 +1,4 @@
-@* Vista Parcial: _ClientesSection.cshtml *@
+
 
 <div class="row mb-4 align-items-center gy-3">
     <div class="col-sm-7 col-md-8">
@@ -30,19 +30,17 @@
                     </tr>
                 </thead>
                 <tbody id="tbodyClientes" class="text-white">
-                    <tr>
-                        @* 🔄 Modificado con !important para romper cualquier herencia oculta de Bootstrap *@
-                        <td style="color: #ced4da !important;">12345678</td>
-                        <td style="color: #ffffff !important; font-weight: 600;">Juan Pérez (Ejemplo)</td>
-                        <td style="color: #ced4da !important;">juan@correo.com</td>
-                        <td style="color: #ced4da !important;">San Luis</td>
+                    <tr id="ejemplo-fila-cliente">
+                        <td class="text-muted">12345678</td>
+                        <td class="fw-bold">Juan Pérez (Ejemplo)</td>
+                        <td class="text-muted">juan@correo.com</td>
+                        <td class="text-muted">San Luis</td>
                         <td><span class="badge bg-success">Excelente</span></td>
-                        <td style="color: #ced4da !important;">10/06/2026</td>
+                        <td class="text-muted">10/06/2026</td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-light"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-light" onclick="abrirModalCliente(1)"><i class="bi bi-pencil"></i></button>
                         </td>
                     </tr>
-                    @* Este es el tr del spinner por defecto al cargar *@
                     <tr id="rowCargandoClientes">
                         <td colspan="7" class="text-center py-5 text-muted">
                             <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>
@@ -58,8 +56,8 @@
 <div class="modal fade" id="modalCliente" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
      aria-labelledby="modalClienteLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-dark text-white rounded-top-3 py-3">
+        <div class="modal-content border-0 shadow-lg rounded-3 bg-dark text-white">
+            <div class="modal-header border-secondary py-3">
                 <h5 class="modal-title fw-bold fs-5" id="modalClienteLabel">
                     <i class="bi bi-person-gear me-2 text-info"></i><span id="modalClienteTitulo">Nuevo Cliente</span>
                 </h5>
@@ -73,55 +71,55 @@
                     <input type="hidden" id="cId" name="id" value="0">
                     <input type="hidden" id="cIdPersonaId" name="idPersonaId" value="0">
 
-                    <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary pb-2">
                         <i class="bi bi-card-text me-1"></i> Datos Personales Identificatorios
                     </h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Documento Identidad *</label>
-                            <input type="text" class="form-control shadow-sm" id="cDocumentoIdentidad"
+                            <label class="form-label fw-semibold text-muted small">Documento Identidad *</label>
+                            <input type="text" class="form-control bg-black text-white border-secondary shadow-sm" id="cDocumentoIdentidad"
                                    name="documentoIdentidad" required placeholder="DNI, CUIT, etc.">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Nombres *</label>
-                            <input type="text" class="form-control shadow-sm" id="cNombres" name="nombres" required>
+                            <label class="form-label fw-semibold text-muted small">Nombres *</label>
+                            <input type="text" class="form-control bg-black text-white border-secondary shadow-sm" id="cNombres" name="nombres" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Apellidos *</label>
-                            <input type="text" class="form-control shadow-sm" id="cApellidos" name="apellidos" required>
+                            <label class="form-label fw-semibold text-muted small">Apellidos *</label>
+                            <input type="text" class="form-control bg-black text-white border-secondary shadow-sm" id="cApellidos" name="apellidos" required>
                         </div>
                     </div>
 
-                    <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary pb-2">
                         <i class="bi bi-telephone me-1"></i> Información de Contacto
                     </h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Email *</label>
-                            <input type="email" class="form-control shadow-sm" id="cEmail" name="email" required
+                            <label class="form-label fw-semibold text-muted small">Email *</label>
+                            <input type="email" class="form-control bg-black text-white border-secondary shadow-sm" id="cEmail" name="email" required
                                    placeholder="ejemplo@correo.com">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Teléfono</label>
-                            <input type="text" class="form-control shadow-sm" id="cTelefono" name="telefono">
+                            <label class="form-label fw-semibold text-muted small">Teléfono</label>
+                            <input type="tel" class="form-control bg-black text-white border-secondary shadow-sm" id="cTelefono" name="telefono" placeholder="Ej: 2664000000">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Teléfono Alternativo</label>
-                            <input type="text" class="form-control shadow-sm" id="cTelefonoAlternativo" name="telefonoAlternativo">
+                            <label class="form-label fw-semibold text-muted small">Teléfono Alternativo</label>
+                            <input type="tel" class="form-control bg-black text-white border-secondary shadow-sm" id="cTelefonoAlternativo" name="telefonoAlternativo">
                         </div>
                     </div>
 
-                    <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary pb-2">
                         <i class="bi bi-info-circle me-1"></i> Perfil Demográfico
                     </h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Fecha Nacimiento</label>
-                            <input type="date" class="form-control shadow-sm" id="cFechaNacimiento" name="fechaNacimiento">
+                            <label class="form-label fw-semibold text-muted small">Fecha Nacimiento</label>
+                            <input type="date" class="form-control bg-black text-white border-secondary shadow-sm" id="cFechaNacimiento" name="fechaNacimiento">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Género</label>
-                            <select class="form-select shadow-sm" id="cGenero" name="genero">
+                            <label class="form-label fw-semibold text-muted small">Género</label>
+                            <select class="form-select bg-black text-white border-secondary shadow-sm" id="cGenero" name="genero">
                                 <option value="">Seleccionar...</option>
                                 <option value="Masculino">Masculino</option>
                                 <option value="Femenino">Femenino</option>
@@ -129,8 +127,8 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Estado Civil</label>
-                            <select class="form-select shadow-sm" id="cEstadoCivil" name="estadoCivil">
+                            <label class="form-label fw-semibold text-muted small">Estado Civil</label>
+                            <select class="form-select bg-black text-white border-secondary shadow-sm" id="cEstadoCivil" name="estadoCivil">
                                 <option value="">Seleccionar...</option>
                                 <option value="Soltero/a">Soltero/a</option>
                                 <option value="Casado/a">Casado/a</option>
@@ -140,46 +138,46 @@
                         </div>
                     </div>
 
-                    <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary pb-2">
                         <i class="bi bi-geo-alt me-1"></i> Datos Domiciliarios
                     </h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold text-secondary small">Dirección</label>
-                            <input type="text" class="form-control shadow-sm" id="cDireccion" name="direccion"
+                            <label class="form-label fw-semibold text-muted small">Dirección</label>
+                            <input type="text" class="form-control bg-black text-white border-secondary shadow-sm" id="cDireccion" name="direccion"
                                    placeholder="Calle, Número, Piso...">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary small">Provincia / Estado *</label>
-                            <input type="text" class="form-control shadow-sm" id="cEstadoProvincia" name="estadoProvincia"
-                                   list="datalistProvincias" placeholder="Escriba o seleccione..." oninput="onProvinciaChange()" required>
+                            <label class="form-label fw-semibold text-muted small">Provincia / Estado *</label>
+                            <input type="text" class="form-control bg-black text-white border-secondary shadow-sm" id="cEstadoProvincia" name="estadoProvincia"
+                                   list="datalistProvincias" placeholder="Escriba..." oninput="onProvinciaChange()" required>
                             <datalist id="datalistProvincias"></datalist>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary small">Ciudad *</label>
-                            <input type="text" class="form-control shadow-sm" id="cCiudad" name="ciudad"
-                                   list="datalistCiudades" placeholder="Escriba o seleccione..." required disabled>
+                            <label class="form-label fw-semibold text-muted small">Ciudad *</label>
+                            <input type="text" class="form-control bg-black text-white border-secondary shadow-sm" id="cCiudad" name="ciudad"
+                                   list="datalistCiudades" placeholder="Escriba..." required disabled>
                             <datalist id="datalistCiudades"></datalist>
                         </div>
                     </div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary small">Código Postal</label>
-                            <input type="text" class="form-control shadow-sm" id="cCodigoPostal" name="codigoPostal">
+                            <label class="form-label fw-semibold text-muted small">Código Postal</label>
+                            <input type="text" class="form-control bg-black text-white border-secondary shadow-sm" id="cCodigoPostal" name="codigoPostal">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold text-secondary small">País</label>
-                            <input type="text" class="form-control shadow-sm" id="cPais" name="pais" value="Argentina" readonly>
+                            <label class="form-label fw-semibold text-muted small">País</label>
+                            <input type="text" class="form-control bg-black text-white border-secondary readonly shadow-sm" id="cPais" name="pais" value="Argentina" readonly>
                         </div>
                     </div>
 
-                    <h6 class="text-danger fw-bold mb-3 border-bottom pb-2">
+                    <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary pb-2">
                         <i class="bi bi-briefcase me-1"></i> Información Comercial (Ficha de Cliente)
                     </h6>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold text-secondary small">Calificación Crediticia</label>
-                            <select class="form-select shadow-sm" id="cCalificacionCrediticia" name="calificacionCrediticia">
+                            <label class="form-label fw-semibold text-muted small">Calificación Crediticia</label>
+                            <select class="form-select bg-black text-white border-secondary shadow-sm" id="cCalificacionCrediticia" name="calificacionCrediticia">
                                 <option value="Excelente">Excelente</option>
                                 <option value="Buena" selected>Buena</option>
                                 <option value="Regular">Regular</option>
@@ -187,14 +185,14 @@
                             </select>
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label fw-semibold text-secondary small">Observaciones Internas</label>
-                            <textarea class="form-control shadow-sm" id="cObservaciones" name="observaciones" rows="2"
+                            <label class="form-label fw-semibold text-muted small">Observaciones Internas</label>
+                            <textarea class="form-control bg-black text-white border-secondary shadow-sm" id="cObservaciones" name="observaciones" rows="2"
                                       placeholder="Detalles de interés comercial..."></textarea>
                         </div>
                     </div>
 
                 </div>
-                <div class="modal-footer bg-dark rounded-bottom-3 p-3" style="border-top: 1px solid #222;">
+                <div class="modal-footer border-top border-secondary p-3">
                     <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal"
                             onclick="limpiarFormularioCliente()">Cancelar</button>
                     <button type="submit" class="btn btn-danger shadow-sm" id="btnGuardarCliente">

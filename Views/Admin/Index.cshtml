@@ -8,7 +8,7 @@
 
 <div class="admin-container">
     <br><br><br>
-    
+
     <aside class="sidebar">
         <p id="menu-titulo" class="text-muted small fw-bold mb-4 px-2 d-none d-lg-block">MENÚ ADMINISTRADOR</p>
         <nav>
@@ -39,8 +39,10 @@
 
     <main class="main-content">
         <div class="container-fluid">
-            
-            <partial name="_VehiculosSection" />
+
+            <div id="seccion-vehiculos">
+                <partial name="_VehiculosSection" />
+            </div>
 
             <div id="seccion-clientes" style="display: none;">
                 <partial name="_ClientesSection" />
@@ -56,7 +58,8 @@
 
             <partial name="_AjustesSection" />
 
-            <div id="seccion-vendedor-home" style="display: none;" class="text-center p-5 bg-black rounded border border-secondary mt-4">
+            <div id="seccion-vendedor-home" style="display: none;"
+                 class="text-center p-5 bg-black rounded border border-secondary mt-4">
                 <i class="bi bi-envelope-open text-danger" style="font-size: 4rem;"></i>
                 <h3 class="text-white mt-3 fw-bold">MÓDULO DE ATENCIÓN</h3>
                 <p class="text-muted">Tu perfil de acceso está asignado a la gestión de consultas de clientes.</p>
@@ -70,22 +73,28 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/admin-vehiculos.js" asp-append-version="true"></script>
+<script>
+        // 1. Primero la base de datos de sesión (Token JWT global)
+        window.token = localStorage.getItem('jonel_token');
+        const token = window.token;
+    </script>
+
     <script src="~/js/admin-vendedores.js" asp-append-version="true"></script>
+    <script src="~/js/admin-vehiculos.js" asp-append-version="true"></script>
     <script src="~/js/admin-clientes.js" asp-append-version="true"></script>
+
     <script src="~/js/admin-ventas.js" asp-append-version="true"></script>
 
     <script>
-        const token = localStorage.getItem('jonel_token');
         const modalUsuario = document.getElementById('modalUsuario') ? new bootstrap.Modal(document.getElementById('modalUsuario')) : null;
-        let usuarioRol = "Vendedor"; 
+        let usuarioRol = "Vendedor";
 
         function obtenerRolDesdeToken(tokenJWT) {
             try {
                 if (!tokenJWT) return "Vendedor";
                 const base64Url = tokenJWT.split('.')[1];
                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));
 
@@ -107,33 +116,34 @@
 
             if (usuarioRol === "Vendedor" || usuarioRol === "vendedor") {
                 document.querySelectorAll('.solo-admin').forEach(el => el.style.setProperty('display', 'none', 'important'));
-                
+
                 const menuTxt = document.getElementById('menu-titulo');
                 if (menuTxt) menuTxt.innerText = "MENÚ VENDEDOR";
 
-                window.location.href = '/Admin/Consultas';
-                return; 
+                const secVehiculos = document.getElementById('seccion-vehiculos');
+                if (secVehiculos) secVehiculos.style.display = 'none';
+
+                const secVendedorHome = document.getElementById('seccion-vendedor-home');
+                if (secVendedorHome) secVendedorHome.style.display = 'block';
+
+                try { await cargarPendientes(); } catch (e) { console.error(e); }
+                return;
             }
 
-            cargarPendientes();
-
-            if (typeof cargarCategorias === 'function') {
-                await cargarCategorias();
-            }
-
-            if (typeof listar === 'function') {
-                await listar();
-            }
-            
+            // Si es Administrador, inicializa la SPA en la sección por defecto de manera segura
             cambiarSeccion('vehiculos');
+
+            // Carga inicial controlada asincrónica post-montaje del DOM
+            setTimeout(async () => {
+                try { await cargarPendientes(); } catch (e) { console.error("Error al cargar pendientes:", e); }
+                try { if (typeof window.cargarCategorias === 'function') { await window.cargarCategorias(); } } catch (e) { console.error(e); }
+            }, 50);
         });
 
         async function cargarPendientes() {
             try {
                 const resp = await fetch('/Admin/GetConsultas', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (!resp.ok) return;
@@ -152,63 +162,68 @@
         }
 
         function cambiarSeccion(seccion) {
+            // Protección de rol en el Front
             if (usuarioRol === "Vendedor" || usuarioRol === "vendedor") {
-                window.location.href = '/Admin/Consultas';
+                const secVendedorHome = document.getElementById('seccion-vendedor-home');
+                if (secVendedorHome) {
+                    document.getElementById('seccion-vehiculos').style.display = 'none';
+                    document.getElementById('seccion-clientes').style.display = 'none';
+                    document.getElementById('seccion-ventas').style.display = 'none';
+                    secVendedorHome.style.display = 'block';
+                }
                 return;
             }
 
             const secVehiculos = document.getElementById('seccion-vehiculos');
-            const secClientes = document.getElementById('seccion-clientes'); 
-            const secVentas = document.getElementById('seccion-ventas'); 
-            const secUsuarios = document.getElementById('seccion-usuarios'); 
-            const secVendedores = document.getElementById('seccion-vendedores'); 
+            const secClientes = document.getElementById('seccion-clientes');
+            const secVentas = document.getElementById('seccion-ventas');
+            const secUsuarios = document.getElementById('seccion-usuarios');
+            const secVendedores = document.getElementById('seccion-vendedores');
             const secAjustes = document.getElementById('seccion-ajustes');
+            const secVendedorHome = document.getElementById('seccion-vendedor-home');
 
             const btnVehiculos = document.getElementById('btn-nav-vehiculos');
-            const btnClientes = document.getElementById('btn-nav-clientes'); 
-            const btnVentas = document.getElementById('btn-nav-ventas'); 
+            const btnClientes = document.getElementById('btn-nav-clientes');
+            const btnVentas = document.getElementById('btn-nav-ventas');
             const btnUsuarios = document.getElementById('btn-nav-usuarios');
-            const btnVendedores = document.getElementById('btn-nav-vendedores'); 
+            const btnVendedores = document.getElementById('btn-nav-vendedores');
             const btnAjustes = document.getElementById('btn-nav-ajustes');
 
-            if(secVehiculos) secVehiculos.style.display = 'none';
-            if(secClientes) secClientes.style.display = 'none'; 
-            if(secVentas) secVentas.style.display = 'none'; 
-            if(secUsuarios) secUsuarios.style.display = 'none';
-            if(secVendedores) secVendedores.style.display = 'none'; 
-            if(secAjustes) secAjustes.style.display = 'none';
+            if (secVehiculos) secVehiculos.style.display = 'none';
+            if (secClientes) secClientes.style.display = 'none';
+            if (secVentas) secVentas.style.display = 'none';
+            if (secUsuarios) secUsuarios.style.display = 'none';
+            if (secVendedores) secVendedores.style.display = 'none';
+            if (secAjustes) secAjustes.style.display = 'none';
+            if (secVendedorHome) secVendedorHome.style.display = 'none';
 
             btnVehiculos?.classList.remove('active');
-            btnClientes?.classList.remove('active'); 
-            btnVentas?.classList.remove('active'); 
+            btnClientes?.classList.remove('active');
+            btnVentas?.classList.remove('active');
             btnUsuarios?.classList.remove('active');
-            btnVendedores?.classList.remove('active'); 
+            btnVendedores?.classList.remove('active');
             btnAjustes?.classList.remove('active');
 
             if (seccion === 'vehiculos' && secVehiculos) {
                 secVehiculos.style.display = 'block';
                 btnVehiculos.classList.add('active');
-            } else if (seccion === 'clientes' && secClientes) { 
+                if (typeof window.listar === 'function') window.listar();
+            } else if (seccion === 'clientes' && secClientes) {
                 secClientes.style.display = 'block';
                 btnClientes.classList.add('active');
-                if (typeof listarClientes === 'function') listarClientes();
-            } else if (seccion === 'ventas' && secVentas) { 
+                if (typeof window.listarClientes === 'function') window.listarClientes();
+            } else if (seccion === 'ventas' && secVentas) {
                 secVentas.style.display = 'block';
                 btnVentas.classList.add('active');
-                if (typeof listarVentas === 'function') listarVentas();
+                if (typeof window.listarVentas === 'function') window.listarVentas();
             } else if (seccion === 'usuarios' && secUsuarios) {
                 secUsuarios.style.display = 'block';
                 btnUsuarios.classList.add('active');
-                
-                if (typeof listarUsuarios === 'function') listarUsuarios();
-                else if (typeof cargarUsuarios === 'function') cargarUsuarios();
-                else if (typeof getUsuarios === 'function') getUsuarios();
+                if (typeof window.listarUsuarios === 'function') window.listarUsuarios();
             } else if (seccion === 'vendedores' && secVendedores) {
                 secVendedores.style.display = 'block';
                 btnVendedores.classList.add('active');
-                
-                if (typeof listarVendedores === 'function') listarVendedores();
-                else if (typeof cargarVendedores === 'function') cargarVendedores();
+                if (typeof window.listarVendedores === 'function') window.listarVendedores();
             } else if (seccion === 'ajustes' && secAjustes) {
                 secAjustes.style.display = 'block';
                 btnAjustes.classList.add('active');

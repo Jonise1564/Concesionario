@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jonel Autos - Gestión</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @RenderSection("Styles", required: false)
 
     <script>
@@ -55,12 +55,6 @@
                                 <i class="bi bi-box-arrow-right"></i> Salir
                             </a>
                         </li>
-@* 
-                        <li class="nav-item ms-sm-3 mt-2 mt-sm-0">
-                            <button class="btn btn-link nav-link text-dark p-0" id="btnThemeToggle" onclick="conmutarTema()" title="Cambiar modo de color">
-                                <i class="bi bi-moon-stars-fill fs-5" id="themeIcon"></i>
-                            </button>
-                        </li> *@
                     </ul>
                 </div>
             </div>
@@ -85,7 +79,6 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
-        // Lógica de autenticación y roles existente
         document.addEventListener("DOMContentLoaded", function() {
             const token = localStorage.getItem('jonel_token');
             const menuAcceso = document.getElementById('menuAcceso');
@@ -113,8 +106,6 @@
                     if(menuAdmin) menuAdmin.style.display = 'none';
                 }
             }
-
-            // Inicializar el ícono correcto del botón al cargar el DOM
             actualizarIconoTema(document.documentElement.getAttribute('data-bs-theme'));
         });
 
@@ -124,7 +115,6 @@
             window.location.href = '/Home/Index';
         }
 
-        // NUEVAS FUNCIÓNES PARA LA GESTIÓN DE TEMAS VISUALES
         function conmutarTema() {
             const htmlEl = document.documentElement;
             const temaActual = htmlEl.getAttribute('data-bs-theme');
@@ -147,10 +137,10 @@
         }
     </script>
 
+    @* Renderizado de scripts específicos de cada vista independiente *@
     @await RenderSectionAsync("Scripts", required: false)
 
     <div id="chat-bubble">💬</div>
-
     <div id="chat-box">
         <div id="chat-messages"></div>
         <input type="text" id="chat-input" placeholder="Escribí tu consulta..." />
@@ -167,13 +157,11 @@
             }
         }
 
-        /* Ajuste para asegurar que el botón de tema no rompa links nativos text-dark */
         #btnThemeToggle {
             text-decoration: none;
             box-shadow: none;
         }
         
-        /* Garantiza visibilidad correcta de iconos en barras superiores adaptables */
         [data-bs-theme="light"] .navbar-custom .nav-link {
             color: #212529 !important;
         }
@@ -181,7 +169,6 @@
             color: #f8f9fa !important;
         }
 
-        /* BOTÓN FLOTANTE */
         #chat-bubble {
             position: fixed;
             bottom: 20px;
@@ -195,7 +182,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.4);
         }
 
-        /* CONTENEDOR DEL CHAT */
         #chat-box {
             position: fixed;
             bottom: 80px;
@@ -211,7 +197,6 @@
             z-index: 9999;
         }
 
-        /* MENSAJES */
         #chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -222,7 +207,6 @@
             gap: 8px;
         }
 
-        /* MENSAJE BOT */
         .mensaje-bot {
             background: #2a2a2a;
             padding: 10px;
@@ -233,7 +217,6 @@
             white-space: pre-line;
         }
 
-        /* MENSAJE USER */
         .mensaje-user {
             background: #eb0a1e;
             padding: 10px;
@@ -244,7 +227,6 @@
             text-align: right;
         }
 
-        /* INPUT */
         #chat-input {
             border: none;
             padding: 12px;
@@ -254,7 +236,6 @@
             color: white;
         }
 
-        /* Icono en el chat*/
         .chat-message {
             display: flex;
             gap: 10px;
@@ -318,41 +299,43 @@
         input.addEventListener("keypress", async (e) => {
             if (e.key === "Enter") {
                 const text = input.value;
+                if(!text.trim()) return;
                 input.value = "";
                 messages.innerHTML += `
                 <div class="chat-message chat-user">
                     <div class="chat-avatar">
                         <i class="bi bi-person-fill"></i>
                     </div>
-
                     <div class="chat-content">
                         <div class="chat-name">Tú</div>
                         <div>${text}</div>
                     </div>
-                </div>
-                `;
+                </div>`;
+                messages.scrollTop = messages.scrollHeight;
 
-                const res = await fetch("/api/chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: text })
-                });
+                try {
+                    const res = await fetch("/api/chat", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ message: text })
+                    });
 
-                const data = await res.json();
-                const textoFormateado = formatearPrecio(data.reply);
+                    const data = await res.json();
+                    const textoFormateado = formatearPrecio(data.reply);
 
-                messages.innerHTML += `
-                <div class="chat-message">
-                    <div class="chat-avatar">
-                        <i class="bi bi-robot"></i>
-                    </div>
-
-                    <div class="chat-content">
-                        <div class="chat-name">Bot Jonel</div>
-                        <div>${textoFormateado.replace(/\n/g, "<br>")}</div>
-                    </div>
-                </div>
-                `;
+                    messages.innerHTML += `
+                    <div class="chat-message">
+                        <div class="chat-avatar">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div class="chat-content">
+                            <div class="chat-name">Bot Jonel</div>
+                            <div>${textoFormateado.replace(/\n/g, "<br>")}</div>
+                        </div>
+                    </div>`;
+                } catch(err) {
+                    console.error("Error en el chat:", err);
+                }
                 messages.scrollTop = messages.scrollHeight;
             }
         });

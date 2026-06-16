@@ -366,10 +366,10 @@ C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\w99nbukeao-{0}-
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\znbyr4l8sq-{0}-4zob8qzyy2-4zob8qzyy2.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\lbld6wqa2m-{0}-cuusv5nrul-cuusv5nrul.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\ofy8utyl77-{0}-61n19gt1b8-61n19gt1b8.gz
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\7k7r7n5ex1-{0}-0ss1s23rle-0ss1s23rle.gz
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\fldndm23ei-{0}-txrcxyfrqo-txrcxyfrqo.gz
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\u14ttytn8p-{0}-vgwya0gzcr-vgwya0gzcr.gz
-C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\5v48s16lbv-{0}-wukmz8pik3-wukmz8pik3.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\7k7r7n5ex1-{0}-hcr7r4jews-hcr7r4jews.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\fldndm23ei-{0}-oylret5on1-oylret5on1.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\u14ttytn8p-{0}-5dc2ixdo4n-5dc2ixdo4n.gz
+C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\5v48s16lbv-{0}-naa1qq1ye9-naa1qq1ye9.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\pok7n4mbzr-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\g2r8xc8vtw-{0}-t1cqhe9u97-t1cqhe9u97.gz
 C:\Users\JSON\Desktop\Concesionario\obj\Debug\net10.0\compressed\nws25mg7fo-{0}-c2jlpeoesf-c2jlpeoesf.gz

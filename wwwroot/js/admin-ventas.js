@@ -1,31 +1,61 @@
-// wwwroot/js/admin-ventas.js
-
-// Instancia global del modal de Bootstrap
-const modalVentaElement = document.getElementById('modalVenta');
-const modalVenta = modalVentaElement ? new bootstrap.Modal(modalVentaElement) : null;
+// Referencia global de la instancia del modal de Bootstrap
+let modalVenta = null;
 
 // Arrays globales para almacenar lo que viene de la BD y poder buscar por texto
-let listaClientesMemoria = [];
+//let listaClientesMemoria = [];
 let listaVehiculosMemoria = [];
+
+// Variable segura para el token (Busca en localStorage igual que tu Layout)
+const getAuthToken = () => {
+    if (typeof window.token !== 'undefined' && window.token) return window.token;
+    return localStorage.getItem('jonel_token') || '';
+};
+
+// 🚀 EXPOSICIÓN GLOBAL EXPLICÍTA DE LAS FUNCIONES CRÍTICAS
+window.inicializarModalVentaDeFormaSegura = function() {
+    try {
+        const modalVentaElement = document.getElementById('modalVenta');
+        if (modalVentaElement && typeof bootstrap !== 'undefined') {
+            // Evitamos duplicar instancias si ya existía
+            if (!modalVenta) {
+                modalVenta = new bootstrap.Modal(modalVentaElement);
+            }
+        }
+    } catch (e) {
+        console.error("Error al inicializar el componente modal de ventas:", e);
+    }
+}
 
 // ==========================================
 // 1. LISTAR VENTAS EN LA TABLA PRINCIPAL
 // ==========================================
-async function listarVentas() {
+window.listarVentas = async function() {
+    console.log("🚀 Ejecutando listarVentas() de forma global.");
     const tbody = document.getElementById('tbodyVentas');
-    if (!tbody) return;
+    
+    if (!tbody) {
+        console.error("ERROR CRÍTICO: No se encontró un elemento con el ID 'tbodyVentas' en el HTML.");
+        return;
+    }
 
     try {
+        const tokenVal = getAuthToken();
+        if (!tokenVal) {
+            console.warn("Advertencia: El token JWT está vacío.");
+        }
+
         const resp = await fetch('/Admin/GetVentas', {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${tokenVal}` }
         });
 
-        if (!resp.ok) throw new Error("No se pudieron recuperar las ventas.");
+        if (!resp.ok) {
+            throw new Error(`El servidor respondió con código de estado ${resp.status} (${resp.statusText})`);
+        }
 
         const ventas = await resp.json();
-        tbody.innerHTML = '';
+        tbody.innerHTML = ''; 
 
-        if (ventas.length === 0) {
+        if (!ventas || ventas.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="7" class="text-center py-4 text-muted small">No hay registros de ventas.</td>
@@ -35,18 +65,33 @@ async function listarVentas() {
 
         ventas.forEach(v => {
             const fecha = v.fechaVenta ? new Date(v.fechaVenta).toLocaleDateString('es-AR') : 'N/A';
-            const monto = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v.montoFinal);
+            const monto = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v.montoFinal || 0);
+            
+            // Corrección preventiva: Soporta tanto 'detalles' como 'detallesVenta'
+            const listaDetalles = v.detalles || v.detallesVenta || [];
+            let descripcionItems = 'Vehículo asignado';
+            if (listaDetalles.length > 0) {
+                descripcionItems = listaDetalles.map(d => d.descripcionItem || 'Unidad comercial').join(' | ');
+            }
+
+            const comprobanteText = v.tipoComprobante ? `<span class="badge bg-secondary me-1">${v.tipoComprobante}</span>` : '';
+            const formaPagoText = v.formaPago || 'N/A';
+
+            const objetoVentaEscapado = JSON.stringify(v).replace(/"/g, '&quot;');
 
             tbody.innerHTML += `
                 <tr>
-                    <td style="color: #ffffff !important; font-weight: 600;">#V-${v.id}</td>
+                    <td style="color: #ffffff !important; font-weight: 600;">#C-${v.nroComprobante || v.id}</td>
                     <td style="color: #ffffff !important;">${v.nombreCliente || 'N/A'}</td>
                     <td style="color: #ced4da !important;">${fecha}</td>
-                    <td style="color: #ffffff !important; font-size: 0.9rem;">${v.detalleVehiculo || 'Vehículo asignado'}</td>
-                    <td style="color: #ced4da !important;"><i class="bi bi-credit-card me-1 text-info"></i> ${v.formaPago}</td>
+                    <td style="color: #ffffff !important; font-size: 0.9rem;">${descripcionItems}</td>
+                    <td style="color: #ced4da !important;">
+                        ${comprobanteText}
+                        <i class="bi bi-credit-card me-1 text-info"></i> ${formaPagoText}
+                    </td>
                     <td style="color: #ffffff !important; font-weight: bold;">${monto}</td>
                     <td class="text-end pe-4">
-                        <button class="btn btn-sm btn-outline-info" onclick="verDetalleVentaCompletado(${JSON.stringify(v).replace(/"/g, '&quot;')})" title="Ver Detalles">
+                        <button class="btn btn-sm btn-outline-info" onclick="verDetalleVentaCompletado(${objetoVentaEscapado})" title="Ver Detalles">
                             <i class="bi bi-eye"></i>
                         </button>
                     </td>
@@ -54,10 +99,12 @@ async function listarVentas() {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Error capturado en listarVentas:", error);
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-4 text-danger small">Error al cargar el historial de ventas.</td>
+                <td colspan="7" class="text-center py-4 text-danger small">
+                    <i class="bi bi-exclamation-triangle me-1"></i> <strong>Error al cargar:</strong> ${error.message}
+                </td>
             </tr>`;
     }
 }
@@ -65,90 +112,110 @@ async function listarVentas() {
 // ==========================================
 // 2. CARGAR COMPONENTES PARA LA NUEVA VENTA
 // ==========================================
-async function abrirModalVenta(id = 0) {
-    limpiarFormularioVenta();
+window.abrirModalVenta = async function(id = 0) {
+    try {
+        limpiarFormularioVenta();
 
-    // Seteamos fecha y hora actual en el formulario
-    const ahora = new Date();
-    ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
-    document.getElementById('vFecha').value = ahora.toISOString().slice(0, 16);
+        const ahora = new Date();
+        ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+        const inputFecha = document.getElementById('vFecha');
+        if (inputFecha) inputFecha.value = ahora.toISOString().slice(0, 16);
 
-    if (id === 0) {
-        document.getElementById('modalVentaTitulo').innerText = "Registrar Nueva Venta";
-        
-        // Habilitar controles que se bloquean al "Ver Detalle"
-        opacidadCamposVenta(false);
+        // Si es una nueva venta (id === 0), poblamos los datalists de interacciones
+        if (id === 0) {
+            const titulo = document.getElementById('modalVentaTitulo');
+            if (titulo) titulo.innerText = "Registrar Nueva Venta";
 
-        // Cargamos los selectores/datalists de Clientes y Vehículos en paralelo
-        await Promise.all([cargarDatalistClientes(), cargarDatalistVehiculos()]);
+            opacidadCamposVenta(false);
 
-        modalVenta?.show();
+            await Promise.all([
+                cargarDatalistClientes().catch(e => console.error("Error datalist clientes:", e)),
+                cargarDatalistVehiculos().catch(e => console.error("Error datalist vehículos:", e))
+            ]);
+        }
+
+        // Mostrar el modal de forma segura sin importar si es nueva venta o consulta (id === -1)
+        const modalVentaElement = document.getElementById('modalVenta');
+        if (modalVentaElement) {
+            if (typeof bootstrap !== 'undefined') {
+                if (!modalVenta) modalVenta = new bootstrap.Modal(modalVentaElement);
+                modalVenta.show();
+            } else {
+                modalVentaElement.classList.add('show');
+                modalVentaElement.style.display = 'block';
+                document.body.classList.add('modal-open');
+            }
+        } else {
+            alert("Error: El elemento HTML '#modalVenta' no existe en esta página.");
+        }
+    } catch (err) {
+        console.error("Error crítico al abrir modal de venta:", err);
     }
 }
 
-// Carga los clientes en el datalist para buscar por Nombre/DNI
 async function cargarDatalistClientes() {
-    try {
-        const resp = await fetch('/Admin/GetClientes', { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!resp.ok) return;
-        
-        listaClientesMemoria = await resp.json();
-        const dl = document.getElementById('datalistClientesVenta');
-        if (!dl) return;
+    const resp = await fetch('/Admin/GetClientes', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
+    if (!resp.ok) return;
 
-        dl.innerHTML = '';
-        listaClientesMemoria.forEach(c => {
-            const nombreCompleto = `${c.persona?.nombres} ${c.persona?.apellidos}`;
-            dl.innerHTML += `<option value="${nombreCompleto} (DNI: ${c.persona?.documentoIdentidad})" data-id="${c.id}"></option>`;
-        });
+    listaClientesMemoria = await resp.json();
+    const dl = document.getElementById('datalistClientesVenta');
+    if (!dl) return;
 
-        // Evento para capturar el ID real cuando seleccionan el texto
-        document.getElementById('vClienteBusqueda').oninput = function() {
+    dl.innerHTML = '';
+    listaClientesMemoria.forEach(c => {
+        const nombreCompleto = `${c.persona?.nombres || ''} ${c.persona?.apellidos || ''}`.trim();
+        dl.innerHTML += `<option value="${nombreCompleto} (DNI: ${c.persona?.documentoIdentidad || 'S/D'})" data-id="${c.id}"></option>`;
+    });
+
+    const inputBusqueda = document.getElementById('vClienteBusqueda');
+    if (inputBusqueda) {
+        inputBusqueda.oninput = function () {
             const val = this.value;
             const option = Array.from(dl.options).find(o => o.value === val);
-            document.getElementById('vIdCliente').value = option ? option.getAttribute('data-id') : "";
+            const inputIdCliente = document.getElementById('vIdCliente');
+            if (inputIdCliente) inputIdCliente.value = option ? option.getAttribute('data-id') : "";
         };
-    } catch (e) { console.error("Error cargando clientes para venta:", e); }
+    }
 }
 
-// Carga los vehículos disponibles en el datalist para vender
 async function cargarDatalistVehiculos() {
-    try {
-        const resp = await fetch('/Admin/GetVehiculos', { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!resp.ok) return;
+    const resp = await fetch('/Admin/GetVehiculos', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
+    if (!resp.ok) return;
 
-        const vehiculos = await resp.json();
-        // Filtramos para ofrecer únicamente los que están "Disponibles"
-        listaVehiculosMemoria = vehiculos.filter(v => v.estado?.toLowerCase() === "disponible" || v.estado?.toLowerCase() == "disponibles");
-        
-        const dl = document.getElementById('datalistProductosVenta');
-        if (!dl) return;
+    const dataVehiculos = await resp.json();
+    // Normalización de estados
+    listaVehiculosMemoria = dataVehiculos.filter(v => v.estado?.toLowerCase() === "disponible" || v.estado?.toLowerCase() === "disponibles");
 
-        dl.innerHTML = '';
-        listaVehiculosMemoria.forEach(v => {
-            dl.innerHTML += `<option value="${v.marca} ${v.modelo} - Patente: ${v.patente}" data-id="${v.id}" data-precio="${v.precio}"></option>`;
-        });
+    const dl = document.getElementById('datalistProductosVenta');
+    if (!dl) return;
 
-        // Evento para capturar ID y setear automáticamente el Precio Unitario
-        document.getElementById('vProductoBusqueda').oninput = function() {
+    dl.innerHTML = '';
+    listaVehiculosMemoria.forEach(v => {
+        dl.innerHTML += `<option value="${v.marca} ${v.modelo} - Patente: ${v.patente || 'S/P'}" data-id="${v.id}" data-precio="${v.precio}"></option>`;
+    });
+
+    const inputProdBusqueda = document.getElementById('vProductoBusqueda');
+    if (inputProdBusqueda) {
+        inputProdBusqueda.oninput = function () {
             const val = this.value;
             const option = Array.from(dl.options).find(o => o.value === val);
+            const inputIdVehiculo = document.getElementById('vIdVehiculo');
+            const inputPrecioUnitario = document.getElementById('vPrecioUnitario');
+
             if (option) {
-                document.getElementById('vIdVehiculo').value = option.getAttribute('data-id');
+                if (inputIdVehiculo) inputIdVehiculo.value = option.getAttribute('data-id');
                 const precio = parseFloat(option.getAttribute('data-precio')) || 0;
-                document.getElementById('vPrecioUnitario').value = precio;
-                
-                // Mapear al flujo de subtotal/totales de tu modal viejo
+                if (inputPrecioUnitario) inputPrecioUnitario.value = precio;
+
                 asignarItemFilaUnica(val, precio);
             } else {
-                document.getElementById('vIdVehiculo').value = "";
-                document.getElementById('vPrecioUnitario').value = "";
+                if (inputIdVehiculo) inputIdVehiculo.value = "";
+                if (inputPrecioUnitario) inputPrecioUnitario.value = "0";
             }
         };
-    } catch (e) { console.error("Error cargando vehículos para venta:", e); }
+    }
 }
 
-// Inserta el auto seleccionado en la tabla de vista previa del modal
 function asignarItemFilaUnica(descripcion, precio) {
     const tbody = document.getElementById('tbodyDetalleVenta');
     if (!tbody) return;
@@ -161,21 +228,21 @@ function asignarItemFilaUnica(descripcion, precio) {
             <td class="text-center text-white">1</td>
             <td class="text-end text-white">${totalFormateado}</td>
             <td class="text-end text-white fw-bold">${totalFormateado}</td>
-            <td class="text-center">
+            <td class="text-center visual-control">
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarSeleccionVehiculo()"><i class="bi bi-x-lg"></i></button>
             </td>
         </tr>`;
 
-    document.getElementById('lblSubtotal').innerText = totalFormateado;
-    document.getElementById('lblTotalFinal').innerText = totalFormateado;
-    document.getElementById('vMontoFinalCalculado').value = precio;
+    if (document.getElementById('lblSubtotal')) document.getElementById('lblSubtotal').innerText = totalFormateado;
+    if (document.getElementById('lblTotalFinal')) document.getElementById('lblTotalFinal').innerText = totalFormateado;
+    if (document.getElementById('vMontoFinalCalculado')) document.getElementById('vMontoFinalCalculado').value = precio;
 }
 
-function limpiarSeleccionVehiculo() {
-    document.getElementById('vProductoBusqueda').value = "";
-    document.getElementById('vIdVehiculo').value = "";
-    document.getElementById('vPrecioUnitario').value = "";
-    
+window.limpiarSeleccionVehiculo = function() {
+    if (document.getElementById('vProductoBusqueda')) document.getElementById('vProductoBusqueda').value = "";
+    if (document.getElementById('vIdVehiculo')) document.getElementById('vIdVehiculo').value = "";
+    if (document.getElementById('vPrecioUnitario')) document.getElementById('vPrecioUnitario').value = "0";
+
     const tbody = document.getElementById('tbodyDetalleVenta');
     if (tbody) {
         tbody.innerHTML = `
@@ -183,33 +250,44 @@ function limpiarSeleccionVehiculo() {
                 <td colspan="5" class="text-center py-4 text-muted small">No hay ítems cargados en la venta actual.</td>
             </tr>`;
     }
-    document.getElementById('lblSubtotal').innerText = "$0,00";
-    document.getElementById('lblTotalFinal').innerText = "$0,00";
-    document.getElementById('vMontoFinalCalculado').value = "0";
+    if (document.getElementById('lblSubtotal')) document.getElementById('lblSubtotal').innerText = "$0,00";
+    if (document.getElementById('lblTotalFinal')) document.getElementById('lblTotalFinal').innerText = "$0,00";
+    if (document.getElementById('vMontoFinalCalculado')) document.getElementById('vMontoFinalCalculado').value = "0";
 }
 
 // ==========================================
 // 3. GUARDAR LA VENTA (POST)
 // ==========================================
-async function guardarVenta() {
-    const idCliente = document.getElementById('vIdCliente').value;
-    const idVehiculo = document.getElementById('vIdVehiculo').value;
+window.guardarVenta = async function() {
+    const idCliente = document.getElementById('vIdCliente')?.value;
+    const idVehiculo = document.getElementById('vIdVehiculo')?.value;
+    const precioUnitario = parseFloat(document.getElementById('vPrecioUnitario')?.value) || 0;
 
     if (!idCliente || !idVehiculo) {
         alert("Por favor seleccione un Cliente y un Vehículo válidos de la lista desplegable.");
         return;
     }
 
-    // Estructura exacta que espera tu Base de Datos e Inyección SQL en C#
     const ventaData = {
-        id: parseInt(document.getElementById('vId').value) || 0,
-        vehiculoId: parseInt(idVehiculo),
+        id: parseInt(document.getElementById('vId')?.value) || 0,
         clienteId: parseInt(idCliente),
-        vendedorId: 0, // Se encarga el backend de leerlo del JWT por seguridad
-        fechaVenta: document.getElementById('vFecha').value,
-        montoFinal: parseFloat(document.getElementById('vMontoFinalCalculado').value) || 0,
-        formaPago: document.getElementById('vMedioPago').value,
-        observaciones: document.getElementById('vObservaciones')?.value || ""
+        vendedorId: 0,
+        tipoComprobanteId: parseInt(document.getElementById('vTipoComprobante')?.value) || 1,
+        formaPagoId: parseInt(document.getElementById('vMedioPago')?.value) || 1,
+        puntoVenta: parseInt(document.getElementById('vPuntoVenta')?.value) || 1,
+        nroComprobante: parseInt(document.getElementById('vNroComprobante')?.value) || 0,
+        fechaVenta: document.getElementById('vFecha')?.value,
+        montoFinal: parseFloat(document.getElementById('vMontoFinalCalculado')?.value) || 0,
+        observaciones: document.getElementById('vObservaciones')?.value || "",
+        detallesVenta: [
+            {
+                vehiculoId: parseInt(idVehiculo),
+                repuestoId: null,
+                servicioId: null,
+                cantidad: 1,
+                precioUnitario: precioUnitario
+            }
+        ]
     };
 
     try {
@@ -217,7 +295,7 @@ async function guardarVenta() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${getAuthToken()}`
             },
             body: JSON.stringify(ventaData)
         });
@@ -231,13 +309,8 @@ async function guardarVenta() {
 
         modalVenta?.hide();
         limpiarFormularioVenta();
-        
-        // Recargamos el listado principal
-        await listarVentas();
-        
-        // Si tenés el script de vehículos activo, refrescá el stock para que desaparezca el coche vendido
-        if (typeof listar === 'function') listar();
 
+        await window.listarVentas();
         alert("¡Venta registrada de forma exitosa!");
 
     } catch (error) {
@@ -253,45 +326,68 @@ function limpiarFormularioVenta() {
     const form = document.getElementById('formVenta');
     if (form) form.reset();
 
-    document.getElementById('vId').value = "0";
-    document.getElementById('vIdCliente').value = "";
-    document.getElementById('vIdVehiculo').value = "";
-    
-    // Inputs ocultos auxiliares creados para guardar el control
-    if (!document.getElementById('vIdVehiculo')) {
-        const hiddenFields = `
-            <input type="hidden" id="vIdVehiculo" value="">
-            <input type="hidden" id="vMontoFinalCalculado" value="0">`;
-        document.getElementById('formVenta').insertAdjacentHTML('beforeend', hiddenFields);
+    if (document.getElementById('vId')) document.getElementById('vId').value = "0";
+    if (document.getElementById('vIdCliente')) document.getElementById('vIdCliente').value = "";
+    if (document.getElementById('vIdVehiculo')) document.getElementById('vIdVehiculo').value = "";
+
+    if (!document.getElementById('vMontoFinalCalculado')) {
+        const formElem = document.getElementById('formVenta');
+        if (formElem) {
+            const hiddenFields = `<input type="hidden" id="vMontoFinalCalculado" value="0">`;
+            formElem.insertAdjacentHTML('beforeend', hiddenFields);
+        }
     } else {
         document.getElementById('vMontoFinalCalculado').value = "0";
     }
 
-    limpiarSeleccionVehiculo();
+    window.limpiarSeleccionVehiculo();
 }
 
-function verDetalleVentaCompletado(ventaObj) {
-    abrirModalVenta(-1); // Bloquea flujos por ID ficticio
-    
-    document.getElementById('modalVentaTitulo').innerText = `Consulta de Venta #V-${ventaObj.id}`;
-    document.getElementById('vClienteBusqueda').value = ventaObj.nombreCliente || '';
-    document.getElementById('vMedioPago').value = ventaObj.formaPago;
-    document.getElementById('vFecha').value = ventaObj.fechaVenta ? ventaObj.fechaVenta.slice(0, 16) : '';
-    document.getElementById('vObservaciones').value = ventaObj.observaciones || '';
-    
-    asignarItemFilaUnica(ventaObj.detalleVehiculo || 'Detalle del rodado', ventaObj.montoFinal);
+window.verDetalleVentaCompletado = function(ventaObj) {
+    window.abrirModalVenta(-1);
+
+    if (document.getElementById('modalVentaTitulo')) {
+        document.getElementById('modalVentaTitulo').innerText = `Consulta de Venta #C-${ventaObj.nroComprobante || ventaObj.id}`;
+    }
+    if (document.getElementById('vClienteBusqueda')) document.getElementById('vClienteBusqueda').value = ventaObj.nombreCliente || '';
+    if (document.getElementById('vMedioPago')) document.getElementById('vMedioPago').value = ventaObj.formaPagoId || "1";
+    if (document.getElementById('vTipoComprobante')) document.getElementById('vTipoComprobante').value = ventaObj.tipoComprobanteId || "1";
+    if (document.getElementById('vFecha')) document.getElementById('vFecha').value = ventaObj.fechaVenta ? ventaObj.fechaVenta.slice(0, 16) : '';
+    if (document.getElementById('vObservaciones')) document.getElementById('vObservaciones').value = ventaObj.observaciones || '';
+
+    if (ventaObj.detalles && ventaObj.detalles.length > 0) {
+        const primerItem = ventaObj.detalles[0];
+        asignarItemFilaUnica(primerItem.descripcionItem || 'Unidad Vehicular', ventaObj.montoFinal);
+    } else {
+        asignarItemFilaUnica(ventaObj.detalleVehiculo || 'Detalle del Rodado', ventaObj.montoFinal);
+    }
+
+    if (!modalVenta) {
+        const modalVentaElement = document.getElementById('modalVenta');
+        if (modalVentaElement && typeof bootstrap !== 'undefined') {
+            modalVenta = new bootstrap.Modal(modalVentaElement);
+        }
+    }
+
     opacidadCamposVenta(true);
-    
     modalVenta?.show();
 }
 
 function opacidadCamposVenta(bloquear) {
-    document.getElementById('vClienteBusqueda').disabled = bloquear;
-    document.getElementById('vMedioPago').disabled = bloquear;
-    document.getElementById('vFecha').disabled = bloquear;
-    document.getElementById('vProductoBusqueda').disabled = bloquear;
-    document.getElementById('vObservaciones').disabled = bloquear;
-    
+    if (document.getElementById('vClienteBusqueda')) document.getElementById('vClienteBusqueda').disabled = bloquear;
+    if (document.getElementById('vMedioPago')) document.getElementById('vMedioPago').disabled = bloquear;
+    if (document.getElementById('vFecha')) document.getElementById('vFecha').disabled = bloquear;
+    if (document.getElementById('vProductoBusqueda')) document.getElementById('vProductoBusqueda').disabled = bloquear;
+    if (document.getElementById('vObservaciones')) document.getElementById('vObservaciones').disabled = bloquear;
+
     const btnSubmit = document.getElementById('btnGuardarVenta');
-    if (btnSubmit) btnSubmit.style.display = bloquear ? 'none' : 'block';
+    if (btnSubmit) btnSubmit.style.setProperty('display', bloquear ? 'none' : 'block', 'important');
 }
+
+// Inicialización controlada para que no bloquee otros archivos JS en el Layout
+document.addEventListener("DOMContentLoaded", () => {
+    if (document.getElementById('tbodyVentas')) {
+        window.inicializarModalVentaDeFormaSegura();
+        window.listarVentas();
+    }
+});

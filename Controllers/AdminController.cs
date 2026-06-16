@@ -380,5 +380,12 @@ namespace Concesionario.Controllers
                 return BadRequest(new { message = "No se pudo eliminar: " + ex.Message });
             }
         }
+
+
+
+
+
+
+        
     }
 }

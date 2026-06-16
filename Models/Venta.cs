@@ -1,17 +1,13 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Concesionario.Models
 {
-    [Table("ventas")] // En minúscula para coincidir exactamente con MySQL
+    [Table("ventas")]
     public class Venta
     {
         [Key]
         public int Id { get; set; }
-
-        [Required]
-        public int VehiculoId { get; set; }
 
         [Required]
         public int ClienteId { get; set; }
@@ -20,40 +16,43 @@ namespace Concesionario.Models
         public int VendedorId { get; set; }
 
         [Required]
-        public DateTime FechaVenta { get; set; }
+        public int TipoComprobanteId { get; set; }
 
         [Required]
-        [Column(TypeName = "decimal(15,2)")] // Ajustado a la precisión (15,2) de tu tabla
+        public int FormaPagoId { get; set; }
+
+        [Required]
+        public int PuntoVenta { get; set; }
+
+        [Required]
+        public int NroComprobante { get; set; }
+
+        [Required]
+        public DateTime FechaVenta { get; set; } = DateTime.Now;
+
+        [Required]
+        [Column(TypeName = "decimal(15,2)")]
         public decimal MontoFinal { get; set; }
 
-        [Required]
-        [StringLength(50)]
-        public string FormaPago { get; set; } = string.Empty;
-
-        public string? Observaciones { get; set; } // En MySQL es de tipo 'text', mapea a string directo
-
+        public string? Observaciones { get; set; } 
 
         // ==========================================
-        // PROPIEDADES DE NAVEGACIÓN (Entity Framework)
+        // PROPIEDADES DE NAVEGACIÓN
         // ==========================================
         
-        [ForeignKey("VehiculoId")]
-        public virtual Vehiculo? Vehiculo { get; set; }
-
         [ForeignKey("ClienteId")]
         public virtual Cliente? Cliente { get; set; }
 
-        [ForeignKey("VendedorId")]
-        public virtual Vendedor? Vendedor { get; set; }
+        [ForeignKey("FormaPagoId")]
+        public virtual FormaPago? FormaPago { get; set; }
 
+        [ForeignKey("TipoComprobanteId")]
+        public virtual TipoComprobante? TipoComprobante { get; set; }
 
-        // ==========================================
-        // PROPIEDADES EXTRA PARA EL FRONTEND (JSON)
-        // ==========================================
+        // Relación crucial: Una venta tiene muchos detalles
+        public virtual ICollection<DetalleVenta> DetallesVenta { get; set; } = new List<DetalleVenta>();
+
         [NotMapped]
-        public string? NombreCliente { get; set; }
-
-        [NotMapped]
-        public string? DetalleVehiculo { get; set; }
+        public string NombreCliente { get; set; } = string.Empty;
     }
 }
