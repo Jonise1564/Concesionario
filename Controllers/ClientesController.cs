@@ -22,16 +22,92 @@ namespace Concesionario.Controllers
         // ---------------------------------------------------------------------
         // LISTAR CLIENTES
         // ---------------------------------------------------------------------
+        // [HttpGet("Listar")]
+        // public async Task<IActionResult> Listar()
+        // {
+        //     try
+        //     {
+        //         // Proyectamos directamente lo necesario para romper ciclos relacionales de EF
+        //         var clientes = await _context.Clientes
+        //             .Include(c => c.Persona)
+        //                 .ThenInclude(p => p.Ciudad)
+        //                     .ThenInclude(ciu => ciu.Provincia)
+        //             .OrderByDescending(c => c.Id)
+        //             .Select(c => new
+        //             {
+        //                 id = c.Id,
+        //                 idPersonaId = c.IdPersonaId,
+        //                 calificacionCrediticia = c.CalificacionCrediticia,
+        //                 idFechaAlta = c.IdFechaAlta,
+        //                 observaciones = c.Observaciones,
+        //                 persona = new
+        //                 {
+        //                     id = c.Persona.Id,
+        //                     documentoIdentidad = c.Persona.DocumentoIdentidad,
+        //                     nombres = c.Persona.Nombres,
+        //                     apellidos = c.Persona.Apellidos,
+        //                     email = c.Persona.Email,
+        //                     telefono = c.Persona.Telefono,
+        //                     telefonoAlternativo = c.Persona.TelefonoAlternativo,
+        //                     fechaNacimiento = c.Persona.FechaNacimiento,
+        //                     genero = c.Persona.Genero,
+        //                     estadoCivil = c.Persona.EstadoCivil,
+        //                     direccion = c.Persona.Direccion,
+        //                     codigoPostal = c.Persona.CodigoPostal,
+        //                     pais = c.Persona.Pais,
+        //                     ciudadId = c.Persona.CiudadId,
+        //                     ciudad = c.Persona.Ciudad != null ? new
+        //                     {
+        //                         id = c.Persona.Ciudad.Id,
+        //                         nombre = c.Persona.Ciudad.Nombre,
+        //                         provincia = c.Persona.Ciudad.Provincia != null ? new
+        //                         {
+        //                             id = c.Persona.Ciudad.Provincia.Id,
+        //                             nombre = c.Persona.Ciudad.Provincia.Nombre
+        //                         } : null
+        //                     } : null
+        //                 }
+        //             })
+        //             .ToListAsync();
+
+        //         return Ok(clientes);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return BadRequest(new { message = "Error al obtener la lista de clientes: " + ex.Message });
+        //     }
+        // }
+
+
+// ---------------------------------------------------------------------
+        // LISTAR CLIENTES (Soporta Búsqueda Opcional Dinámica)
+        // ---------------------------------------------------------------------
         [HttpGet("Listar")]
-        public async Task<IActionResult> Listar()
+        public async Task<IActionResult> Listar([FromQuery] string? search = null)
         {
             try
             {
-                // Proyectamos directamente lo necesario para romper ciclos relacionales de EF
-                var clientes = await _context.Clientes
+                // Iniciamos la consulta sobre la tabla Clientes
+                var query = _context.Clientes
                     .Include(c => c.Persona)
                         .ThenInclude(p => p.Ciudad)
                             .ThenInclude(ciu => ciu.Provincia)
+                    .AsQueryable();
+
+                // Si viene el parámetro de búsqueda, filtramos en la base de datos
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    string searchTrim = search.Trim().ToLower();
+                    
+                    query = query.Where(c => 
+                        c.Persona.Nombres.ToLower().Contains(searchTrim) || 
+                        c.Persona.Apellidos.ToLower().Contains(searchTrim) || 
+                        c.Persona.DocumentoIdentidad.Contains(searchTrim)
+                    );
+                }
+
+                // Proyectamos directamente lo necesario para romper ciclos relacionales de EF
+                var clientes = await query
                     .OrderByDescending(c => c.Id)
                     .Select(c => new
                     {
@@ -40,6 +116,8 @@ namespace Concesionario.Controllers
                         calificacionCrediticia = c.CalificacionCrediticia,
                         idFechaAlta = c.IdFechaAlta,
                         observaciones = c.Observaciones,
+                        // Añadimos propiedad plana para simplificar lecturas en selectores Javascript
+                        nombreCompleto = c.Persona.Nombres + " " + c.Persona.Apellidos,
                         persona = new
                         {
                             id = c.Persona.Id,
@@ -77,6 +155,17 @@ namespace Concesionario.Controllers
                 return BadRequest(new { message = "Error al obtener la lista de clientes: " + ex.Message });
             }
         }
+
+
+
+
+
+
+
+
+
+
+
 
         // ---------------------------------------------------------------------
         // GUARDAR / EDITAR CLIENTE
